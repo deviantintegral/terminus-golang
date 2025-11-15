@@ -1,0 +1,383 @@
+package output
+
+import (
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"reflect"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
+
+// Format represents output format types
+type Format string
+
+const (
+	// FormatTable is table format
+	FormatTable Format = "table"
+	// FormatJSON is JSON format
+	FormatJSON Format = "json"
+	// FormatYAML is YAML format
+	FormatYAML Format = "yaml"
+	// FormatCSV is CSV format
+	FormatCSV Format = "csv"
+	// FormatList is simple list format (one item per line)
+	FormatList Format = "list"
+)
+
+// Options configures output formatting
+type Options struct {
+	Format Format
+	Fields []string
+	Writer io.Writer
+}
+
+// DefaultOptions returns default output options
+func DefaultOptions() *Options {
+	return &Options{
+		Format: FormatTable,
+		Writer: os.Stdout,
+	}
+}
+
+// Print prints data in the specified format
+func Print(data interface{}, opts *Options) error {
+	if opts == nil {
+		opts = DefaultOptions()
+	}
+
+	if opts.Writer == nil {
+		opts.Writer = os.Stdout
+	}
+
+	switch opts.Format {
+	case FormatTable:
+		return printTable(data, opts)
+	case FormatJSON:
+		return printJSON(data, opts.Writer)
+	case FormatYAML:
+		return printYAML(data, opts.Writer)
+	case FormatCSV:
+		return printCSV(data, opts)
+	case FormatList:
+		return printList(data, opts)
+	default:
+		return fmt.Errorf("unsupported format: %s", opts.Format)
+	}
+}
+
+// printJSON prints data as JSON
+func printJSON(data interface{}, w io.Writer) error {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(data)
+}
+
+// printYAML prints data as YAML
+func printYAML(data interface{}, w io.Writer) error {
+	encoder := yaml.NewEncoder(w)
+	defer encoder.Close()
+	return encoder.Encode(data)
+}
+
+// printTable prints data as a table
+func printTable(data interface{}, opts *Options) error {
+	rows, headers := extractTableData(data, opts.Fields)
+	if len(rows) == 0 {
+		return nil
+	}
+
+	// Calculate column widths
+	widths := make([]int, len(headers))
+	for i, h := range headers {
+		widths[i] = len(h)
+	}
+	for _, row := range rows {
+		for i, cell := range row {
+			if i < len(widths) && len(cell) > widths[i] {
+				widths[i] = len(cell)
+			}
+		}
+	}
+
+	// Print header
+	for i, h := range headers {
+		fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h)
+	}
+	fmt.Fprintln(opts.Writer)
+
+	// Print separator
+	for _, w := range widths {
+		fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2))
+	}
+	fmt.Fprintln(opts.Writer)
+
+	// Print rows
+	for _, row := range rows {
+		for i, cell := range row {
+			if i < len(widths) {
+				fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell)
+			}
+		}
+		fmt.Fprintln(opts.Writer)
+	}
+
+	return nil
+}
+
+// printCSV prints data as CSV
+func printCSV(data interface{}, opts *Options) error {
+	rows, headers := extractTableData(data, opts.Fields)
+	if len(rows) == 0 {
+		return nil
+	}
+
+	w := csv.NewWriter(opts.Writer)
+	defer w.Flush()
+
+	// Write header
+	if err := w.Write(headers); err != nil {
+		return fmt.Errorf("failed to write CSV header: %w", err)
+	}
+
+	// Write rows
+	for _, row := range rows {
+		if err := w.Write(row); err != nil {
+			return fmt.Errorf("failed to write CSV row: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// printList prints data as a simple list
+func printList(data interface{}, opts *Options) error {
+	rows, _ := extractTableData(data, opts.Fields)
+
+	for _, row := range rows {
+		if len(row) > 0 {
+			fmt.Fprintln(opts.Writer, row[0])
+		}
+	}
+
+	return nil
+}
+
+// extractTableData extracts table data from various data types
+func extractTableData(data interface{}, fields []string) ([][]string, []string) {
+	v := reflect.ValueOf(data)
+
+	// Dereference pointer
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	// Handle slice/array
+	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+		if v.Len() == 0 {
+			return nil, nil
+		}
+
+		var rows [][]string
+		var headers []string
+
+		for i := 0; i < v.Len(); i++ {
+			item := v.Index(i)
+
+			// Dereference pointer
+			if item.Kind() == reflect.Ptr {
+				item = item.Elem()
+			}
+
+			row, itemHeaders := extractRow(item, fields)
+			if i == 0 {
+				headers = itemHeaders
+			}
+			rows = append(rows, row)
+		}
+
+		return rows, headers
+	}
+
+	// Handle single item
+	row, headers := extractRow(v, fields)
+	return [][]string{row}, headers
+}
+
+// extractRow extracts a single row from a struct or map
+func extractRow(v reflect.Value, fields []string) ([]string, []string) {
+	// Dereference pointer
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		return extractFromStruct(v, fields)
+	case reflect.Map:
+		return extractFromMap(v, fields)
+	default:
+		// For primitive types, just convert to string
+		return []string{fmt.Sprintf("%v", v.Interface())}, []string{"Value"}
+	}
+}
+
+// extractFromStruct extracts data from a struct
+func extractFromStruct(v reflect.Value, fields []string) ([]string, []string) {
+	t := v.Type()
+
+	var row []string
+	var headers []string
+
+	// Build field map from struct tags
+	fieldMap := make(map[string]int)
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		// Get JSON tag name
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" || jsonTag == "-" {
+			continue
+		}
+
+		// Remove omitempty and other options
+		tagParts := strings.Split(jsonTag, ",")
+		fieldName := tagParts[0]
+
+		fieldMap[strings.ToLower(fieldName)] = i
+		fieldMap[strings.ToLower(field.Name)] = i
+	}
+
+	// If fields specified, use them; otherwise use all fields
+	if len(fields) > 0 {
+		for _, fieldName := range fields {
+			idx, ok := fieldMap[strings.ToLower(fieldName)]
+			if !ok {
+				// Field not found, add empty value
+				row = append(row, "")
+				headers = append(headers, fieldName)
+				continue
+			}
+
+			field := t.Field(idx)
+			value := v.Field(idx)
+
+			headers = append(headers, getHeaderName(field))
+			row = append(row, formatValue(value))
+		}
+	} else {
+		// Use all fields in order
+		for i := 0; i < t.NumField(); i++ {
+			field := t.Field(i)
+
+			// Skip unexported fields
+			if !field.IsExported() {
+				continue
+			}
+
+			// Skip fields with json:"-"
+			jsonTag := field.Tag.Get("json")
+			if jsonTag == "-" {
+				continue
+			}
+
+			value := v.Field(i)
+
+			headers = append(headers, getHeaderName(field))
+			row = append(row, formatValue(value))
+		}
+	}
+
+	return row, headers
+}
+
+// extractFromMap extracts data from a map
+func extractFromMap(v reflect.Value, fields []string) ([]string, []string) {
+	var row []string
+	var headers []string
+
+	if len(fields) > 0 {
+		for _, fieldName := range fields {
+			key := reflect.ValueOf(fieldName)
+			value := v.MapIndex(key)
+
+			headers = append(headers, fieldName)
+			if value.IsValid() {
+				row = append(row, formatValue(value))
+			} else {
+				row = append(row, "")
+			}
+		}
+	} else {
+		// Use all keys
+		for _, key := range v.MapKeys() {
+			value := v.MapIndex(key)
+
+			headers = append(headers, fmt.Sprintf("%v", key.Interface()))
+			row = append(row, formatValue(value))
+		}
+	}
+
+	return row, headers
+}
+
+// getHeaderName gets the display name for a struct field
+func getHeaderName(field reflect.StructField) string {
+	// Try to get from json tag first
+	jsonTag := field.Tag.Get("json")
+	if jsonTag != "" && jsonTag != "-" {
+		tagParts := strings.Split(jsonTag, ",")
+		return tagParts[0]
+	}
+
+	// Use field name
+	return field.Name
+}
+
+// formatValue formats a reflect.Value as a string
+func formatValue(v reflect.Value) string {
+	if !v.IsValid() {
+		return ""
+	}
+
+	// Dereference pointer
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return ""
+		}
+		v = v.Elem()
+	}
+
+	// Handle different types
+	switch v.Kind() {
+	case reflect.String:
+		return v.String()
+	case reflect.Bool:
+		return fmt.Sprintf("%t", v.Bool())
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fmt.Sprintf("%d", v.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fmt.Sprintf("%d", v.Uint())
+	case reflect.Float32, reflect.Float64:
+		return fmt.Sprintf("%g", v.Float())
+	case reflect.Slice, reflect.Array:
+		if v.Len() == 0 {
+			return ""
+		}
+		// For slices, join elements
+		var parts []string
+		for i := 0; i < v.Len(); i++ {
+			parts = append(parts, formatValue(v.Index(i)))
+		}
+		return strings.Join(parts, ", ")
+	case reflect.Map, reflect.Struct:
+		// For complex types, use JSON
+		data, _ := json.Marshal(v.Interface())
+		return string(data)
+	default:
+		return fmt.Sprintf("%v", v.Interface())
+	}
+}

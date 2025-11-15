@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: go
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-upload:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          if [ "$GOOS" = "windows" ]; then
+            EXT=".exe"
+          else
+            EXT=""
+          fi
+          OUTPUT="terminus-$GOOS-$GOARCH$EXT"
+          go build -ldflags="-s -w" -o "$OUTPUT" ./cmd/terminus
+          if [ "$GOOS" != "windows" ]; then
+            tar -czf "${OUTPUT}.tar.gz" "$OUTPUT"
+            rm "$OUTPUT"
+          else
+            zip "${OUTPUT}.zip" "$OUTPUT"
+            rm "$OUTPUT"
+          fi
+
+      - name: Upload Release Artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ matrix.goos }}" != "windows" ]; then
+            gh release upload ${{ needs.release-please.outputs.tag_name }} \
+              terminus-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+          else
+            gh release upload ${{ needs.release-please.outputs.tag_name }} \
+              terminus-${{ matrix.goos }}-${{ matrix.goarch }}.exe.zip
+          fi
