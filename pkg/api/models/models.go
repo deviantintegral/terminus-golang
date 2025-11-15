@@ -1,3 +1,4 @@
+// Package models defines data structures for Pantheon API resources.
 package models
 
 import "time"

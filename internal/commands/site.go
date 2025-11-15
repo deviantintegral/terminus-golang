@@ -62,7 +62,6 @@ var siteTeamCmd = &cobra.Command{
 
 var (
 	siteOrgFlag      string
-	siteNameFlag     string
 	siteLabelFlag    string
 	siteUpstreamFlag string
 	siteRegionFlag   string
@@ -86,10 +85,10 @@ func init() {
 	siteCreateCmd.Flags().StringVar(&siteUpstreamFlag, "upstream", "", "Upstream ID")
 	siteCreateCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Organization ID")
 	siteCreateCmd.Flags().StringVar(&siteRegionFlag, "region", "", "Preferred region")
-	siteCreateCmd.MarkFlagRequired("upstream")
+	_ = siteCreateCmd.MarkFlagRequired("upstream")
 }
 
-func runSiteList(cmd *cobra.Command, args []string) error {
+func runSiteList(_ *cobra.Command, _ []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -112,7 +111,7 @@ func runSiteList(cmd *cobra.Command, args []string) error {
 	return printOutput(sites)
 }
 
-func runSiteInfo(cmd *cobra.Command, args []string) error {
+func runSiteInfo(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -128,7 +127,7 @@ func runSiteInfo(cmd *cobra.Command, args []string) error {
 	return printOutput(site)
 }
 
-func runSiteCreate(cmd *cobra.Command, args []string) error {
+func runSiteCreate(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -160,7 +159,7 @@ func runSiteCreate(cmd *cobra.Command, args []string) error {
 	return printOutput(site)
 }
 
-func runSiteDelete(cmd *cobra.Command, args []string) error {
+func runSiteDelete(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -185,7 +184,7 @@ func runSiteDelete(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runSiteTeamList(cmd *cobra.Command, args []string) error {
+func runSiteTeamList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

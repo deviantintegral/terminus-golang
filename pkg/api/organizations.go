@@ -50,7 +50,7 @@ func (s *OrganizationsService) List(ctx context.Context) ([]*models.Organization
 // Get returns a specific organization
 func (s *OrganizationsService) Get(ctx context.Context, orgID string) (*models.Organization, error) {
 	path := fmt.Sprintf("/organizations/%s", orgID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get organization: %w", err)
 	}

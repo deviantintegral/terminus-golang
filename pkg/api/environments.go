@@ -20,7 +20,7 @@ func NewEnvironmentsService(client *Client) *EnvironmentsService {
 // List returns all environments for a site
 func (s *EnvironmentsService) List(ctx context.Context, siteID string) ([]*models.Environment, error) {
 	path := fmt.Sprintf("/sites/%s/environments", siteID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list environments: %w", err)
 	}
@@ -36,7 +36,7 @@ func (s *EnvironmentsService) List(ctx context.Context, siteID string) ([]*model
 // Get returns a specific environment
 func (s *EnvironmentsService) Get(ctx context.Context, siteID, envID string) (*models.Environment, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get environment: %w", err)
 	}
@@ -58,7 +58,7 @@ func (s *EnvironmentsService) ClearCache(ctx context.Context, siteID, envID stri
 		"params": map[string]interface{}{},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to clear cache: %w", err)
 	}
@@ -91,7 +91,7 @@ func (s *EnvironmentsService) Deploy(ctx context.Context, siteID, envID string, 
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, workflowReq)
+	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy: %w", err)
 	}
@@ -124,7 +124,7 @@ func (s *EnvironmentsService) CloneContent(ctx context.Context, siteID, envID st
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, workflowReq)
+	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone content: %w", err)
 	}
@@ -148,7 +148,7 @@ func (s *EnvironmentsService) ChangeConnectionMode(ctx context.Context, siteID, 
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to change connection mode: %w", err)
 	}
@@ -177,7 +177,7 @@ func (s *EnvironmentsService) Commit(ctx context.Context, siteID, envID string, 
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, workflowReq)
+	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to commit: %w", err)
 	}
@@ -199,7 +199,7 @@ func (s *EnvironmentsService) Wipe(ctx context.Context, siteID, envID string) (*
 		"params": map[string]interface{}{},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to wipe environment: %w", err)
 	}
@@ -215,7 +215,7 @@ func (s *EnvironmentsService) Wipe(ctx context.Context, siteID, envID string) (*
 // GetConnectionInfo returns connection information for an environment
 func (s *EnvironmentsService) GetConnectionInfo(ctx context.Context, siteID, envID string) (*models.ConnectionInfo, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/connection-info", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connection info: %w", err)
 	}
@@ -231,7 +231,7 @@ func (s *EnvironmentsService) GetConnectionInfo(ctx context.Context, siteID, env
 // GetUpstreamUpdates returns upstream update information
 func (s *EnvironmentsService) GetUpstreamUpdates(ctx context.Context, siteID, envID string) (*models.UpstreamUpdate, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/upstream-updates", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get upstream updates: %w", err)
 	}
@@ -256,7 +256,7 @@ func (s *EnvironmentsService) ApplyUpstreamUpdates(ctx context.Context, siteID, 
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply upstream updates: %w", err)
 	}
@@ -272,7 +272,7 @@ func (s *EnvironmentsService) ApplyUpstreamUpdates(ctx context.Context, siteID, 
 // GetLock returns lock information for an environment
 func (s *EnvironmentsService) GetLock(ctx context.Context, siteID, envID string) (*models.Lock, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/lock", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lock: %w", err)
 	}
@@ -298,7 +298,7 @@ func (s *EnvironmentsService) SetLock(ctx context.Context, siteID, envID, userna
 	if err != nil {
 		return fmt.Errorf("failed to set lock: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("set lock failed with status %d", resp.StatusCode)
@@ -314,7 +314,7 @@ func (s *EnvironmentsService) RemoveLock(ctx context.Context, siteID, envID stri
 	if err != nil {
 		return fmt.Errorf("failed to remove lock: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("remove lock failed with status %d", resp.StatusCode)

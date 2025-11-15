@@ -39,7 +39,7 @@ var rootCmd = &cobra.Command{
 
 It provides tools to manage sites, environments, workflows, backups, and more
 on the Pantheon platform.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		return initCLIContext()
 	},
 	SilenceUsage:  true,
@@ -136,7 +136,7 @@ func confirm(message string) bool {
 
 	fmt.Printf("%s [y/N]: ", message)
 	var response string
-	fmt.Scanln(&response)
+	_, _ = fmt.Scanln(&response)
 
 	return response == "y" || response == "Y" || response == "yes"
 }

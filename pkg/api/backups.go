@@ -23,7 +23,7 @@ func NewBackupsService(client *Client) *BackupsService {
 // List returns all backups for an environment
 func (s *BackupsService) List(ctx context.Context, siteID, envID string) ([]*models.Backup, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/backups/catalog", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list backups: %w", err)
 	}
@@ -39,7 +39,7 @@ func (s *BackupsService) List(ctx context.Context, siteID, envID string) ([]*mod
 // Get returns a specific backup
 func (s *BackupsService) Get(ctx context.Context, siteID, envID, backupID string) (*models.Backup, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/backups/catalog/%s", siteID, envID, backupID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get backup: %w", err)
 	}
@@ -52,7 +52,7 @@ func (s *BackupsService) Get(ctx context.Context, siteID, envID, backupID string
 	return &backup, nil
 }
 
-// CreateRequest represents a backup creation request
+// CreateBackupRequest represents a backup creation request
 type CreateBackupRequest struct {
 	KeepFor int `json:"ttl,omitempty"` // TTL in days
 }
@@ -73,7 +73,7 @@ func (s *BackupsService) Create(ctx context.Context, siteID, envID string, req *
 		"params": params,
 	}
 
-	resp, err := s.client.Post(ctx, path, workflowReq)
+	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to create backup: %w", err)
 	}
@@ -97,7 +97,7 @@ func (s *BackupsService) CreateElement(ctx context.Context, siteID, envID, eleme
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, workflowReq)
+	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to create %s backup: %w", element, err)
 	}
@@ -113,7 +113,7 @@ func (s *BackupsService) CreateElement(ctx context.Context, siteID, envID, eleme
 // GetDownloadURL returns the download URL for a backup element
 func (s *BackupsService) GetDownloadURL(ctx context.Context, siteID, envID, backupID, element string) (string, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/backups/catalog/%s/downloads/%s", siteID, envID, backupID, element)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return "", fmt.Errorf("failed to get download URL: %w", err)
 	}
@@ -146,18 +146,18 @@ func (s *BackupsService) Download(ctx context.Context, siteID, envID, backupID, 
 	if err != nil {
 		return fmt.Errorf("failed to download backup: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with status %d", resp.StatusCode)
 	}
 
 	// Create output file
-	out, err := os.Create(outputPath)
+	out, err := os.Create(outputPath) //nolint:gosec // User-specified output path
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	// Copy data
 	if _, err := io.Copy(out, resp.Body); err != nil {
@@ -178,7 +178,7 @@ func (s *BackupsService) Restore(ctx context.Context, siteID, envID, backupID st
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, workflowReq)
+	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to restore backup: %w", err)
 	}
@@ -194,7 +194,7 @@ func (s *BackupsService) Restore(ctx context.Context, siteID, envID, backupID st
 // GetSchedule returns the backup schedule for an environment
 func (s *BackupsService) GetSchedule(ctx context.Context, siteID, envID string) (map[string]interface{}, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/backups/schedule", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get backup schedule: %w", err)
 	}
@@ -222,7 +222,7 @@ func (s *BackupsService) SetSchedule(ctx context.Context, siteID, envID string, 
 	if err != nil {
 		return fmt.Errorf("failed to set backup schedule: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("set backup schedule failed with status %d", resp.StatusCode)

@@ -54,7 +54,7 @@ func init() {
 	domainCmd.AddCommand(domainDNSCmd)
 }
 
-func runDomainList(cmd *cobra.Command, args []string) error {
+func runDomainList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func runDomainList(cmd *cobra.Command, args []string) error {
 	return printOutput(domains)
 }
 
-func runDomainAdd(cmd *cobra.Command, args []string) error {
+func runDomainAdd(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func runDomainAdd(cmd *cobra.Command, args []string) error {
 	return printOutput(addedDomain)
 }
 
-func runDomainRemove(cmd *cobra.Command, args []string) error {
+func runDomainRemove(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func runDomainRemove(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runDomainDNS(cmd *cobra.Command, args []string) error {
+func runDomainDNS(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

@@ -59,7 +59,7 @@ func init() {
 	workflowCmd.AddCommand(workflowWatchCmd)
 }
 
-func runWorkflowList(cmd *cobra.Command, args []string) error {
+func runWorkflowList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func runWorkflowList(cmd *cobra.Command, args []string) error {
 	return printOutput(workflows)
 }
 
-func runWorkflowInfo(cmd *cobra.Command, args []string) error {
+func runWorkflowInfo(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func runWorkflowInfo(cmd *cobra.Command, args []string) error {
 	return printOutput(workflow)
 }
 
-func runWorkflowWait(cmd *cobra.Command, args []string) error {
+func runWorkflowWait(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func runWorkflowWait(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflowID, "Workflow")
 }
 
-func runWorkflowWatch(cmd *cobra.Command, args []string) error {
+func runWorkflowWatch(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -164,9 +164,9 @@ func waitForWorkflow(siteID, workflowID, description string) error {
 	opts := &api.WaitOptions{
 		PollInterval: 3 * time.Second,
 		Timeout:      30 * time.Minute,
-		OnProgress: func(w *models.Workflow) {
+		OnProgress: func(_ *models.Workflow) {
 			if bar != nil {
-				bar.Add(1)
+				_ = bar.Add(1)
 			}
 		},
 	}
@@ -174,13 +174,13 @@ func waitForWorkflow(siteID, workflowID, description string) error {
 	workflow, err := workflowsService.Wait(getContext(), siteID, workflowID, opts)
 	if err != nil {
 		if bar != nil {
-			bar.Finish()
+			_ = bar.Finish()
 		}
 		return fmt.Errorf("workflow wait failed: %w", err)
 	}
 
 	if bar != nil {
-		bar.Finish()
+		_ = bar.Finish()
 	}
 
 	if workflow.IsSuccessful() {

@@ -1,3 +1,4 @@
+// Package config handles application configuration from multiple sources.
 package config
 
 import (
@@ -105,7 +106,7 @@ func (c *Config) load() error {
 
 // loadFromFile loads configuration from a YAML file
 func (c *Config) loadFromFile(path string) error {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // Config file path
 	if err != nil {
 		return err
 	}
@@ -124,7 +125,7 @@ func (c *Config) loadFromFile(path string) error {
 
 // loadFromEnvFile loads environment variables from a .env file
 func (c *Config) loadFromEnvFile(path string) error {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // Env file path
 	if err != nil {
 		return err
 	}
@@ -187,11 +188,11 @@ func (c *Config) setValue(key string, value interface{}) {
 	case "TERMINUS_HOST":
 		c.Host = valueStr
 	case "TERMINUS_PORT":
-		fmt.Sscanf(valueStr, "%d", &c.Port)
+		_, _ = fmt.Sscanf(valueStr, "%d", &c.Port)
 	case "TERMINUS_PROTOCOL":
 		c.Protocol = valueStr
 	case "TERMINUS_TIMEOUT":
-		fmt.Sscanf(valueStr, "%d", &c.Timeout)
+		_, _ = fmt.Sscanf(valueStr, "%d", &c.Timeout)
 	case "TERMINUS_CACHE_DIR":
 		c.CacheDir = c.expandPath(valueStr)
 	case "TERMINUS_PLUGINS_DIR":
@@ -255,7 +256,7 @@ func (c *Config) GetString(key string) string {
 func (c *Config) GetInt(key string) int {
 	if value, ok := c.Get(key); ok {
 		var result int
-		fmt.Sscanf(fmt.Sprintf("%v", value), "%d", &result)
+		_, _ = fmt.Sscanf(fmt.Sprintf("%v", value), "%d", &result)
 		return result
 	}
 	return 0

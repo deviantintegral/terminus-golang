@@ -116,14 +116,14 @@ func init() {
 	envCloneContentCmd.Flags().StringVar(&envFromEnvFlag, "from-env", "", "Source environment")
 	envCloneContentCmd.Flags().BoolVar(&envDatabaseFlag, "db", true, "Clone database")
 	envCloneContentCmd.Flags().BoolVar(&envFilesFlag, "files", true, "Clone files")
-	envCloneContentCmd.MarkFlagRequired("from-env")
+	_ = envCloneContentCmd.MarkFlagRequired("from-env")
 
 	// Commit flags
 	envCommitCmd.Flags().StringVarP(&envCommitMsgFlag, "message", "m", "", "Commit message")
-	envCommitCmd.MarkFlagRequired("message")
+	_ = envCommitCmd.MarkFlagRequired("message")
 }
 
-func runEnvList(cmd *cobra.Command, args []string) error {
+func runEnvList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func runEnvList(cmd *cobra.Command, args []string) error {
 	return printOutput(envs)
 }
 
-func runEnvInfo(cmd *cobra.Command, args []string) error {
+func runEnvInfo(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func runEnvInfo(cmd *cobra.Command, args []string) error {
 	return printOutput(env)
 }
 
-func runEnvClearCache(cmd *cobra.Command, args []string) error {
+func runEnvClearCache(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func runEnvClearCache(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Clearing cache")
 }
 
-func runEnvDeploy(cmd *cobra.Command, args []string) error {
+func runEnvDeploy(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func runEnvDeploy(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Deploying")
 }
 
-func runEnvCloneContent(cmd *cobra.Command, args []string) error {
+func runEnvCloneContent(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func runEnvCloneContent(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Cloning content")
 }
 
-func runEnvCommit(cmd *cobra.Command, args []string) error {
+func runEnvCommit(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func runEnvCommit(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Committing")
 }
 
-func runEnvWipe(cmd *cobra.Command, args []string) error {
+func runEnvWipe(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -290,7 +290,7 @@ func runEnvWipe(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Wiping environment")
 }
 
-func runEnvConnectionSet(cmd *cobra.Command, args []string) error {
+func runEnvConnectionSet(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

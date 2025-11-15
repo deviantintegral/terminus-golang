@@ -1,3 +1,4 @@
+// Package commands implements all CLI commands for terminus.
 package commands
 
 import (
@@ -49,10 +50,10 @@ func init() {
 	authLoginCmd.Flags().StringVar(&machineTokenFlag, "machine-token", "", "Machine token for authentication")
 	authLoginCmd.Flags().StringVar(&emailFlag, "email", "", "Email address (for token storage)")
 	authLoginCmd.Flags().BoolVar(&saveTokenFlag, "save-token", true, "Save machine token for future use")
-	authLoginCmd.MarkFlagRequired("machine-token")
+	_ = authLoginCmd.MarkFlagRequired("machine-token")
 }
 
-func runAuthLogin(cmd *cobra.Command, args []string) error {
+func runAuthLogin(_ *cobra.Command, _ []string) error {
 	// Create auth service
 	authService := api.NewAuthService(cliContext.APIClient)
 
@@ -99,7 +100,7 @@ func runAuthLogin(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAuthLogout(cmd *cobra.Command, args []string) error {
+func runAuthLogout(_ *cobra.Command, _ []string) error {
 	// Delete session
 	if err := cliContext.SessionStore.DeleteSession(); err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
@@ -110,7 +111,7 @@ func runAuthLogout(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAuthWhoami(cmd *cobra.Command, args []string) error {
+func runAuthWhoami(_ *cobra.Command, _ []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

@@ -21,7 +21,7 @@ func NewWorkflowsService(client *Client) *WorkflowsService {
 // List returns all workflows for a site
 func (s *WorkflowsService) List(ctx context.Context, siteID string) ([]*models.Workflow, error) {
 	path := fmt.Sprintf("/sites/%s/workflows", siteID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list workflows: %w", err)
 	}
@@ -37,7 +37,7 @@ func (s *WorkflowsService) List(ctx context.Context, siteID string) ([]*models.W
 // ListForEnvironment returns workflows for a specific environment
 func (s *WorkflowsService) ListForEnvironment(ctx context.Context, siteID, envID string) ([]*models.Workflow, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/workflows", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list environment workflows: %w", err)
 	}
@@ -53,7 +53,7 @@ func (s *WorkflowsService) ListForEnvironment(ctx context.Context, siteID, envID
 // Get returns a specific workflow
 func (s *WorkflowsService) Get(ctx context.Context, siteID, workflowID string) (*models.Workflow, error) {
 	path := fmt.Sprintf("/sites/%s/workflows/%s", siteID, workflowID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow: %w", err)
 	}

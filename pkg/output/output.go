@@ -1,3 +1,4 @@
+// Package output provides formatting utilities for CLI output.
 package output
 
 import (
@@ -79,7 +80,7 @@ func printJSON(data interface{}, w io.Writer) error {
 // printYAML prints data as YAML
 func printYAML(data interface{}, w io.Writer) error {
 	encoder := yaml.NewEncoder(w)
-	defer encoder.Close()
+	defer func() { _ = encoder.Close() }()
 	return encoder.Encode(data)
 }
 
@@ -105,24 +106,24 @@ func printTable(data interface{}, opts *Options) error {
 
 	// Print header
 	for i, h := range headers {
-		fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h)
+		_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h)
 	}
-	fmt.Fprintln(opts.Writer)
+	_, _ = fmt.Fprintln(opts.Writer)
 
 	// Print separator
 	for _, w := range widths {
-		fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2))
+		_, _ = fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2))
 	}
-	fmt.Fprintln(opts.Writer)
+	_, _ = fmt.Fprintln(opts.Writer)
 
 	// Print rows
 	for _, row := range rows {
 		for i, cell := range row {
 			if i < len(widths) {
-				fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell)
+				_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell)
 			}
 		}
-		fmt.Fprintln(opts.Writer)
+		_, _ = fmt.Fprintln(opts.Writer)
 	}
 
 	return nil
@@ -159,7 +160,7 @@ func printList(data interface{}, opts *Options) error {
 
 	for _, row := range rows {
 		if len(row) > 0 {
-			fmt.Fprintln(opts.Writer, row[0])
+			_, _ = fmt.Fprintln(opts.Writer, row[0])
 		}
 	}
 

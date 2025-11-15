@@ -21,7 +21,7 @@ func NewSitesService(client *Client) *SitesService {
 // List returns all sites accessible to the authenticated user
 func (s *SitesService) List(ctx context.Context) ([]*models.Site, error) {
 	// Get user sites
-	resp, err := s.client.Get(ctx, "/sites")
+	resp, err := s.client.Get(ctx, "/sites") //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sites: %w", err)
 	}
@@ -37,7 +37,7 @@ func (s *SitesService) List(ctx context.Context) ([]*models.Site, error) {
 // Get returns a specific site by ID or name
 func (s *SitesService) Get(ctx context.Context, siteID string) (*models.Site, error) {
 	path := fmt.Sprintf("/sites/%s", siteID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get site: %w", err)
 	}
@@ -61,7 +61,7 @@ type CreateSiteRequest struct {
 
 // Create creates a new site
 func (s *SitesService) Create(ctx context.Context, req *CreateSiteRequest) (*models.Site, error) {
-	resp, err := s.client.Post(ctx, "/sites", req)
+	resp, err := s.client.Post(ctx, "/sites", req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to create site: %w", err)
 	}
@@ -81,7 +81,7 @@ func (s *SitesService) Delete(ctx context.Context, siteID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete site: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("delete failed with status %d", resp.StatusCode)
@@ -99,7 +99,7 @@ type UpdateRequest struct {
 // Update updates a site
 func (s *SitesService) Update(ctx context.Context, siteID string, req *UpdateRequest) (*models.Site, error) {
 	path := fmt.Sprintf("/sites/%s", siteID)
-	resp, err := s.client.Put(ctx, path, req)
+	resp, err := s.client.Put(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to update site: %w", err)
 	}
@@ -140,7 +140,7 @@ func (s *SitesService) ListByOrganization(ctx context.Context, orgID string) ([]
 // GetTeam returns team members for a site
 func (s *SitesService) GetTeam(ctx context.Context, siteID string) ([]*models.TeamMember, error) {
 	path := fmt.Sprintf("/sites/%s/team", siteID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get site team: %w", err)
 	}
@@ -162,7 +162,7 @@ type AddTeamMemberRequest struct {
 // AddTeamMember adds a team member to a site
 func (s *SitesService) AddTeamMember(ctx context.Context, siteID string, req *AddTeamMemberRequest) (*models.TeamMember, error) {
 	path := fmt.Sprintf("/sites/%s/team", siteID)
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to add team member: %w", err)
 	}
@@ -182,7 +182,7 @@ func (s *SitesService) RemoveTeamMember(ctx context.Context, siteID, userID stri
 	if err != nil {
 		return fmt.Errorf("failed to remove team member: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("remove team member failed with status %d", resp.StatusCode)
@@ -194,7 +194,7 @@ func (s *SitesService) RemoveTeamMember(ctx context.Context, siteID, userID stri
 // GetTags returns tags for a site
 func (s *SitesService) GetTags(ctx context.Context, siteID, orgID string) ([]*models.Tag, error) {
 	path := fmt.Sprintf("/organizations/%s/tags/sites/%s", orgID, siteID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tags: %w", err)
 	}
@@ -221,7 +221,7 @@ func (s *SitesService) AddTag(ctx context.Context, siteID, orgID, tagName string
 	if err != nil {
 		return fmt.Errorf("failed to add tag: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("add tag failed with status %d", resp.StatusCode)
@@ -237,7 +237,7 @@ func (s *SitesService) RemoveTag(ctx context.Context, siteID, orgID, tagName str
 	if err != nil {
 		return fmt.Errorf("failed to remove tag: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("remove tag failed with status %d", resp.StatusCode)
