@@ -108,13 +108,13 @@ func init() {
 
 	// Restore flags
 	backupRestoreCmd.Flags().StringVar(&backupIDFlag, "backup", "", "Backup ID to restore")
-	backupRestoreCmd.MarkFlagRequired("backup")
+	_ = backupRestoreCmd.MarkFlagRequired("backup")
 
 	// Schedule flags
 	backupAutomaticEnableCmd.Flags().IntVar(&backupScheduleDay, "day", 0, "Day of the week for backups (0-6)")
 }
 
-func runBackupList(cmd *cobra.Command, args []string) error {
+func runBackupList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func runBackupList(cmd *cobra.Command, args []string) error {
 	return printOutput(backups)
 }
 
-func runBackupCreate(cmd *cobra.Command, args []string) error {
+func runBackupCreate(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func runBackupCreate(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Creating backup")
 }
 
-func runBackupGet(cmd *cobra.Command, args []string) error {
+func runBackupGet(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func runBackupGet(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runBackupRestore(cmd *cobra.Command, args []string) error {
+func runBackupRestore(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func runBackupRestore(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Restoring backup")
 }
 
-func runBackupAutomaticInfo(cmd *cobra.Command, args []string) error {
+func runBackupAutomaticInfo(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func runBackupAutomaticInfo(cmd *cobra.Command, args []string) error {
 	return printOutput(schedule)
 }
 
-func runBackupAutomaticEnable(cmd *cobra.Command, args []string) error {
+func runBackupAutomaticEnable(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -269,7 +269,7 @@ func runBackupAutomaticEnable(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runBackupAutomaticDisable(cmd *cobra.Command, args []string) error {
+func runBackupAutomaticDisable(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

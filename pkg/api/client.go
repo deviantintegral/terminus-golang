@@ -152,7 +152,7 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 			if readErr != nil {
 				return nil, fmt.Errorf("failed to read request body: %w", readErr)
 			}
-			req.Body.Close()
+			_ = req.Body.Close()
 			bodyReader = bytes.NewReader(bodyBytes)
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
@@ -186,7 +186,7 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 
 		// Close failed response body
 		if resp != nil && resp.Body != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	}
 
@@ -256,7 +256,7 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
@@ -287,11 +287,11 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 
 // DecodeResponse decodes a JSON response into a target struct
 func DecodeResponse(resp *http.Response, target interface{}) error {
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
-		return &APIError{
+		return &Error{
 			StatusCode: resp.StatusCode,
 			Message:    string(body),
 		}
@@ -304,19 +304,19 @@ func DecodeResponse(resp *http.Response, target interface{}) error {
 	return nil
 }
 
-// APIError represents an API error response
-type APIError struct {
+// Error represents an API error response
+type Error struct {
 	StatusCode int
 	Message    string
 }
 
-func (e *APIError) Error() string {
+func (e *Error) Error() string {
 	return fmt.Sprintf("API error %d: %s", e.StatusCode, e.Message)
 }
 
 // IsNotFound returns true if the error is a 404 Not Found
 func IsNotFound(err error) bool {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := err.(*Error); ok {
 		return apiErr.StatusCode == http.StatusNotFound
 	}
 	return false
@@ -324,7 +324,7 @@ func IsNotFound(err error) bool {
 
 // IsConflict returns true if the error is a 409 Conflict
 func IsConflict(err error) bool {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := err.(*Error); ok {
 		return apiErr.StatusCode == http.StatusConflict
 	}
 	return false

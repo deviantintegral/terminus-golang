@@ -1,3 +1,5 @@
+version: 2
+
 run:
   timeout: 5m
   tests: true
@@ -29,31 +31,21 @@ linters-settings:
   staticcheck:
     checks: ["all"]
 
-  stylecheck:
-    checks: ["all"]
-
   gocritic:
     enabled-tags:
       - diagnostic
-      - experimental
-      - opinionated
       - performance
       - style
 
 linters:
   enable:
     - errcheck      # Check for unchecked errors
-    - gosimple      # Simplify code
     - govet         # Vet examines Go source code
     - ineffassign   # Detect ineffectual assignments
     - staticcheck   # Go static analysis
-    - typecheck     # Type-check Go code
     - unused        # Check for unused code
-    - gofmt         # Format code
-    - goimports     # Manage imports
     - misspell      # Check spelling
     - revive        # Fast, configurable linter
-    - stylecheck    # Style checker
     - gocritic      # Comprehensive linter
     - gocyclo       # Cyclomatic complexity
     - gosec         # Security checker

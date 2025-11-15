@@ -87,7 +87,7 @@ func init() {
 	orgUpstreamsCmd.AddCommand(orgUpstreamsListCmd)
 }
 
-func runOrgList(cmd *cobra.Command, args []string) error {
+func runOrgList(_ *cobra.Command, _ []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func runOrgList(cmd *cobra.Command, args []string) error {
 	return printOutput(orgs)
 }
 
-func runOrgInfo(cmd *cobra.Command, args []string) error {
+func runOrgInfo(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func runOrgInfo(cmd *cobra.Command, args []string) error {
 	return printOutput(org)
 }
 
-func runOrgPeopleList(cmd *cobra.Command, args []string) error {
+func runOrgPeopleList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func runOrgPeopleList(cmd *cobra.Command, args []string) error {
 	return printOutput(members)
 }
 
-func runOrgSiteList(cmd *cobra.Command, args []string) error {
+func runOrgSiteList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func runOrgSiteList(cmd *cobra.Command, args []string) error {
 	return printOutput(sites)
 }
 
-func runOrgUpstreamsList(cmd *cobra.Command, args []string) error {
+func runOrgUpstreamsList(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

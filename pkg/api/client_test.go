@@ -50,7 +50,7 @@ func TestClientRequest(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"id": "test"}`))
+		_, _ = w.Write([]byte(`{"id": "test"}`))
 	}))
 	defer server.Close()
 
@@ -65,7 +65,7 @@ func TestClientRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status code 200, got %d", resp.StatusCode)
@@ -94,8 +94,8 @@ func TestShouldRetry(t *testing.T) {
 	}
 }
 
-func TestAPIError(t *testing.T) {
-	err := &APIError{
+func TestError(t *testing.T) {
+	err := &Error{
 		StatusCode: 404,
 		Message:    "Not Found",
 	}

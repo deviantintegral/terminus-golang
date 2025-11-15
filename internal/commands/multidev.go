@@ -62,7 +62,7 @@ func init() {
 	multidevMergeFromDevCmd.Flags().BoolVar(&envUpdateDBFlag, "updatedb", false, "Run database updates after merge")
 }
 
-func runMultidevCreate(cmd *cobra.Command, args []string) error {
+func runMultidevCreate(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func runMultidevCreate(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Creating multidev")
 }
 
-func runMultidevDelete(cmd *cobra.Command, args []string) error {
+func runMultidevDelete(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func runMultidevDelete(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Deleting multidev")
 }
 
-func runMultidevMergeToDev(cmd *cobra.Command, args []string) error {
+func runMultidevMergeToDev(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func runMultidevMergeToDev(cmd *cobra.Command, args []string) error {
 	return waitForWorkflow(siteID, workflow.ID, "Merging to dev")
 }
 
-func runMultidevMergeFromDev(cmd *cobra.Command, args []string) error {
+func runMultidevMergeFromDev(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}

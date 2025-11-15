@@ -1,3 +1,4 @@
+// Package api provides a client for the Pantheon API.
 package api
 
 import (
@@ -44,7 +45,7 @@ func (s *AuthService) Login(ctx context.Context, machineToken, email string) (*S
 	if err != nil {
 		return nil, fmt.Errorf("login request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("login failed with status %d", resp.StatusCode)
@@ -63,7 +64,7 @@ func (s *AuthService) Login(ctx context.Context, machineToken, email string) (*S
 
 // Whoami returns information about the current user
 func (s *AuthService) Whoami(ctx context.Context) (*models.User, error) {
-	resp, err := s.client.Get(ctx, "/user")
+	resp, err := s.client.Get(ctx, "/user") //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("whoami request failed: %w", err)
 	}

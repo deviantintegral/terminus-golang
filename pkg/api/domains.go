@@ -20,7 +20,7 @@ func NewDomainsService(client *Client) *DomainsService {
 // List returns all domains for an environment
 func (s *DomainsService) List(ctx context.Context, siteID, envID string) ([]*models.Domain, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/domains", siteID, envID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list domains: %w", err)
 	}
@@ -36,7 +36,7 @@ func (s *DomainsService) List(ctx context.Context, siteID, envID string) ([]*mod
 // Get returns a specific domain
 func (s *DomainsService) Get(ctx context.Context, siteID, envID, domainID string) (*models.Domain, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/domains/%s", siteID, envID, domainID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get domain: %w", err)
 	}
@@ -53,7 +53,7 @@ func (s *DomainsService) Get(ctx context.Context, siteID, envID, domainID string
 func (s *DomainsService) Add(ctx context.Context, siteID, envID, domain string) (*models.Domain, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/domains/%s", siteID, envID, domain)
 
-	resp, err := s.client.Put(ctx, path, nil)
+	resp, err := s.client.Put(ctx, path, nil) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to add domain: %w", err)
 	}
@@ -73,7 +73,7 @@ func (s *DomainsService) Remove(ctx context.Context, siteID, envID, domainID str
 	if err != nil {
 		return fmt.Errorf("failed to remove domain: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("remove domain failed with status %d", resp.StatusCode)
@@ -85,7 +85,7 @@ func (s *DomainsService) Remove(ctx context.Context, siteID, envID, domainID str
 // GetDNS returns DNS recommendations for a domain
 func (s *DomainsService) GetDNS(ctx context.Context, siteID, envID, domainID string) ([]*models.DNSRecord, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/domains/%s/dns", siteID, envID, domainID)
-	resp, err := s.client.Get(ctx, path)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DNS records: %w", err)
 	}

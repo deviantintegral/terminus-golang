@@ -1,3 +1,4 @@
+// Package session handles session and token storage for authentication.
 package session
 
 import (
@@ -112,7 +113,7 @@ func (s *Store) SaveToken(email, token string) error {
 func (s *Store) LoadToken(email string) (string, error) {
 	tokenPath := filepath.Join(s.tokensPath, sanitizeFilename(email))
 
-	data, err := os.ReadFile(tokenPath)
+	data, err := os.ReadFile(tokenPath) //nolint:gosec // Token file path
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil

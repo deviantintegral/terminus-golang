@@ -17,7 +17,7 @@ func NewMultidevService(client *Client) *MultidevService {
 	return &MultidevService{client: client}
 }
 
-// CreateRequest represents a multidev creation request
+// CreateMultidevRequest represents a multidev creation request
 type CreateMultidevRequest struct {
 	FromEnvironment string `json:"from_environment"`
 	CloudDevelopmentEnvironmentID string `json:"cloud_development_environment_id"`
@@ -35,7 +35,7 @@ func (s *MultidevService) Create(ctx context.Context, siteID, envName, fromEnv s
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to create multidev: %w", err)
 	}
@@ -59,7 +59,7 @@ func (s *MultidevService) Delete(ctx context.Context, siteID, envID string, dele
 		req["delete_db"] = true
 	}
 
-	resp, err := s.client.Delete(ctx, path)
+	resp, err := s.client.Delete(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete multidev: %w", err)
 	}
@@ -83,7 +83,7 @@ func (s *MultidevService) MergeToDev(ctx context.Context, siteID, envID string, 
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge to dev: %w", err)
 	}
@@ -107,7 +107,7 @@ func (s *MultidevService) MergeFromDev(ctx context.Context, siteID, envID string
 		},
 	}
 
-	resp, err := s.client.Post(ctx, path, req)
+	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge from dev: %w", err)
 	}
