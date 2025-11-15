@@ -12,6 +12,12 @@ golangci-lint run --timeout=5m
 
 If there are any linting errors, **STOP** and fix them before proceeding.
 
+**Note on golangci-lint versions:**
+- The project configuration is designed for golangci-lint v1.x (stable, used in CI)
+- If you have v2.x (beta) installed locally, it may show config errors
+- The CI pipeline uses v1.64.8, which is the authoritative version
+- When in doubt, verify changes pass in CI rather than relying solely on local linting
+
 ## Development Workflow
 
 ### 1. After Every Code Change
