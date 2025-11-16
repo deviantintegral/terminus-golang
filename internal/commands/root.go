@@ -14,11 +14,11 @@ import (
 
 var (
 	// Global flags
-	formatFlag  string
-	fieldsFlag  []string
-	yesFlag     bool
-	quietFlag   bool
-	verboseFlag bool
+	formatFlag   string
+	fieldsFlag   []string
+	yesFlag      bool
+	quietFlag    bool
+	verboseCount int
 )
 
 // CLIContext holds shared context for all commands
@@ -57,7 +57,7 @@ func init() {
 	rootCmd.PersistentFlags().StringSliceVar(&fieldsFlag, "fields", nil, "Fields to display (comma-separated)")
 	rootCmd.PersistentFlags().BoolVarP(&yesFlag, "yes", "y", false, "Answer yes to all prompts")
 	rootCmd.PersistentFlags().BoolVarP(&quietFlag, "quiet", "q", false, "Suppress output")
-	rootCmd.PersistentFlags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
+	rootCmd.PersistentFlags().CountVarP(&verboseCount, "verbose", "v", "Verbose output (-v, -vv, or -vvv for increasing verbosity)")
 
 	// Add command groups
 	rootCmd.AddCommand(authCmd)
@@ -81,10 +81,18 @@ func initCLIContext() error {
 	// Create session store
 	sessionStore := session.NewStore(cfg.CacheDir)
 
-	// Create API client
-	apiClient := api.NewClient(
+	// Create API client with optional logger
+	clientOpts := []api.ClientOption{
 		api.WithBaseURL(cfg.GetBaseURL()),
-	)
+	}
+
+	// Add logger if verbose mode is enabled
+	if verboseCount > 0 {
+		logger := api.NewLogger(api.VerbosityLevel(verboseCount))
+		clientOpts = append(clientOpts, api.WithLogger(logger))
+	}
+
+	apiClient := api.NewClient(clientOpts...)
 
 	// Try to load existing session
 	sess, err := sessionStore.LoadSession()

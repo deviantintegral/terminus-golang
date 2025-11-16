@@ -73,9 +73,9 @@ func (s *EnvironmentsService) ClearCache(ctx context.Context, siteID, envID stri
 
 // DeployRequest represents a deploy request
 type DeployRequest struct {
-	UpdateDB bool   `json:"updatedb,omitempty"`
-	Note     string `json:"annotation,omitempty"`
-	ClearCache bool `json:"clear_cache,omitempty"`
+	UpdateDB   bool   `json:"updatedb,omitempty"`
+	Note       string `json:"annotation,omitempty"`
+	ClearCache bool   `json:"clear_cache,omitempty"`
 }
 
 // Deploy deploys code to an environment
@@ -119,8 +119,8 @@ func (s *EnvironmentsService) CloneContent(ctx context.Context, siteID, envID st
 		"type": "clone_database_files",
 		"params": map[string]interface{}{
 			"from_environment": req.FromEnvironment,
-			"db":              req.Database,
-			"files":           req.Files,
+			"db":               req.Database,
+			"files":            req.Files,
 		},
 	}
 

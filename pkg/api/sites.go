@@ -92,7 +92,7 @@ func (s *SitesService) Delete(ctx context.Context, siteID string) error {
 
 // UpdateRequest represents a site update request
 type UpdateRequest struct {
-	Label       string `json:"label,omitempty"`
+	Label        string `json:"label,omitempty"`
 	ServiceLevel string `json:"service_level,omitempty"`
 }
 
