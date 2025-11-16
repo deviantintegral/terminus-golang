@@ -20,7 +20,7 @@ jobs:
         id: release
         with:
           release-type: go
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
   build-and-upload:
     needs: release-please
