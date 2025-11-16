@@ -274,7 +274,7 @@ func runEnvWipe(_ *cobra.Command, args []string) error {
 	}
 
 	if !confirm(fmt.Sprintf("Are you sure you want to wipe %s.%s? This cannot be undone.", siteID, envID)) {
-		printMessage("Cancelled")
+		printMessage("Canceled")
 		return nil
 	}
 

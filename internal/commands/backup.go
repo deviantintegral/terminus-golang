@@ -210,7 +210,7 @@ func runBackupRestore(_ *cobra.Command, args []string) error {
 	}
 
 	if !confirm(fmt.Sprintf("Are you sure you want to restore %s.%s from backup %s?", siteID, envID, backupIDFlag)) {
-		printMessage("Cancelled")
+		printMessage("Canceled")
 		return nil
 	}
 

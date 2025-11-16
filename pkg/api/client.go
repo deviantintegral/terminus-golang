@@ -152,7 +152,7 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 			if readErr != nil {
 				return nil, fmt.Errorf("failed to read request body: %w", readErr)
 			}
-			_ = req.Body.Close()
+			_ = req.Body.Close() //nolint:errcheck // Retry loop cleanup
 			bodyReader = bytes.NewReader(bodyBytes)
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
@@ -186,7 +186,7 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 
 		// Close failed response body
 		if resp != nil && resp.Body != nil {
-			_ = resp.Body.Close()
+			_ = resp.Body.Close() //nolint:errcheck // Retry loop cleanup
 		}
 	}
 
@@ -256,10 +256,10 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 		if err != nil {
 			return nil, err
 		}
-		defer func() { _ = resp.Body.Close() }()
+		defer func() { _ = resp.Body.Close() }() //nolint:errcheck // Deferred close
 
 		if resp.StatusCode != http.StatusOK {
-			body, _ := io.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Error message best effort
 			return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 		}
 
@@ -287,10 +287,10 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 
 // DecodeResponse decodes a JSON response into a target struct
 func DecodeResponse(resp *http.Response, target interface{}) error {
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // Deferred close
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Error message best effort
 		return &Error{
 			StatusCode: resp.StatusCode,
 			Message:    string(body),

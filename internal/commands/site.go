@@ -167,7 +167,7 @@ func runSiteDelete(_ *cobra.Command, args []string) error {
 	siteID := args[0]
 
 	if !confirm(fmt.Sprintf("Are you sure you want to delete site '%s'? This cannot be undone.", siteID)) {
-		printMessage("Cancelled")
+		printMessage("Canceled")
 		return nil
 	}
 

@@ -112,7 +112,7 @@ func runDomainRemove(_ *cobra.Command, args []string) error {
 	domain := args[1]
 
 	if !confirm(fmt.Sprintf("Are you sure you want to remove domain '%s' from %s.%s?", domain, siteID, envID)) {
-		printMessage("Cancelled")
+		printMessage("Canceled")
 		return nil
 	}
 

@@ -77,7 +77,7 @@ func (s *Store) LoadSession() (*Session, error) {
 	// Check if expired
 	if session.IsExpired() {
 		// Remove expired session
-		_ = s.DeleteSession()
+		_ = s.DeleteSession() //nolint:errcheck // Best effort cleanup
 		return nil, nil
 	}
 
