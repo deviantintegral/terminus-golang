@@ -192,7 +192,7 @@ func waitForWorkflow(siteID, workflowID, description string) error {
 }
 
 // parseSiteEnv parses a site.env string
-func parseSiteEnv(input string) (site string, env string, err error) {
+func parseSiteEnv(input string) (site, env string, err error) {
 	parts := strings.SplitN(input, ".", 2)
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("invalid format: expected 'site.env', got '%s'", input)
