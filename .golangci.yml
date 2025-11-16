@@ -1,45 +1,9 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: false  # Allow blank identifier assignments
-
-  gocyclo:
-    min-complexity: 15
-
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment  # Overly pedantic about struct field order
-      - shadow          # Variable shadowing is sometimes intentional
-      - nilness         # Can be overly strict
-
-  misspell:
-    locale: US
-
-  revive:
-    rules:
-      - name: exported
-        severity: warning
-        disabled: false
-      - name: package-comments
-        severity: warning
-        disabled: false
-
-  staticcheck:
-    checks: ["all"]
-
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - performance
-      - style
 
 linters:
   enable:
@@ -62,14 +26,50 @@ linters:
     - exhaustive    # Can be overly strict
     - exhaustruct   # Can be overly strict
 
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: false  # Allow blank identifier assignments
+
+    gocyclo:
+      min-complexity: 15
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment  # Overly pedantic about struct field order
+        - shadow          # Variable shadowing is sometimes intentional
+        - nilness         # Can be overly strict
+
+    misspell:
+      locale: US
+
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+          disabled: false
+        - name: package-comments
+          severity: warning
+          disabled: false
+
+    staticcheck:
+      checks: ["all"]
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files
+      - path: _test\.go
+        linters:
+          - gosec
+          - dupl
+
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - gosec
-        - dupl
