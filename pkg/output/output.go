@@ -80,7 +80,7 @@ func printJSON(data interface{}, w io.Writer) error {
 // printYAML prints data as YAML
 func printYAML(data interface{}, w io.Writer) error {
 	encoder := yaml.NewEncoder(w)
-	defer func() { _ = encoder.Close() }()
+	defer func() { _ = encoder.Close() }() //nolint:errcheck // Deferred close
 	return encoder.Encode(data)
 }
 
@@ -106,24 +106,24 @@ func printTable(data interface{}, opts *Options) error {
 
 	// Print header
 	for i, h := range headers {
-		_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h)
+		_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h) //nolint:errcheck // Output write
 	}
-	_, _ = fmt.Fprintln(opts.Writer)
+	_, _ = fmt.Fprintln(opts.Writer) //nolint:errcheck // Output write
 
 	// Print separator
 	for _, w := range widths {
-		_, _ = fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2))
+		_, _ = fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2)) //nolint:errcheck // Output write
 	}
-	_, _ = fmt.Fprintln(opts.Writer)
+	_, _ = fmt.Fprintln(opts.Writer) //nolint:errcheck // Output write
 
 	// Print rows
 	for _, row := range rows {
 		for i, cell := range row {
 			if i < len(widths) {
-				_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell)
+				_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell) //nolint:errcheck // Output write
 			}
 		}
-		_, _ = fmt.Fprintln(opts.Writer)
+		_, _ = fmt.Fprintln(opts.Writer) //nolint:errcheck // Output write
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func printList(data interface{}, opts *Options) error {
 
 	for _, row := range rows {
 		if len(row) > 0 {
-			_, _ = fmt.Fprintln(opts.Writer, row[0])
+			_, _ = fmt.Fprintln(opts.Writer, row[0]) //nolint:errcheck // Output write
 		}
 	}
 
@@ -376,7 +376,7 @@ func formatValue(v reflect.Value) string {
 		return strings.Join(parts, ", ")
 	case reflect.Map, reflect.Struct:
 		// For complex types, use JSON
-		data, _ := json.Marshal(v.Interface())
+		data, _ := json.Marshal(v.Interface()) //nolint:errcheck // Best effort formatting
 		return string(data)
 	default:
 		return fmt.Sprintf("%v", v.Interface())

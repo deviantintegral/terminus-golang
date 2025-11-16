@@ -95,7 +95,7 @@ func runMultidevDelete(_ *cobra.Command, args []string) error {
 	}
 
 	if !confirm(fmt.Sprintf("Are you sure you want to delete multidev %s.%s?", siteID, envID)) {
-		printMessage("Cancelled")
+		printMessage("Canceled")
 		return nil
 	}
 

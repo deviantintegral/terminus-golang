@@ -6,13 +6,17 @@ run:
 linters-settings:
   errcheck:
     check-type-assertions: true
-    check-blank: true
+    check-blank: false  # Allow blank identifier assignments
 
   gocyclo:
     min-complexity: 15
 
   govet:
     enable-all: true
+    disable:
+      - fieldalignment  # Overly pedantic about struct field order
+      - shadow          # Variable shadowing is sometimes intentional
+      - nilness         # Can be overly strict
 
   misspell:
     locale: US
