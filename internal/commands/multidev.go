@@ -46,7 +46,7 @@ var multidevMergeFromDevCmd = &cobra.Command{
 }
 
 var (
-	multidevFromEnvFlag string
+	multidevFromEnvFlag  string
 	multidevDeleteDBFlag bool
 )
 

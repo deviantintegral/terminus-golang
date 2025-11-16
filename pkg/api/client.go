@@ -103,12 +103,14 @@ func (c *Client) SetToken(token string) {
 // Request makes an HTTP request to the API with retry logic
 func (c *Client) Request(ctx context.Context, method, path string, body interface{}) (*http.Response, error) {
 	var bodyReader io.Reader
+	var bodyBytes []byte
 	if body != nil {
-		jsonBody, err := json.Marshal(body)
+		var err error
+		bodyBytes, err = json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
-		bodyReader = bytes.NewReader(jsonBody)
+		bodyReader = bytes.NewReader(bodyBytes)
 	}
 
 	fullURL := c.baseURL + path
@@ -133,6 +135,19 @@ func (c *Client) Request(ctx context.Context, method, path string, body interfac
 
 	if c.logger != nil {
 		c.logger.Debug("API Request: %s %s (trace: %s)", method, fullURL, traceID)
+
+		// Log detailed HTTP request at trace level
+		if httpLogger, ok := AsHTTPLogger(c.logger); ok && httpLogger.IsTraceEnabled() {
+			headers := make(map[string][]string)
+			for k, v := range req.Header {
+				headers[k] = v
+			}
+			bodyStr := ""
+			if len(bodyBytes) > 0 {
+				bodyStr = string(bodyBytes)
+			}
+			httpLogger.LogHTTPRequest(method, fullURL, headers, bodyStr)
+		}
 	}
 
 	// Execute request with retry logic
@@ -146,55 +161,129 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 
 	for attempt := 0; attempt <= MaxRetries; attempt++ {
 		// Clone the request body for retries
-		var bodyReader io.Reader
-		if req.Body != nil {
-			bodyBytes, readErr := io.ReadAll(req.Body)
-			if readErr != nil {
-				return nil, fmt.Errorf("failed to read request body: %w", readErr)
-			}
-			_ = req.Body.Close()
-			bodyReader = bytes.NewReader(bodyBytes)
-			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		bodyReader, cloneErr := c.cloneRequestBody(req)
+		if cloneErr != nil {
+			return nil, cloneErr
 		}
 
 		resp, err = c.httpClient.Do(req)
 
-		if err == nil && !shouldRetry(resp.StatusCode) {
-			// Success or non-retriable error
+		if c.shouldStopRetrying(resp, err) {
+			c.logSuccessfulResponse(resp)
 			return resp, nil
 		}
 
-		if err != nil && c.logger != nil {
-			c.logger.Warn("Request failed (attempt %d/%d): %v", attempt+1, MaxRetries+1, err)
-		} else if c.logger != nil {
-			c.logger.Warn("Request returned %d (attempt %d/%d)", resp.StatusCode, attempt+1, MaxRetries+1)
-		}
+		c.logRetryAttempt(err, resp, attempt)
 
-		// Don't sleep on the last attempt
 		if attempt < MaxRetries {
-			backoff := time.Duration(math.Pow(2, float64(attempt))) * InitialBackoff
-			if c.logger != nil {
-				c.logger.Debug("Retrying after %v", backoff)
-			}
-			time.Sleep(backoff)
-
-			// Restore body for retry
-			if bodyReader != nil {
-				req.Body = io.NopCloser(bodyReader)
-			}
+			c.sleepWithBackoff(attempt)
+			c.restoreRequestBody(req, bodyReader)
 		}
 
-		// Close failed response body
-		if resp != nil && resp.Body != nil {
-			_ = resp.Body.Close()
-		}
+		c.closeResponseBody(resp)
+	}
+
+	return c.formatRetryError(err, resp)
+}
+
+// cloneRequestBody clones the request body for retry attempts
+func (c *Client) cloneRequestBody(req *http.Request) (io.Reader, error) {
+	if req.Body == nil {
+		return nil, nil
+	}
+
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request body: %w", err)
+	}
+	_ = req.Body.Close()
+
+	bodyReader := bytes.NewReader(bodyBytes)
+	req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	return bodyReader, nil
+}
+
+// shouldStopRetrying determines if we should stop retrying
+func (c *Client) shouldStopRetrying(resp *http.Response, err error) bool {
+	return err == nil && !shouldRetry(resp.StatusCode)
+}
+
+// logSuccessfulResponse logs the response if trace logging is enabled
+func (c *Client) logSuccessfulResponse(resp *http.Response) {
+	if httpLogger, ok := AsHTTPLogger(c.logger); ok && httpLogger.IsTraceEnabled() {
+		c.logHTTPResponse(resp, httpLogger)
+	}
+}
+
+// logRetryAttempt logs a retry attempt
+func (c *Client) logRetryAttempt(err error, resp *http.Response, attempt int) {
+	if c.logger == nil {
+		return
 	}
 
 	if err != nil {
+		c.logger.Warn("Request failed (attempt %d/%d): %v", attempt+1, MaxRetries+1, err)
+	} else {
+		c.logger.Warn("Request returned %d (attempt %d/%d)", resp.StatusCode, attempt+1, MaxRetries+1)
+	}
+}
+
+// sleepWithBackoff sleeps with exponential backoff
+func (c *Client) sleepWithBackoff(attempt int) {
+	backoff := time.Duration(math.Pow(2, float64(attempt))) * InitialBackoff
+	if c.logger != nil {
+		c.logger.Debug("Retrying after %v", backoff)
+	}
+	time.Sleep(backoff)
+}
+
+// restoreRequestBody restores the request body for retry
+func (c *Client) restoreRequestBody(req *http.Request, bodyReader io.Reader) {
+	if bodyReader != nil {
+		req.Body = io.NopCloser(bodyReader)
+	}
+}
+
+// closeResponseBody safely closes a response body
+func (c *Client) closeResponseBody(resp *http.Response) {
+	if resp != nil && resp.Body != nil {
+		_ = resp.Body.Close()
+	}
+}
+
+// formatRetryError formats the final error after all retries are exhausted
+func (c *Client) formatRetryError(err error, resp *http.Response) (*http.Response, error) {
+	if err != nil {
 		return nil, fmt.Errorf("request failed after %d attempts: %w", MaxRetries+1, err)
 	}
-
 	return resp, fmt.Errorf("request failed with status %d after %d attempts", resp.StatusCode, MaxRetries+1)
+}
+
+// logHTTPResponse logs HTTP response details while preserving the response body
+func (c *Client) logHTTPResponse(resp *http.Response, httpLogger HTTPLogger) {
+	if resp == nil || resp.Body == nil {
+		return
+	}
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		httpLogger.Error("Failed to read response body for logging: %v", err)
+		return
+	}
+	_ = resp.Body.Close()
+
+	// Restore the response body for the caller
+	resp.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+	// Convert headers to map
+	headers := make(map[string][]string)
+	for k, v := range resp.Header {
+		headers[k] = v
+	}
+
+	// Log the response
+	httpLogger.LogHTTPResponse(resp.StatusCode, resp.Status, headers, string(bodyBytes))
 }
 
 // shouldRetry determines if a status code should trigger a retry

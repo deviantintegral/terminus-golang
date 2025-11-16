@@ -79,11 +79,11 @@ var backupAutomaticDisableCmd = &cobra.Command{
 }
 
 var (
-	backupElementFlag  string
-	backupKeepForFlag  int
-	backupOutputFlag   string
-	backupIDFlag       string
-	backupScheduleDay  int
+	backupElementFlag string
+	backupKeepForFlag int
+	backupOutputFlag  string
+	backupIDFlag      string
+	backupScheduleDay int
 )
 
 func init() {

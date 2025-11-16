@@ -32,12 +32,12 @@ type Config struct {
 	Timeout  int
 
 	// Paths
-	HomeDir      string
-	CacheDir     string
-	PluginsDir   string
-	TokensDir    string
-	SessionFile  string
-	ConfigFile   string
+	HomeDir     string
+	CacheDir    string
+	PluginsDir  string
+	TokensDir   string
+	SessionFile string
+	ConfigFile  string
 
 	// Display settings
 	DateFormat string

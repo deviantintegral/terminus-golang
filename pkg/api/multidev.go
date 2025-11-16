@@ -19,7 +19,7 @@ func NewMultidevService(client *Client) *MultidevService {
 
 // CreateMultidevRequest represents a multidev creation request
 type CreateMultidevRequest struct {
-	FromEnvironment string `json:"from_environment"`
+	FromEnvironment               string `json:"from_environment"`
 	CloudDevelopmentEnvironmentID string `json:"cloud_development_environment_id"`
 }
 
@@ -30,7 +30,7 @@ func (s *MultidevService) Create(ctx context.Context, siteID, envName, fromEnv s
 	req := map[string]interface{}{
 		"type": "create_cloud_development_environment",
 		"params": map[string]interface{}{
-			"environment_id":     envName,
+			"environment_id":          envName,
 			"deploy_from_environment": fromEnv,
 		},
 	}
