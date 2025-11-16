@@ -80,7 +80,7 @@ func printJSON(data interface{}, w io.Writer) error {
 // printYAML prints data as YAML
 func printYAML(data interface{}, w io.Writer) error {
 	encoder := yaml.NewEncoder(w)
-	defer func() { _ = encoder.Close() }() //nolint:errcheck // Deferred close
+	defer func() { _ = encoder.Close() }()
 	return encoder.Encode(data)
 }
 
@@ -106,24 +106,24 @@ func printTable(data interface{}, opts *Options) error {
 
 	// Print header
 	for i, h := range headers {
-		_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h) //nolint:errcheck // Output write
+		_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, h)
 	}
-	_, _ = fmt.Fprintln(opts.Writer) //nolint:errcheck // Output write
+	_, _ = fmt.Fprintln(opts.Writer)
 
 	// Print separator
 	for _, w := range widths {
-		_, _ = fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2)) //nolint:errcheck // Output write
+		_, _ = fmt.Fprintf(opts.Writer, "%s", strings.Repeat("-", w+2))
 	}
-	_, _ = fmt.Fprintln(opts.Writer) //nolint:errcheck // Output write
+	_, _ = fmt.Fprintln(opts.Writer)
 
 	// Print rows
 	for _, row := range rows {
 		for i, cell := range row {
 			if i < len(widths) {
-				_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell) //nolint:errcheck // Output write
+				_, _ = fmt.Fprintf(opts.Writer, "%-*s", widths[i]+2, cell)
 			}
 		}
-		_, _ = fmt.Fprintln(opts.Writer) //nolint:errcheck // Output write
+		_, _ = fmt.Fprintln(opts.Writer)
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func printList(data interface{}, opts *Options) error {
 
 	for _, row := range rows {
 		if len(row) > 0 {
-			_, _ = fmt.Fprintln(opts.Writer, row[0]) //nolint:errcheck // Output write
+			_, _ = fmt.Fprintln(opts.Writer, row[0])
 		}
 	}
 
@@ -168,7 +168,7 @@ func printList(data interface{}, opts *Options) error {
 }
 
 // extractTableData extracts table data from various data types
-func extractTableData(data interface{}, fields []string) ([][]string, []string) {
+func extractTableData(data interface{}, fields []string) (rows [][]string, headers []string) {
 	v := reflect.ValueOf(data)
 
 	// Dereference pointer
@@ -209,7 +209,7 @@ func extractTableData(data interface{}, fields []string) ([][]string, []string) 
 }
 
 // extractRow extracts a single row from a struct or map
-func extractRow(v reflect.Value, fields []string) ([]string, []string) {
+func extractRow(v reflect.Value, fields []string) (row []string, headers []string) {
 	// Dereference pointer
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -227,11 +227,8 @@ func extractRow(v reflect.Value, fields []string) ([]string, []string) {
 }
 
 // extractFromStruct extracts data from a struct
-func extractFromStruct(v reflect.Value, fields []string) ([]string, []string) {
+func extractFromStruct(v reflect.Value, fields []string) (row []string, headers []string) {
 	t := v.Type()
-
-	var row []string
-	var headers []string
 
 	// Build field map from struct tags
 	fieldMap := make(map[string]int)
@@ -266,7 +263,7 @@ func extractFromStruct(v reflect.Value, fields []string) ([]string, []string) {
 			field := t.Field(idx)
 			value := v.Field(idx)
 
-			headers = append(headers, getHeaderName(field))
+			headers = append(headers, getHeaderName(&field))
 			row = append(row, formatValue(value))
 		}
 	} else {
@@ -287,7 +284,7 @@ func extractFromStruct(v reflect.Value, fields []string) ([]string, []string) {
 
 			value := v.Field(i)
 
-			headers = append(headers, getHeaderName(field))
+			headers = append(headers, getHeaderName(&field))
 			row = append(row, formatValue(value))
 		}
 	}
@@ -296,10 +293,7 @@ func extractFromStruct(v reflect.Value, fields []string) ([]string, []string) {
 }
 
 // extractFromMap extracts data from a map
-func extractFromMap(v reflect.Value, fields []string) ([]string, []string) {
-	var row []string
-	var headers []string
-
+func extractFromMap(v reflect.Value, fields []string) (row []string, headers []string) {
 	if len(fields) > 0 {
 		for _, fieldName := range fields {
 			key := reflect.ValueOf(fieldName)
@@ -326,7 +320,7 @@ func extractFromMap(v reflect.Value, fields []string) ([]string, []string) {
 }
 
 // getHeaderName gets the display name for a struct field
-func getHeaderName(field reflect.StructField) string {
+func getHeaderName(field *reflect.StructField) string {
 	// Try to get from json tag first
 	jsonTag := field.Tag.Get("json")
 	if jsonTag != "" && jsonTag != "-" {
@@ -376,7 +370,7 @@ func formatValue(v reflect.Value) string {
 		return strings.Join(parts, ", ")
 	case reflect.Map, reflect.Struct:
 		// For complex types, use JSON
-		data, _ := json.Marshal(v.Interface()) //nolint:errcheck // Best effort formatting
+		data, _ := json.Marshal(v.Interface())
 		return string(data)
 	default:
 		return fmt.Sprintf("%v", v.Interface())

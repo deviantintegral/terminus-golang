@@ -137,7 +137,7 @@ func (s *BackupsService) Download(ctx context.Context, siteID, envID, backupID, 
 	}
 
 	// Download file
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
 	}
@@ -146,7 +146,7 @@ func (s *BackupsService) Download(ctx context.Context, siteID, envID, backupID, 
 	if err != nil {
 		return fmt.Errorf("failed to download backup: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // Deferred close
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with status %d", resp.StatusCode)
@@ -157,7 +157,7 @@ func (s *BackupsService) Download(ctx context.Context, siteID, envID, backupID, 
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer func() { _ = out.Close() }() //nolint:errcheck // Deferred close
+	defer func() { _ = out.Close() }()
 
 	// Copy data
 	if _, err := io.Copy(out, resp.Body); err != nil {
@@ -222,7 +222,7 @@ func (s *BackupsService) SetSchedule(ctx context.Context, siteID, envID string, 
 	if err != nil {
 		return fmt.Errorf("failed to set backup schedule: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // Deferred close
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("set backup schedule failed with status %d", resp.StatusCode)

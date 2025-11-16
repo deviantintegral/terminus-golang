@@ -188,11 +188,11 @@ func (c *Config) setValue(key string, value interface{}) {
 	case "TERMINUS_HOST":
 		c.Host = valueStr
 	case "TERMINUS_PORT":
-		_, _ = fmt.Sscanf(valueStr, "%d", &c.Port) //nolint:errcheck // Use default on parse error
+		_, _ = fmt.Sscanf(valueStr, "%d", &c.Port)
 	case "TERMINUS_PROTOCOL":
 		c.Protocol = valueStr
 	case "TERMINUS_TIMEOUT":
-		_, _ = fmt.Sscanf(valueStr, "%d", &c.Timeout) //nolint:errcheck // Use default on parse error
+		_, _ = fmt.Sscanf(valueStr, "%d", &c.Timeout)
 	case "TERMINUS_CACHE_DIR":
 		c.CacheDir = c.expandPath(valueStr)
 	case "TERMINUS_PLUGINS_DIR":
@@ -225,7 +225,7 @@ func (c *Config) ensureDirectories() error {
 	}
 
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
@@ -256,7 +256,7 @@ func (c *Config) GetString(key string) string {
 func (c *Config) GetInt(key string) int {
 	if value, ok := c.Get(key); ok {
 		var result int
-		_, _ = fmt.Sscanf(fmt.Sprintf("%v", value), "%d", &result) //nolint:errcheck // Use default on parse error
+		_, _ = fmt.Sscanf(fmt.Sprintf("%v", value), "%d", &result)
 		return result
 	}
 	return 0
