@@ -209,7 +209,7 @@ func extractTableData(data interface{}, fields []string) (rows [][]string, heade
 }
 
 // extractRow extracts a single row from a struct or map
-func extractRow(v reflect.Value, fields []string) (row []string, headers []string) {
+func extractRow(v reflect.Value, fields []string) (row, headers []string) {
 	// Dereference pointer
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -227,7 +227,7 @@ func extractRow(v reflect.Value, fields []string) (row []string, headers []strin
 }
 
 // extractFromStruct extracts data from a struct
-func extractFromStruct(v reflect.Value, fields []string) (row []string, headers []string) {
+func extractFromStruct(v reflect.Value, fields []string) (row, headers []string) {
 	t := v.Type()
 
 	// Build field map from struct tags
@@ -293,7 +293,7 @@ func extractFromStruct(v reflect.Value, fields []string) (row []string, headers 
 }
 
 // extractFromMap extracts data from a map
-func extractFromMap(v reflect.Value, fields []string) (row []string, headers []string) {
+func extractFromMap(v reflect.Value, fields []string) (row, headers []string) {
 	if len(fields) > 0 {
 		for _, fieldName := range fields {
 			key := reflect.ValueOf(fieldName)
