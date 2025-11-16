@@ -47,12 +47,12 @@ func (s *Store) SaveSession(session *Session) error {
 	}
 
 	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(s.sessionPath), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(s.sessionPath), 0o700); err != nil {
 		return fmt.Errorf("failed to create session directory: %w", err)
 	}
 
 	// Write with secure permissions
-	if err := os.WriteFile(s.sessionPath, data, 0600); err != nil {
+	if err := os.WriteFile(s.sessionPath, data, 0o600); err != nil {
 		return fmt.Errorf("failed to write session file: %w", err)
 	}
 
@@ -77,7 +77,7 @@ func (s *Store) LoadSession() (*Session, error) {
 	// Check if expired
 	if session.IsExpired() {
 		// Remove expired session
-		_ = s.DeleteSession() //nolint:errcheck // Best effort cleanup
+		_ = s.DeleteSession()
 		return nil, nil
 	}
 
@@ -95,14 +95,14 @@ func (s *Store) DeleteSession() error {
 // SaveToken saves a machine token to disk
 func (s *Store) SaveToken(email, token string) error {
 	// Ensure tokens directory exists
-	if err := os.MkdirAll(s.tokensPath, 0700); err != nil {
+	if err := os.MkdirAll(s.tokensPath, 0o700); err != nil {
 		return fmt.Errorf("failed to create tokens directory: %w", err)
 	}
 
 	tokenPath := filepath.Join(s.tokensPath, sanitizeFilename(email))
 
 	// Write with secure permissions
-	if err := os.WriteFile(tokenPath, []byte(token), 0600); err != nil {
+	if err := os.WriteFile(tokenPath, []byte(token), 0o600); err != nil {
 		return fmt.Errorf("failed to write token file: %w", err)
 	}
 
