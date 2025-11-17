@@ -19,16 +19,30 @@ func NewSitesService(client *Client) *SitesService {
 }
 
 // List returns all sites accessible to the authenticated user
-func (s *SitesService) List(ctx context.Context) ([]*models.Site, error) {
-	// Get user sites
-	resp, err := s.client.Get(ctx, "/sites") //nolint:bodyclose // DecodeResponse closes body
+func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site, error) {
+	// Get user sites using memberships endpoint
+	path := fmt.Sprintf("/users/%s/memberships/sites", userID)
+
+	rawResults, err := s.client.GetPaged(ctx, path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list sites: %w", err)
+		return nil, err
 	}
 
-	var sites []*models.Site
-	if err := DecodeResponse(resp, &sites); err != nil {
-		return nil, err
+	sites := make([]*models.Site, 0, len(rawResults))
+	for _, raw := range rawResults {
+		var membership struct {
+			Site *models.Site `json:"site"`
+		}
+		if err := json.Unmarshal(raw, &membership); err != nil {
+			// Try direct unmarshal in case the API returns sites directly
+			var site models.Site
+			if err := json.Unmarshal(raw, &site); err != nil {
+				return nil, fmt.Errorf("failed to decode site: %w", err)
+			}
+			sites = append(sites, &site)
+		} else if membership.Site != nil {
+			sites = append(sites, membership.Site)
+		}
 	}
 
 	return sites, nil

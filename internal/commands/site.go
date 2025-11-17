@@ -93,15 +93,23 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Load session to get user ID
+	sess, err := cliContext.SessionStore.LoadSession()
+	if err != nil {
+		return fmt.Errorf("failed to load session: %w", err)
+	}
+	if sess == nil || sess.UserID == "" {
+		return fmt.Errorf("no user ID in session")
+	}
+
 	sitesService := api.NewSitesService(cliContext.APIClient)
 
 	var sites interface{}
-	var err error
 
 	if siteOrgFlag != "" {
 		sites, err = sitesService.ListByOrganization(getContext(), siteOrgFlag)
 	} else {
-		sites, err = sitesService.List(getContext())
+		sites, err = sitesService.List(getContext(), sess.UserID)
 	}
 
 	if err != nil {

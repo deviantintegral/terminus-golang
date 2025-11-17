@@ -324,10 +324,10 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 	limit := 100
 
 	for {
-		// Build URL with pagination parameters
-		u, err := url.Parse(c.baseURL + basePath)
+		// Build path with pagination parameters
+		u, err := url.Parse(basePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse URL: %w", err)
+			return nil, fmt.Errorf("failed to parse path: %w", err)
 		}
 
 		q := u.Query()
@@ -335,10 +335,9 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 		q.Set("page", fmt.Sprintf("%d", page))
 		u.RawQuery = q.Encode()
 
-		path := u.Path + "?" + u.RawQuery
-		// Remove baseURL from path since Request will add it back
-		if len(path) > len(c.baseURL) {
-			path = path[len(c.baseURL):]
+		path := basePath
+		if u.RawQuery != "" {
+			path = basePath + "?" + u.RawQuery
 		}
 
 		resp, err := c.Get(ctx, path)

@@ -19,8 +19,8 @@ func NewOrganizationsService(client *Client) *OrganizationsService {
 }
 
 // List returns all organizations for the authenticated user
-func (s *OrganizationsService) List(ctx context.Context) ([]*models.Organization, error) {
-	path := "/user/organizations"
+func (s *OrganizationsService) List(ctx context.Context, userID string) ([]*models.Organization, error) {
+	path := fmt.Sprintf("/users/%s/memberships/organizations", userID)
 
 	rawResults, err := s.client.GetPaged(ctx, path)
 	if err != nil {

@@ -234,7 +234,7 @@ func TestOrgList(t *testing.T) {
 	client.SetToken(session.Session)
 
 	// Test org list
-	orgs, err := orgService.List(ctx)
+	orgs, err := orgService.List(ctx, session.UserID)
 	if err != nil {
 		// Record the error for documentation purposes
 		errorResponse := map[string]interface{}{
@@ -281,7 +281,7 @@ func TestOrgInfo(t *testing.T) {
 	client.SetToken(session.Session)
 
 	// Get org list to find an org ID
-	orgs, err := orgService.List(ctx)
+	orgs, err := orgService.List(ctx, session.UserID)
 	if err != nil {
 		t.Skipf("Cannot test org:info - org:list failed: %v", err)
 		return
@@ -342,7 +342,7 @@ func TestSiteList(t *testing.T) {
 	client.SetToken(session.Session)
 
 	// Test site list
-	sites, err := siteService.List(ctx)
+	sites, err := siteService.List(ctx, session.UserID)
 	if err != nil {
 		// Record the error for documentation purposes
 		errorResponse := map[string]interface{}{
@@ -389,7 +389,7 @@ func TestSiteInfo(t *testing.T) {
 	client.SetToken(session.Session)
 
 	// Get site list to find a site ID
-	sites, err := siteService.List(ctx)
+	sites, err := siteService.List(ctx, session.UserID)
 	if err != nil {
 		t.Skipf("Cannot test site:info - site:list failed: %v", err)
 		return
@@ -472,7 +472,7 @@ func TestIntegrationSequence(t *testing.T) {
 
 	// 3. List organizations
 	t.Run("ListOrganizations", func(t *testing.T) {
-		orgs, err := orgService.List(ctx)
+		orgs, err := orgService.List(ctx, session.UserID)
 		if err != nil {
 			t.Logf("⚠ List organizations endpoint not available: %v", err)
 			return
@@ -482,7 +482,7 @@ func TestIntegrationSequence(t *testing.T) {
 
 	// 4. List sites
 	t.Run("ListSites", func(t *testing.T) {
-		sites, err := siteService.List(ctx)
+		sites, err := siteService.List(ctx, session.UserID)
 		if err != nil {
 			t.Logf("⚠ List sites endpoint not available: %v", err)
 			return
