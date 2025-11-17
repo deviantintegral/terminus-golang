@@ -92,9 +92,18 @@ func runOrgList(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Load session to get user ID
+	sess, err := cliContext.SessionStore.LoadSession()
+	if err != nil {
+		return fmt.Errorf("failed to load session: %w", err)
+	}
+	if sess == nil || sess.UserID == "" {
+		return fmt.Errorf("no user ID in session")
+	}
+
 	orgsService := api.NewOrganizationsService(cliContext.APIClient)
 
-	orgs, err := orgsService.List(getContext())
+	orgs, err := orgsService.List(getContext(), sess.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to list organizations: %w", err)
 	}
