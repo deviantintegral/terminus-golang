@@ -1,0 +1,4 @@
+{
+  "error": "failed to list organizations: API returned status 404: 404 page not found\n",
+  "note": "This endpoint may not be available for all Pantheon accounts"
+}
