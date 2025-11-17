@@ -152,7 +152,7 @@ func TestAuthWhoami(t *testing.T) {
 	client.SetToken(session.Session)
 
 	// Test whoami
-	user, err := authService.Whoami(ctx)
+	user, err := authService.Whoami(ctx, session.UserID)
 	if err != nil {
 		// Record the error for documentation purposes
 		errorResponse := map[string]interface{}{
@@ -443,8 +443,10 @@ func TestIntegrationSequence(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Login
+	var session *SessionResponse
 	t.Run("Login", func(t *testing.T) {
-		session, err := authService.Login(ctx, token, "integration@example.com")
+		var err error
+		session, err = authService.Login(ctx, token, "integration@example.com")
 		if err != nil {
 			t.Fatalf("Login failed: %v", err)
 		}
@@ -455,8 +457,12 @@ func TestIntegrationSequence(t *testing.T) {
 	// 2. Whoami
 	var user *models.User
 	t.Run("Whoami", func(t *testing.T) {
+		if session == nil {
+			t.Skip("Login failed, skipping whoami test")
+			return
+		}
 		var err error
-		user, err = authService.Whoami(ctx)
+		user, err = authService.Whoami(ctx, session.UserID)
 		if err != nil {
 			t.Logf("⚠ Whoami endpoint not available: %v", err)
 			return

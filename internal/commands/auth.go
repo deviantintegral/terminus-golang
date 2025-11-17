@@ -89,7 +89,7 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 	printMessage("Login successful!")
 
 	// Get and display user info
-	user, err := authService.Whoami(getContext())
+	user, err := authService.Whoami(getContext(), sess.UserID)
 	if err != nil {
 		printError("Warning: failed to get user info: %v", err)
 		return nil
@@ -116,11 +116,20 @@ func runAuthWhoami(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Load session to get user ID
+	sess, err := cliContext.SessionStore.LoadSession()
+	if err != nil {
+		return fmt.Errorf("failed to load session: %w", err)
+	}
+	if sess == nil || sess.UserID == "" {
+		return fmt.Errorf("no user ID in session")
+	}
+
 	// Create auth service
 	authService := api.NewAuthService(cliContext.APIClient)
 
 	// Get user info
-	user, err := authService.Whoami(getContext())
+	user, err := authService.Whoami(getContext(), sess.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user info: %w", err)
 	}

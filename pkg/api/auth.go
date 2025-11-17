@@ -63,8 +63,9 @@ func (s *AuthService) Login(ctx context.Context, machineToken, email string) (*S
 }
 
 // Whoami returns information about the current user
-func (s *AuthService) Whoami(ctx context.Context) (*models.User, error) {
-	resp, err := s.client.Get(ctx, "/user") //nolint:bodyclose // DecodeResponse closes body
+func (s *AuthService) Whoami(ctx context.Context, userID string) (*models.User, error) {
+	path := fmt.Sprintf("/users/%s", userID)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("whoami request failed: %w", err)
 	}
@@ -78,12 +79,12 @@ func (s *AuthService) Whoami(ctx context.Context) (*models.User, error) {
 }
 
 // ValidateSession checks if the current session is valid
-func (s *AuthService) ValidateSession(ctx context.Context) (bool, error) {
+func (s *AuthService) ValidateSession(ctx context.Context, userID string) (bool, error) {
 	if s.client.token == "" {
 		return false, nil
 	}
 
-	_, err := s.Whoami(ctx)
+	_, err := s.Whoami(ctx, userID)
 	if err != nil {
 		if IsNotFound(err) || (err != nil && err.Error() == "API error 401") {
 			return false, nil
