@@ -36,13 +36,6 @@ jobs:
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
-        with:
-          file: ./coverage.out
-          flags: unittests
-          name: codecov-umbrella
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
