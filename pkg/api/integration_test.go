@@ -497,6 +497,200 @@ func TestIntegrationSequence(t *testing.T) {
 	})
 }
 
+// siteLifecycleTestData holds the test context for site lifecycle tests
+type siteLifecycleTestData struct {
+	ctx         context.Context
+	client      *Client
+	authService *AuthService
+	orgService  *OrganizationsService
+	siteService *SitesService
+	session     *SessionResponse
+	orgID       string
+	upstreamID  string
+	siteName    string
+	siteID      string
+	recorder    *fixtureRecorder
+}
+
+// setupSiteLifecycleTest sets up the test environment
+func setupSiteLifecycleTest(t *testing.T) *siteLifecycleTestData {
+	t.Helper()
+	token := skipIfNoToken(t)
+
+	data := &siteLifecycleTestData{
+		ctx:         context.Background(),
+		client:      NewClient(),
+		recorder:    newFixtureRecorder(t),
+	}
+
+	data.authService = NewAuthService(data.client)
+	data.orgService = NewOrganizationsService(data.client)
+	data.siteService = NewSitesService(data.client)
+
+	// Login
+	session, err := data.authService.Login(data.ctx, token, "")
+	if err != nil {
+		t.Fatalf("Login failed: %v", err)
+	}
+	data.session = session
+	data.client.SetToken(session.Session)
+
+	// Get organization
+	orgs, err := data.orgService.List(data.ctx, session.UserID)
+	if err != nil || len(orgs) == 0 {
+		t.Skip("No organizations available")
+	}
+	data.orgID = orgs[0].ID
+	t.Logf("Using organization: %s (ID: %s)", orgs[0].Name, data.orgID)
+
+	// Get upstream
+	upstreams, err := data.orgService.ListUpstreams(data.ctx, data.orgID)
+	if err != nil || len(upstreams) == 0 {
+		t.Skip("No upstreams available")
+	}
+	data.upstreamID = upstreams[0].ID
+	t.Logf("Using upstream: %s (ID: %s)", upstreams[0].Label, data.upstreamID)
+
+	// Generate unique site name
+	data.siteName = fmt.Sprintf("test-site-%s", regexp.MustCompile(`\D`).ReplaceAllString(fmt.Sprintf("%d", session.ExpiresAt), "")[:10])
+	t.Logf("Test site name: %s", data.siteName)
+
+	return data
+}
+
+// TestSiteLifecycle tests the full site lifecycle: create, list, get info, delete
+func TestSiteLifecycle(t *testing.T) {
+	data := setupSiteLifecycleTest(t)
+
+	// Run subtests for each lifecycle stage
+	t.Run("CreateSite", func(t *testing.T) {
+		testCreateSite(t, data)
+	})
+
+	// Ensure cleanup
+	defer func() {
+		if data.siteID != "" {
+			t.Logf("Cleaning up test site: %s", data.siteID)
+			if err := data.siteService.Delete(data.ctx, data.siteID); err != nil {
+				t.Logf("Warning: Failed to cleanup: %v", err)
+			}
+		}
+	}()
+
+	t.Run("VerifySiteInList", func(t *testing.T) {
+		testVerifySiteInList(t, data)
+	})
+
+	t.Run("VerifySiteInfo", func(t *testing.T) {
+		testVerifySiteInfo(t, data)
+	})
+
+	t.Run("DeleteSite", func(t *testing.T) {
+		testDeleteSite(t, data)
+	})
+
+	t.Run("VerifySiteDeleted", func(t *testing.T) {
+		testVerifySiteDeleted(t, data)
+	})
+}
+
+// testCreateSite creates a test site
+func testCreateSite(t *testing.T, data *siteLifecycleTestData) {
+	t.Helper()
+
+	req := &CreateSiteRequest{
+		SiteName:     data.siteName,
+		Label:        data.siteName,
+		UpstreamID:   data.upstreamID,
+		Organization: data.orgID,
+	}
+
+	site, err := data.siteService.Create(data.ctx, req)
+	if err != nil {
+		t.Fatalf("Failed to create site: %v", err)
+	}
+
+	if site == nil || site.ID == "" {
+		t.Fatal("Expected site with valid ID")
+	}
+	if site.Name != data.siteName {
+		t.Errorf("Expected site name %s, got %s", data.siteName, site.Name)
+	}
+
+	data.siteID = site.ID
+	data.recorder.record("site_lifecycle_created", site)
+	t.Logf("✓ Site created: %s (ID: %s)", site.Name, site.ID)
+}
+
+// testVerifySiteInList verifies the site appears in the list
+func testVerifySiteInList(t *testing.T, data *siteLifecycleTestData) {
+	t.Helper()
+
+	sites, err := data.siteService.List(data.ctx, data.session.UserID)
+	if err != nil {
+		t.Fatalf("Failed to list sites: %v", err)
+	}
+
+	for _, s := range sites {
+		if s.ID == data.siteID {
+			t.Logf("✓ Site found in list: %s", s.Name)
+			return
+		}
+	}
+	t.Errorf("Site %s not found in list", data.siteID)
+}
+
+// testVerifySiteInfo verifies site information is correct
+func testVerifySiteInfo(t *testing.T, data *siteLifecycleTestData) {
+	t.Helper()
+
+	site, err := data.siteService.Get(data.ctx, data.siteID)
+	if err != nil {
+		t.Fatalf("Failed to get site info: %v", err)
+	}
+
+	if site.ID != data.siteID {
+		t.Errorf("Expected ID %s, got %s", data.siteID, site.ID)
+	}
+	if site.Name != data.siteName {
+		t.Errorf("Expected name %s, got %s", data.siteName, site.Name)
+	}
+	if site.Label != data.siteName {
+		t.Errorf("Expected label %s, got %s", data.siteName, site.Label)
+	}
+
+	data.recorder.record("site_lifecycle_info", site)
+	t.Logf("✓ Site info verified: %s (ID: %s)", site.Name, site.ID)
+}
+
+// testDeleteSite deletes the test site
+func testDeleteSite(t *testing.T, data *siteLifecycleTestData) {
+	t.Helper()
+
+	if err := data.siteService.Delete(data.ctx, data.siteID); err != nil {
+		t.Fatalf("Failed to delete site: %v", err)
+	}
+	t.Logf("✓ Site deleted: %s", data.siteID)
+}
+
+// testVerifySiteDeleted verifies the site no longer appears in the list
+func testVerifySiteDeleted(t *testing.T, data *siteLifecycleTestData) {
+	t.Helper()
+
+	sites, err := data.siteService.List(data.ctx, data.session.UserID)
+	if err != nil {
+		t.Fatalf("Failed to list sites: %v", err)
+	}
+
+	for _, s := range sites {
+		if s.ID == data.siteID {
+			t.Errorf("Deleted site %s still in list", data.siteID)
+			return
+		}
+	}
+	t.Logf("✓ Verified site no longer in list")
+}
+
 // TestFixtureRedaction verifies that sensitive data is properly redacted
 func TestFixtureRedaction(t *testing.T) {
 	recorder := newFixtureRecorder(t)
