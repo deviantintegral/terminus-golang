@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
@@ -122,8 +123,23 @@ func TestAuthLogin(t *testing.T) {
 	if session.UserID == "" {
 		t.Error("Expected user ID to be set")
 	}
+	// Validate timestamp is set and valid
 	if session.ExpiresAt == 0 {
 		t.Error("Expected expires_at to be set")
+	} else {
+		expiresTime := time.Unix(session.ExpiresAt, 0)
+		now := time.Now()
+
+		// Check that the expiry is in the future
+		if expiresTime.Before(now) {
+			t.Errorf("Expected expires_at to be in the future, got %v (now: %v)", expiresTime, now)
+		}
+
+		// Check that the expiry is within a reasonable range (30 days)
+		maxExpiry := now.Add(30 * 24 * time.Hour)
+		if expiresTime.After(maxExpiry) {
+			t.Errorf("Expected expires_at to be within 30 days, got %v", expiresTime)
+		}
 	}
 
 	// Record fixture
