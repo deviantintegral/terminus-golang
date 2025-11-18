@@ -184,3 +184,8 @@ Save time by catching these locally with the checks above.
 ---
 
 **TL;DR:** Run `golangci-lint run --timeout=5m` after every change and before every commit. Fix all issues immediately.
+
+## Commits and Pull Requests
+
+- **ALWAYS** use conventional commits, and limit the commit message title to no more than 50 characters.
+- **ALWAYS** open pull requests with the title of the commit.
