@@ -60,6 +60,7 @@ func init() {
 	rootCmd.PersistentFlags().CountVarP(&verboseCount, "verbose", "v", "Verbose output (-v, -vv, or -vvv for increasing verbosity)")
 
 	// Add command groups
+	rootCmd.AddCommand(artCmd)
 	rootCmd.AddCommand(authCmd)
 	rootCmd.AddCommand(siteCmd)
 	rootCmd.AddCommand(envCmd)
