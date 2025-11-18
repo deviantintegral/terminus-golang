@@ -244,7 +244,7 @@ The following services are available:
 
 - Go 1.24 or higher
 - golangci-lint
-- pre-commit (optional)
+- pre-commit and golanci-linter (optional)
 
 ### Setup
 
