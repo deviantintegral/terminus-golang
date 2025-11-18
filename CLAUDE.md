@@ -4,6 +4,9 @@ This file contains instructions for Claude Code when working on this project.
 
 ## Pre-Flight Checks
 
+Before making any changes, ALWAYS make sure the right version of go is available. If the normal methods of downloading Go don't work,
+download and install go from https://go.dev/dl/.
+
 Before making any changes or commits, ALWAYS run:
 
 ```bash
