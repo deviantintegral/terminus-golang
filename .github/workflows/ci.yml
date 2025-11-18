@@ -70,7 +70,9 @@ jobs:
               GOOS=darwin GOARCH=amd64 go build -o bin/terminus-darwin-amd64 ./cmd/terminus
               GOOS=darwin GOARCH=arm64 go build -o bin/terminus-darwin-arm64 ./cmd/terminus
           - platform: windows
-            targets: GOOS=windows GOARCH=amd64 go build -o bin/terminus-windows-amd64.exe ./cmd/terminus
+            targets: |
+              GOOS=windows GOARCH=amd64 go build -o bin/terminus-windows-amd64.exe ./cmd/terminus
+              GOOS=windows GOARCH=arm64 go build -o bin/terminus-windows-arm64.exe ./cmd/terminus
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
