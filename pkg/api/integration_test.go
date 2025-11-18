@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -42,6 +43,72 @@ func newFixtureRecorder(t *testing.T) *fixtureRecorder {
 	}
 }
 
+// timestampFields contains field names that should be ignored when comparing fixtures
+var timestampFields = map[string]bool{
+	"expires_at":  true,
+	"created":     true,
+	"finished_at": true,
+	"created_at":  true,
+	"started_at":  true,
+	"start_time":  true,
+	"end_time":    true,
+	"time":        true,
+	"timestamp":   true,
+	"finish_time": true,
+	"expiry_time": true,
+}
+
+// removeTimestamps recursively removes timestamp fields from a map
+func removeTimestamps(data interface{}) interface{} {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		result := make(map[string]interface{})
+		for key, value := range v {
+			if timestampFields[key] {
+				continue
+			}
+			result[key] = removeTimestamps(value)
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(v))
+		for i, item := range v {
+			result[i] = removeTimestamps(item)
+		}
+		return result
+	default:
+		return data
+	}
+}
+
+// onlyTimestampsChanged checks if two JSON byte slices differ only in timestamp fields
+func onlyTimestampsChanged(oldData, newData []byte) bool {
+	var oldJSON, newJSON interface{}
+
+	if err := json.Unmarshal(oldData, &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal(newData, &newJSON); err != nil {
+		return false
+	}
+
+	// Remove timestamps from both
+	oldClean := removeTimestamps(oldJSON)
+	newClean := removeTimestamps(newJSON)
+
+	// Marshal back to compare
+	oldBytes, err := json.Marshal(oldClean)
+	if err != nil {
+		return false
+	}
+	newBytes, err := json.Marshal(newClean)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(oldBytes, newBytes)
+}
+
 // redactSensitiveData removes sensitive information from JSON responses
 func (r *fixtureRecorder) redactSensitiveData(data []byte) []byte {
 	// Convert to string for easier manipulation
@@ -75,6 +142,7 @@ func (r *fixtureRecorder) redactSensitiveData(data []byte) []byte {
 }
 
 // record saves a fixture to disk with redacted sensitive data
+// It skips writing if the only changes are to timestamp fields
 func (r *fixtureRecorder) record(name string, data interface{}) {
 	r.t.Helper()
 
@@ -87,8 +155,17 @@ func (r *fixtureRecorder) record(name string, data interface{}) {
 	// Redact sensitive data
 	redacted := r.redactSensitiveData(jsonData)
 
-	// Write to file
+	// Check if file exists and compare
 	filePath := filepath.Join(r.basePath, name+".json")
+	if existingData, err := os.ReadFile(filePath); err == nil {
+		// File exists, check if only timestamps changed
+		if onlyTimestampsChanged(existingData, redacted) {
+			r.t.Logf("Skipped fixture update (only timestamps changed): %s", filePath)
+			return
+		}
+	}
+
+	// Write to file
 	if err := os.WriteFile(filePath, redacted, 0o644); err != nil {
 		r.t.Fatalf("failed to write fixture: %v", err)
 	}
