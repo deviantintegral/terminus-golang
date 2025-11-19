@@ -158,6 +158,24 @@ var artCollection = map[string]string{
                  ..'''''''''''''',oOXWMMMMMMMMMMNKko:,'.
                      ...'''''''''''''',;;:::;;,,''..
                           .....''''''''''''....`,
+	"metal": `
+⢀⡶⠛⠛⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠈⣇⠀⠀⢸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⣿⠀⠀⠀⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⢹⡄⠀⠀⢻⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⠟⠲⡆
+⠀⠸⡇⠀⠀⠘⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡏⠀⢠⡟
+⠀⠀⣧⠀⠀⠀⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡾⠀⠀⢸⠃
+⠀⠀⢹⠀⠀⠀⢹⣧⣶⣿⠛⠳⣦⢠⡴⡖⠶⢦⡀⢰⠇⠀⠀⣿⠀
+⠀⠀⢸⡆⢀⣠⡾⣿⡿⠛⣷⠀⢹⣿⠁⠀⠀⠈⣿⣿⠀⠀⠀⡏⠀
+⠀⠀⢀⣿⢿⠉⠏⠋⠁⣴⠟⠀⠈⣿⠀⠀⠀⢀⣿⠀⠀⠀⢸⠇⠀
+⠀⠀⣾⠁⠈⠀⠀⢀⣶⠋⠀⠀⠀⣿⠀⠀⠀⢸⡇⠀⠀⠀⢸⠀⠀
+⠀⠀⢿⠀⠀⠀⢰⡟⢹⣾⠿⠛⣶⣿⡶⠛⢳⣼⠇⠀⠀⠀⢸⠀⠀
+⠀⠀⢸⣆⠀⠀⠀⢻⡼⣿⡄⡂⣻⣿⡇⢐⢴⣿⠀⠀⠀⠀⣿⠀⠀
+⠀⠀⠀⢻⡄⠀⠀⠀⢻⡎⠛⠛⠋⠀⠝⠛⠛⠁⠀⠀⠀⠀⡇⠀⠀
+⠀⠀⠀⠀⣧⠀⠀⠀⠘⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡇⠀⠀
+⠀⠀⠀⠀⠸⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠐⠀⠀
+⠀⠀⠀⠀⠀⢻⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠃⠀⠀⠀
+⠀⠀⠀⠀⠀⠘⠓⠶⠤⣤⣤⣤⣤⣤⣤⣤⣤⡤⠴⠞⠋⠀⠀⠀⠀`,
 }
 
 // artDescriptions provides descriptions for each art piece
@@ -168,6 +186,7 @@ var artDescriptions = map[string]string{
 	"unicorn":   "A magical unicorn",
 	"wordpress": "The WordPress logo",
 	"druplicon": "The Drupal druplicon mascot",
+	"metal":     "The sign of the horns",
 }
 
 var artCmd = &cobra.Command{
