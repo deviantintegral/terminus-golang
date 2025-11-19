@@ -1,12 +1,6 @@
 {
   "id": "REDACTED-ID",
   "email": "redacted@example.com",
-  "profile": {
-    "firstname": "Andrew",
-    "lastname": "Berry",
-    "full_name": "Andrew Berry",
-    "email": ""
-  },
-  "firstname": "",
-  "lastname": ""
+  "firstname": "Andrew",
+  "lastname": "Berry"
 }
