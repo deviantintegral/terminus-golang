@@ -12,8 +12,13 @@ import (
 var authLoginCmd = &cobra.Command{
 	Use:   "auth:login",
 	Short: "Log in to Pantheon",
-	Long:  "Authenticate with Pantheon using a machine token",
-	RunE:  runAuthLogin,
+	Long: `Authenticate with Pantheon using a machine token.
+
+Usage examples:
+  auth:login --machine-token=<machine_token>  Logs in with the provided machine token
+  auth:login                                   Logs in with a previously saved machine token
+  auth:login --email=<email>                   Logs in with a saved token belonging to <email>`,
+	RunE: runAuthLogin,
 }
 
 var authLogoutCmd = &cobra.Command{
@@ -42,17 +47,29 @@ func init() {
 	rootCmd.AddCommand(authWhoamiCmd)
 
 	authLoginCmd.Flags().StringVar(&machineTokenFlag, "machine-token", "", "Machine token for authentication")
-	authLoginCmd.Flags().StringVar(&emailFlag, "email", "", "Email address (for token storage)")
-	_ = authLoginCmd.MarkFlagRequired("machine-token")
+	authLoginCmd.Flags().StringVar(&emailFlag, "email", "", "Email address (for token lookup/storage)")
 }
 
 func runAuthLogin(_ *cobra.Command, _ []string) error {
+	// Determine the machine token to use
+	token := machineTokenFlag
+	email := emailFlag
+
+	if token == "" {
+		// No token provided, try to load from saved tokens
+		var err error
+		token, email, err = resolveToken(email)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Create auth service
 	authService := api.NewAuthService(cliContext.APIClient)
 
 	// Authenticate
 	printMessage("Logging in...")
-	sess, err := authService.Login(getContext(), machineTokenFlag, emailFlag)
+	sess, err := authService.Login(getContext(), token, email)
 	if err != nil {
 		return fmt.Errorf("login failed: %w", err)
 	}
@@ -70,8 +87,13 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 	}
 
 	// Save machine token for future use
-	if emailFlag != "" {
-		if err := cliContext.SessionStore.SaveToken(emailFlag, machineTokenFlag); err != nil {
+	// Use the email from the session response if not explicitly provided
+	tokenEmail := email
+	if tokenEmail == "" && sess.Email != "" {
+		tokenEmail = sess.Email
+	}
+	if tokenEmail != "" {
+		if err := cliContext.SessionStore.SaveToken(tokenEmail, token); err != nil {
 			printError("Warning: failed to save machine token: %v", err)
 		}
 	}
@@ -91,6 +113,49 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 	printMessage("Logged in as: %s %s (%s)", user.FirstName, user.LastName, user.Email)
 
 	return nil
+}
+
+// resolveToken loads a machine token from saved tokens
+func resolveToken(email string) (token, resolvedEmail string, err error) {
+	if email != "" {
+		// Load token for specific email
+		token, err = cliContext.SessionStore.LoadToken(email)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to load token: %w", err)
+		}
+		if token == "" {
+			return "", "", fmt.Errorf("no saved token found for %s", email)
+		}
+		return token, email, nil
+	}
+
+	// No email provided, list all saved tokens
+	var emails []string
+	emails, err = cliContext.SessionStore.ListTokens()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to list tokens: %w", err)
+	}
+
+	if len(emails) == 0 {
+		return "", "", fmt.Errorf("no saved machine tokens found. Please provide --machine-token")
+	}
+
+	if len(emails) > 1 {
+		return "", "", fmt.Errorf("multiple saved tokens found. Please specify --email with one of: %v", emails)
+	}
+
+	// Exactly one saved token
+	resolvedEmail = emails[0]
+	token, err = cliContext.SessionStore.LoadToken(resolvedEmail)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to load token for %s: %w", resolvedEmail, err)
+	}
+	if token == "" {
+		return "", "", fmt.Errorf("saved token for %s is empty", resolvedEmail)
+	}
+
+	printMessage("Using saved token for %s", resolvedEmail)
+	return token, resolvedEmail, nil
 }
 
 func runAuthLogout(_ *cobra.Command, _ []string) error {
