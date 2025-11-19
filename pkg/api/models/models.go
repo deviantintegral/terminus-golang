@@ -1,7 +1,10 @@
 // Package models defines data structures for Pantheon API resources.
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Site represents a Pantheon site
 type Site struct {
@@ -157,6 +160,31 @@ type User struct {
 	Profile   *UserProfile `json:"profile,omitempty"`
 	FirstName string       `json:"firstname"`
 	LastName  string       `json:"lastname"`
+}
+
+// UnmarshalJSON implements custom unmarshaling to flatten profile data
+func (u *User) UnmarshalJSON(data []byte) error {
+	// Define a temporary struct to unmarshal the raw data
+	type UserAlias User
+	aux := &struct {
+		*UserAlias
+	}{
+		UserAlias: (*UserAlias)(u),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Flatten profile data into top-level fields
+	if u.Profile != nil {
+		u.FirstName = u.Profile.FirstName
+		u.LastName = u.Profile.LastName
+		// Clear the profile so it doesn't appear in output
+		u.Profile = nil
+	}
+
+	return nil
 }
 
 // UserProfile represents a user's profile
