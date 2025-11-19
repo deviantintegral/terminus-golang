@@ -39,7 +39,6 @@ var authWhoamiCmd = &cobra.Command{
 var (
 	machineTokenFlag string
 	emailFlag        string
-	saveTokenFlag    bool
 )
 
 func init() {
@@ -49,7 +48,6 @@ func init() {
 
 	authLoginCmd.Flags().StringVar(&machineTokenFlag, "machine-token", "", "Machine token for authentication")
 	authLoginCmd.Flags().StringVar(&emailFlag, "email", "", "Email address (for token storage)")
-	authLoginCmd.Flags().BoolVar(&saveTokenFlag, "save-token", true, "Save machine token for future use")
 	_ = authLoginCmd.MarkFlagRequired("machine-token")
 }
 
@@ -76,8 +74,8 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to save session: %w", err)
 	}
 
-	// Save machine token if requested
-	if saveTokenFlag && emailFlag != "" {
+	// Save machine token for future use
+	if emailFlag != "" {
 		if err := cliContext.SessionStore.SaveToken(emailFlag, machineTokenFlag); err != nil {
 			printError("Warning: failed to save machine token: %v", err)
 		}
