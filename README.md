@@ -577,8 +577,8 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `redis:disable` | Disable Redis for a site | ❌ | ❌ |
-| `redis:enable` | Enable Redis for a site | ❌ | ❌ |
+| `redis:disable` | Disable Redis for a site | ✅ | ❌ |
+| `redis:enable` | Enable Redis for a site | ✅ | ❌ |
 
 ### remote
 
@@ -676,6 +676,6 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | Status | Count |
 |--------|-------|
 | **Total Commands** | 113 |
-| **Implemented** | 46 |
-| **Not Implemented** | 67 |
-| **Implementation Progress** | 41% |
+| **Implemented** | 48 |
+| **Not Implemented** | 65 |
+| **Implementation Progress** | 42% |

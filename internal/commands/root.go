@@ -74,6 +74,7 @@ func init() {
 	rootCmd.AddCommand(planCmd)
 	rootCmd.AddCommand(upstreamCmd)
 	rootCmd.AddCommand(selfCmd)
+	rootCmd.AddCommand(redisCmd)
 }
 
 // initCLIContext initializes the CLI context
