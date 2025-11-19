@@ -64,6 +64,9 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 		}
 	}
 
+	// Extract raw token value (handles PHP Terminus JSON format)
+	token = session.ExtractRawToken(token)
+
 	// Create auth service
 	authService := api.NewAuthService(cliContext.APIClient)
 

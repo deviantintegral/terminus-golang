@@ -162,3 +162,23 @@ func sanitizeFilename(name string) string {
 	safe = filepath.Clean(safe)
 	return safe
 }
+
+// phpTokenFormat represents the JSON format used by PHP Terminus for stored tokens
+type phpTokenFormat struct {
+	Token string `json:"token"`
+	Email string `json:"email"`
+	Date  int64  `json:"date"`
+}
+
+// ExtractRawToken extracts the raw machine token value from a token string.
+// PHP Terminus stores tokens as JSON with token, email, and date fields.
+// This function handles both formats: raw token strings and PHP-style JSON.
+func ExtractRawToken(tokenData string) string {
+	// Try to parse as PHP Terminus JSON format
+	var phpToken phpTokenFormat
+	if err := json.Unmarshal([]byte(tokenData), &phpToken); err == nil && phpToken.Token != "" {
+		return phpToken.Token
+	}
+	// Return as-is if not in PHP format
+	return tokenData
+}
