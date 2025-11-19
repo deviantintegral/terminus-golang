@@ -37,7 +37,7 @@ func TestArtCollection(t *testing.T) {
 
 func TestArtCollectionCount(t *testing.T) {
 	// Verify the expected number of art pieces
-	expectedCount := 6
+	expectedCount := 7
 	actualCount := len(artCollection)
 
 	if actualCount != expectedCount {
