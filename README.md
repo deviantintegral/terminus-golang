@@ -434,7 +434,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `branch:list` | List git branches for a site | ❌ | ❌ |
+| `branch:list` | List git branches for a site | ✅ | ❌ |
 
 ### connection
 
@@ -521,7 +521,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 |---------|-------------|:-----------:|:------------:|
 | `machine-token:delete` | Delete a machine token | ❌ | ❌ |
 | `machine-token:delete-all` | Delete all machine tokens | ❌ | ❌ |
-| `machine-token:list` | List machine tokens | ❌ | ❌ |
+| `machine-token:list` | List machine tokens | ✅ | ❌ |
 
 ### multidev
 
@@ -529,7 +529,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 |---------|-------------|:-----------:|:------------:|
 | `multidev:create` | Create a multidev environment | ✅ | ❌ |
 | `multidev:delete` | Delete a multidev environment | ✅ | ❌ |
-| `multidev:list` | List multidev environments | ❌ | ❌ |
+| `multidev:list` | List multidev environments | ✅ | ❌ |
 | `multidev:merge-from-dev` | Merge code from dev into multidev | ✅ | ❌ |
 | `multidev:merge-to-dev` | Merge code from multidev to dev | ✅ | ❌ |
 
@@ -562,7 +562,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
 | `payment-method:add` | Add a payment method | ❌ | ❌ |
-| `payment-method:list` | List payment methods | ❌ | ❌ |
+| `payment-method:list` | List payment methods | ✅ | ❌ |
 | `payment-method:remove` | Remove a payment method | ❌ | ❌ |
 
 ### plan
@@ -570,7 +570,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
 | `plan:info` | Show site plan information | ✅ | ❌ |
-| `plan:list` | List available plans | ❌ | ❌ |
+| `plan:list` | List available plans | ✅ | ❌ |
 | `plan:set` | Change the site plan | ❌ | ❌ |
 
 ### redis
@@ -620,7 +620,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | `site:list` | List sites | ✅ | ❌ |
 | `site:lookup` | Look up a site by UUID | ❌ | ❌ |
 | `site:org:add` | Add site to an organization | ❌ | ❌ |
-| `site:org:list` | List organizations a site belongs to | ❌ | ❌ |
+| `site:org:list` | List organizations a site belongs to | ✅ | ❌ |
 | `site:org:remove` | Remove site from an organization | ❌ | ❌ |
 | `site:team:add` | Add a user to the site team | ❌ | ❌ |
 | `site:team:list` | List site team members | ✅ | ❌ |
@@ -641,7 +641,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
 | `ssh-key:add` | Add an SSH key to your account | ❌ | ❌ |
-| `ssh-key:list` | List SSH keys on your account | ❌ | ❌ |
+| `ssh-key:list` | List SSH keys on your account | ✅ | ❌ |
 | `ssh-key:remove` | Remove an SSH key from your account | ❌ | ❌ |
 
 ### tag
@@ -649,7 +649,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
 | `tag:add` | Add a tag to a site | ❌ | ❌ |
-| `tag:list` | List tags for a site | ❌ | ❌ |
+| `tag:list` | List tags for a site | ✅ | ❌ |
 | `tag:remove` | Remove a tag from a site | ❌ | ❌ |
 
 ### upstream
@@ -659,7 +659,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | `upstream:info` | Show upstream information | ✅ | ❌ |
 | `upstream:list` | List upstreams | ✅ | ❌ |
 | `upstream:updates:apply` | Apply upstream updates to a site | ❌ | ❌ |
-| `upstream:updates:list` | List available upstream updates | ❌ | ❌ |
+| `upstream:updates:list` | List available upstream updates | ✅ | ❌ |
 | `upstream:updates:status` | Check for upstream updates | ❌ | ❌ |
 
 ### workflow
