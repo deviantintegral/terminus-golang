@@ -37,7 +37,7 @@ type SessionResponse struct {
 func (s *AuthService) Login(ctx context.Context, machineToken string) (*SessionResponse, error) {
 	req := LoginRequest{
 		MachineToken: machineToken,
-		Client:       "terminus",
+		Client:       "terminus-golang",
 	}
 
 	resp, err := s.client.Post(ctx, "/authorize/machine-token", req)
