@@ -81,7 +81,6 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 	sessionData := &session.Session{
 		SessionToken: sess.Session,
 		UserID:       sess.UserID,
-		Email:        sess.Email,
 		ExpiresAt:    sess.ExpiresAt,
 	}
 
@@ -89,14 +88,9 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to save session: %w", err)
 	}
 
-	// Save machine token for future use
-	// Use the email from the session response if not explicitly provided
-	tokenEmail := email
-	if tokenEmail == "" && sess.Email != "" {
-		tokenEmail = sess.Email
-	}
-	if tokenEmail != "" {
-		if err := cliContext.SessionStore.SaveToken(tokenEmail, token); err != nil {
+	// Save machine token for future use if email was provided
+	if email != "" {
+		if err := cliContext.SessionStore.SaveToken(email, token); err != nil {
 			printError("Warning: failed to save machine token: %v", err)
 		}
 	}

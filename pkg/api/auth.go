@@ -31,7 +31,6 @@ type SessionResponse struct {
 	Session   string `json:"session"`
 	UserID    string `json:"user_id"`
 	ExpiresAt int64  `json:"expires_at"`
-	Email     string `json:"email,omitempty"`
 }
 
 // Login authenticates using a machine token and returns a session
