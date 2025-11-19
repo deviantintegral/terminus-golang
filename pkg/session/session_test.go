@@ -216,3 +216,56 @@ func TestSanitizeFilename(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractRawToken(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "raw token string",
+			input:    "abcd1234-raw-token-value",
+			expected: "abcd1234-raw-token-value",
+		},
+		{
+			name:     "PHP Terminus JSON format",
+			input:    `{"token":"actual-token-value","email":"user@example.com","date":1763142241}`,
+			expected: "actual-token-value",
+		},
+		{
+			name:     "PHP format with different field order",
+			input:    `{"email":"user@example.com","date":1763142241,"token":"my-token"}`,
+			expected: "my-token",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "invalid JSON",
+			input:    `{"token": incomplete`,
+			expected: `{"token": incomplete`,
+		},
+		{
+			name:     "JSON without token field",
+			input:    `{"email":"user@example.com","date":1763142241}`,
+			expected: `{"email":"user@example.com","date":1763142241}`,
+		},
+		{
+			name:     "JSON with empty token field",
+			input:    `{"token":"","email":"user@example.com"}`,
+			expected: `{"token":"","email":"user@example.com"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ExtractRawToken(tt.input)
+			if result != tt.expected {
+				t.Errorf("ExtractRawToken(%s) = %s, expected %s", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
