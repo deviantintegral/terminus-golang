@@ -17,16 +17,9 @@ func formatTimestamp(timestamp int64) string {
 	return time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
 }
 
-var backupCmd = &cobra.Command{
-	Use:     "backup",
-	Aliases: []string{"backups"},
-	Short:   "Backup management commands",
-	Long:    "Manage site backups",
-}
-
 var backupListCmd = &cobra.Command{
-	Use:     "list <site>.<env>",
-	Aliases: []string{"ls"},
+	Use:     "backup:list <site>.<env>",
+	Aliases: []string{"backups"},
 	Short:   "List backups",
 	Long:    "Display a list of backups for an environment",
 	Args:    cobra.ExactArgs(1),
@@ -34,7 +27,7 @@ var backupListCmd = &cobra.Command{
 }
 
 var backupCreateCmd = &cobra.Command{
-	Use:   "create <site>.<env>",
+	Use:   "backup:create <site>.<env>",
 	Short: "Create a backup",
 	Long:  "Create a new backup for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -42,7 +35,7 @@ var backupCreateCmd = &cobra.Command{
 }
 
 var backupGetCmd = &cobra.Command{
-	Use:   "get <site>.<env>",
+	Use:   "backup:get <site>.<env>",
 	Short: "Download a backup",
 	Long:  "Download a backup to a local file",
 	Args:  cobra.ExactArgs(1),
@@ -50,7 +43,7 @@ var backupGetCmd = &cobra.Command{
 }
 
 var backupRestoreCmd = &cobra.Command{
-	Use:   "restore <site>.<env>",
+	Use:   "backup:restore <site>.<env>",
 	Short: "Restore a backup",
 	Long:  "Restore an environment from a backup",
 	Args:  cobra.ExactArgs(1),
@@ -58,21 +51,15 @@ var backupRestoreCmd = &cobra.Command{
 }
 
 var backupInfoCmd = &cobra.Command{
-	Use:   "info <site>.<env>",
+	Use:   "backup:info <site>.<env>",
 	Short: "Show backup information",
 	Long:  "Display detailed information about a specific backup",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runBackupInfo,
 }
 
-var backupAutomaticCmd = &cobra.Command{
-	Use:   "automatic",
-	Short: "Automatic backup management",
-	Long:  "Manage automatic backup schedules",
-}
-
 var backupAutomaticInfoCmd = &cobra.Command{
-	Use:   "info <site>.<env>",
+	Use:   "backup:automatic:info <site>.<env>",
 	Short: "Show automatic backup schedule",
 	Long:  "Display the automatic backup schedule for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -80,7 +67,7 @@ var backupAutomaticInfoCmd = &cobra.Command{
 }
 
 var backupAutomaticEnableCmd = &cobra.Command{
-	Use:   "enable <site>.<env>",
+	Use:   "backup:automatic:enable <site>.<env>",
 	Short: "Enable automatic backups",
 	Long:  "Enable automatic backup schedule for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -88,7 +75,7 @@ var backupAutomaticEnableCmd = &cobra.Command{
 }
 
 var backupAutomaticDisableCmd = &cobra.Command{
-	Use:   "disable <site>.<env>",
+	Use:   "backup:automatic:disable <site>.<env>",
 	Short: "Disable automatic backups",
 	Long:  "Disable automatic backup schedule for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -104,16 +91,15 @@ var (
 )
 
 func init() {
-	backupCmd.AddCommand(backupListCmd)
-	backupCmd.AddCommand(backupCreateCmd)
-	backupCmd.AddCommand(backupGetCmd)
-	backupCmd.AddCommand(backupRestoreCmd)
-	backupCmd.AddCommand(backupInfoCmd)
-	backupCmd.AddCommand(backupAutomaticCmd)
-
-	backupAutomaticCmd.AddCommand(backupAutomaticInfoCmd)
-	backupAutomaticCmd.AddCommand(backupAutomaticEnableCmd)
-	backupAutomaticCmd.AddCommand(backupAutomaticDisableCmd)
+	// Add backup commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(backupListCmd)
+	rootCmd.AddCommand(backupCreateCmd)
+	rootCmd.AddCommand(backupGetCmd)
+	rootCmd.AddCommand(backupRestoreCmd)
+	rootCmd.AddCommand(backupInfoCmd)
+	rootCmd.AddCommand(backupAutomaticInfoCmd)
+	rootCmd.AddCommand(backupAutomaticEnableCmd)
+	rootCmd.AddCommand(backupAutomaticDisableCmd)
 
 	// Create flags
 	backupCreateCmd.Flags().StringVar(&backupElementFlag, "element", "", "Backup element (code, database, files)")

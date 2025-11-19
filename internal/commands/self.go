@@ -11,14 +11,8 @@ import (
 // Version is set at build time via ldflags
 var Version = "dev"
 
-var selfCmd = &cobra.Command{
-	Use:   "self",
-	Short: "Terminus self-management commands",
-	Long:  "Commands for managing and displaying information about Terminus itself",
-}
-
 var selfInfoCmd = &cobra.Command{
-	Use:   "info",
+	Use:   "self:info",
 	Short: "Show Terminus information",
 	Long:  "Display information about Terminus including version, paths, and runtime details",
 	Args:  cobra.NoArgs,
@@ -26,7 +20,8 @@ var selfInfoCmd = &cobra.Command{
 }
 
 func init() {
-	selfCmd.AddCommand(selfInfoCmd)
+	// Add self commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(selfInfoCmd)
 }
 
 func runSelfInfo(_ *cobra.Command, _ []string) error {

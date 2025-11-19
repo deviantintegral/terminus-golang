@@ -7,84 +7,53 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var orgCmd = &cobra.Command{
-	Use:     "org",
-	Aliases: []string{"organization"},
-	Short:   "Organization management commands",
-	Long:    "Manage organizations",
-}
-
 var orgListCmd = &cobra.Command{
-	Use:     "list",
-	Aliases: []string{"ls"},
+	Use:     "org:list",
+	Aliases: []string{"organization"},
 	Short:   "List organizations",
 	Long:    "Display a list of organizations",
 	RunE:    runOrgList,
 }
 
 var orgInfoCmd = &cobra.Command{
-	Use:   "info <org>",
+	Use:   "org:info <org>",
 	Short: "Show organization information",
 	Long:  "Display detailed information about an organization",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runOrgInfo,
 }
 
-var orgPeopleCmd = &cobra.Command{
-	Use:   "people",
-	Short: "Organization people management",
-	Long:  "Manage organization members",
-}
-
 var orgPeopleListCmd = &cobra.Command{
-	Use:     "list <org>",
-	Aliases: []string{"ls"},
-	Short:   "List organization members",
-	Long:    "Display a list of members in an organization",
-	Args:    cobra.ExactArgs(1),
-	RunE:    runOrgPeopleList,
-}
-
-var orgSiteCmd = &cobra.Command{
-	Use:   "site",
-	Short: "Organization site management",
-	Long:  "Manage organization sites",
+	Use:   "org:people:list <org>",
+	Short: "List organization members",
+	Long:  "Display a list of members in an organization",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runOrgPeopleList,
 }
 
 var orgSiteListCmd = &cobra.Command{
-	Use:     "list <org>",
-	Aliases: []string{"ls"},
-	Short:   "List organization sites",
-	Long:    "Display a list of sites in an organization",
-	Args:    cobra.ExactArgs(1),
-	RunE:    runOrgSiteList,
-}
-
-var orgUpstreamsCmd = &cobra.Command{
-	Use:   "upstreams",
-	Short: "Organization upstream management",
-	Long:  "Manage organization upstreams",
+	Use:   "org:site:list <org>",
+	Short: "List organization sites",
+	Long:  "Display a list of sites in an organization",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runOrgSiteList,
 }
 
 var orgUpstreamsListCmd = &cobra.Command{
-	Use:     "list <org>",
-	Aliases: []string{"ls"},
-	Short:   "List organization upstreams",
-	Long:    "Display a list of upstreams for an organization",
-	Args:    cobra.ExactArgs(1),
-	RunE:    runOrgUpstreamsList,
+	Use:   "org:upstreams:list <org>",
+	Short: "List organization upstreams",
+	Long:  "Display a list of upstreams for an organization",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runOrgUpstreamsList,
 }
 
 func init() {
-	orgCmd.AddCommand(orgListCmd)
-	orgCmd.AddCommand(orgInfoCmd)
-	orgCmd.AddCommand(orgPeopleCmd)
-	orgCmd.AddCommand(orgSiteCmd)
-	orgCmd.AddCommand(orgUpstreamsCmd)
-
-	orgPeopleCmd.AddCommand(orgPeopleListCmd)
-	orgSiteCmd.AddCommand(orgSiteListCmd)
-	orgUpstreamsCmd.AddCommand(orgUpstreamsListCmd)
+	// Add org commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(orgListCmd)
+	rootCmd.AddCommand(orgInfoCmd)
+	rootCmd.AddCommand(orgPeopleListCmd)
+	rootCmd.AddCommand(orgSiteListCmd)
+	rootCmd.AddCommand(orgUpstreamsListCmd)
 }
 
 func runOrgList(_ *cobra.Command, _ []string) error {

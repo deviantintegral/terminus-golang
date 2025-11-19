@@ -5,83 +5,52 @@ import (
 	"time"
 )
 
-func TestBackupCmdStructure(t *testing.T) {
-	// Test that backupCmd has the expected properties
-	if backupCmd.Use != "backup" {
-		t.Errorf("expected backupCmd.Use to be 'backup', got '%s'", backupCmd.Use)
+func TestBackupListCmdStructure(t *testing.T) {
+	// Test that backupListCmd has the expected properties
+	if backupListCmd.Use != "backup:list <site>.<env>" {
+		t.Errorf("expected backupListCmd.Use to be 'backup:list <site>.<env>', got '%s'", backupListCmd.Use)
 	}
 
-	if backupCmd.Short == "" {
-		t.Error("backupCmd.Short should not be empty")
+	if backupListCmd.Short == "" {
+		t.Error("backupListCmd.Short should not be empty")
 	}
 
 	// Verify aliases
 	foundAlias := false
-	for _, alias := range backupCmd.Aliases {
+	for _, alias := range backupListCmd.Aliases {
 		if alias == "backups" {
 			foundAlias = true
 			break
 		}
 	}
 	if !foundAlias {
-		t.Error("backupCmd should have 'backups' as an alias")
+		t.Error("backupListCmd should have 'backups' as an alias")
 	}
 }
 
 func TestBackupInfoCmdStructure(t *testing.T) {
-	if backupInfoCmd.Use != "info <site>.<env>" {
-		t.Errorf("expected backupInfoCmd.Use to be 'info <site>.<env>', got '%s'", backupInfoCmd.Use)
+	if backupInfoCmd.Use != "backup:info <site>.<env>" {
+		t.Errorf("expected backupInfoCmd.Use to be 'backup:info <site>.<env>', got '%s'", backupInfoCmd.Use)
 	}
 
 	if backupInfoCmd.Short == "" {
 		t.Error("backupInfoCmd.Short should not be empty")
 	}
-
-	// Verify backupInfoCmd is a subcommand of backupCmd
-	found := false
-	for _, cmd := range backupCmd.Commands() {
-		if cmd.Name() == "info" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("backupInfoCmd should be a subcommand of backupCmd")
-	}
 }
 
-func TestBackupSubcommands(t *testing.T) {
-	expectedSubcommands := []string{"list", "create", "get", "restore", "info", "automatic"}
-	subcommands := backupCmd.Commands()
+func TestBackupCommands(t *testing.T) {
+	expectedCommands := []string{"backup:list", "backup:create", "backup:get", "backup:restore", "backup:info", "backup:automatic:info", "backup:automatic:enable", "backup:automatic:disable"}
 
-	for _, expected := range expectedSubcommands {
+	for _, expected := range expectedCommands {
 		found := false
-		for _, cmd := range subcommands {
-			if cmd.Name() == expected {
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Use == expected || (len(cmd.Use) > len(expected) && cmd.Use[:len(expected)] == expected) {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("expected subcommand '%s' not found in backupCmd", expected)
-		}
-	}
-}
-
-func TestBackupAutomaticSubcommands(t *testing.T) {
-	expectedSubcommands := []string{"info", "enable", "disable"}
-	subcommands := backupAutomaticCmd.Commands()
-
-	for _, expected := range expectedSubcommands {
-		found := false
-		for _, cmd := range subcommands {
-			if cmd.Name() == expected {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("expected subcommand '%s' not found in backupAutomaticCmd", expected)
+			t.Errorf("expected command '%s' not found in rootCmd", expected)
 		}
 	}
 }

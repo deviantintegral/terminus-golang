@@ -7,16 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var envCmd = &cobra.Command{
-	Use:     "env",
-	Aliases: []string{"environment"},
-	Short:   "Environment management commands",
-	Long:    "Manage site environments",
-}
-
 var envListCmd = &cobra.Command{
-	Use:     "list <site>",
-	Aliases: []string{"ls"},
+	Use:     "env:list <site>",
+	Aliases: []string{"environment"},
 	Short:   "List environments",
 	Long:    "Display a list of all environments for a site",
 	Args:    cobra.ExactArgs(1),
@@ -24,7 +17,7 @@ var envListCmd = &cobra.Command{
 }
 
 var envInfoCmd = &cobra.Command{
-	Use:   "info <site>.<env>",
+	Use:   "env:info <site>.<env>",
 	Short: "Show environment information",
 	Long:  "Display detailed information about a specific environment",
 	Args:  cobra.ExactArgs(1),
@@ -32,7 +25,7 @@ var envInfoCmd = &cobra.Command{
 }
 
 var envClearCacheCmd = &cobra.Command{
-	Use:   "clear-cache <site>.<env>",
+	Use:   "env:clear-cache <site>.<env>",
 	Short: "Clear environment cache",
 	Long:  "Clear the cache for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -40,7 +33,7 @@ var envClearCacheCmd = &cobra.Command{
 }
 
 var envDeployCmd = &cobra.Command{
-	Use:   "deploy <site>.<env>",
+	Use:   "env:deploy <site>.<env>",
 	Short: "Deploy code to an environment",
 	Long:  "Deploy code from one environment to another",
 	Args:  cobra.ExactArgs(1),
@@ -48,7 +41,7 @@ var envDeployCmd = &cobra.Command{
 }
 
 var envCloneContentCmd = &cobra.Command{
-	Use:   "clone-content <site>.<env>",
+	Use:   "env:clone-content <site>.<env>",
 	Short: "Clone content between environments",
 	Long:  "Clone database and/or files from one environment to another",
 	Args:  cobra.ExactArgs(1),
@@ -56,7 +49,7 @@ var envCloneContentCmd = &cobra.Command{
 }
 
 var envCommitCmd = &cobra.Command{
-	Use:   "commit <site>.<env>",
+	Use:   "env:commit <site>.<env>",
 	Short: "Commit changes",
 	Long:  "Commit changes in SFTP mode",
 	Args:  cobra.ExactArgs(1),
@@ -64,7 +57,7 @@ var envCommitCmd = &cobra.Command{
 }
 
 var envWipeCmd = &cobra.Command{
-	Use:   "wipe <site>.<env>",
+	Use:   "env:wipe <site>.<env>",
 	Short: "Wipe environment",
 	Long:  "Wipe content from an environment",
 	Args:  cobra.ExactArgs(1),
@@ -72,17 +65,11 @@ var envWipeCmd = &cobra.Command{
 }
 
 var envConnectionSetCmd = &cobra.Command{
-	Use:   "set <site>.<env> <mode>",
+	Use:   "env:connection:set <site>.<env> <mode>",
 	Short: "Set connection mode",
 	Long:  "Set the connection mode (git or sftp)",
 	Args:  cobra.ExactArgs(2),
 	RunE:  runEnvConnectionSet,
-}
-
-var envConnectionCmd = &cobra.Command{
-	Use:   "connection",
-	Short: "Connection mode management",
-	Long:  "Manage environment connection mode",
 }
 
 var (
@@ -96,16 +83,15 @@ var (
 )
 
 func init() {
-	envCmd.AddCommand(envListCmd)
-	envCmd.AddCommand(envInfoCmd)
-	envCmd.AddCommand(envClearCacheCmd)
-	envCmd.AddCommand(envDeployCmd)
-	envCmd.AddCommand(envCloneContentCmd)
-	envCmd.AddCommand(envCommitCmd)
-	envCmd.AddCommand(envWipeCmd)
-	envCmd.AddCommand(envConnectionCmd)
-
-	envConnectionCmd.AddCommand(envConnectionSetCmd)
+	// Add env commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(envListCmd)
+	rootCmd.AddCommand(envInfoCmd)
+	rootCmd.AddCommand(envClearCacheCmd)
+	rootCmd.AddCommand(envDeployCmd)
+	rootCmd.AddCommand(envCloneContentCmd)
+	rootCmd.AddCommand(envCommitCmd)
+	rootCmd.AddCommand(envWipeCmd)
+	rootCmd.AddCommand(envConnectionSetCmd)
 
 	// Deploy flags
 	envDeployCmd.Flags().BoolVar(&envUpdateDBFlag, "updatedb", false, "Run database updates after deploy")

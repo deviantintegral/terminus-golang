@@ -7,14 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var connectionCmd = &cobra.Command{
-	Use:   "connection",
-	Short: "Connection management commands",
-	Long:  "Manage environment connection settings and display connection information",
-}
-
 var connectionInfoCmd = &cobra.Command{
-	Use:   "info <site>.<env>",
+	Use:   "connection:info <site>.<env>",
 	Short: "Show connection information",
 	Long:  "Display connection information for an environment including SFTP, Git, MySQL, and Redis",
 	Args:  cobra.ExactArgs(1),
@@ -22,7 +16,7 @@ var connectionInfoCmd = &cobra.Command{
 }
 
 var connectionSetCmd = &cobra.Command{
-	Use:   "set <site>.<env> <mode>",
+	Use:   "connection:set <site>.<env> <mode>",
 	Short: "Set connection mode",
 	Long:  "Set the connection mode (git or sftp) for an environment",
 	Args:  cobra.ExactArgs(2),
@@ -30,8 +24,9 @@ var connectionSetCmd = &cobra.Command{
 }
 
 func init() {
-	connectionCmd.AddCommand(connectionInfoCmd)
-	connectionCmd.AddCommand(connectionSetCmd)
+	// Add connection commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(connectionInfoCmd)
+	rootCmd.AddCommand(connectionSetCmd)
 }
 
 func runConnectionInfo(_ *cobra.Command, args []string) error {

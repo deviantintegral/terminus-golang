@@ -59,22 +59,22 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&quietFlag, "quiet", "q", false, "Suppress output")
 	rootCmd.PersistentFlags().CountVarP(&verboseCount, "verbose", "v", "Verbose output (-v, -vv, or -vvv for increasing verbosity)")
 
-	// Add command groups
-	rootCmd.AddCommand(artCmd)
-	// Note: auth commands (auth:login, auth:logout, auth:whoami) are added in auth.go init()
-	rootCmd.AddCommand(siteCmd)
-	rootCmd.AddCommand(envCmd)
-	rootCmd.AddCommand(workflowCmd)
-	rootCmd.AddCommand(backupCmd)
-	rootCmd.AddCommand(orgCmd)
-	rootCmd.AddCommand(domainCmd)
-	rootCmd.AddCommand(multidevCmd)
-	rootCmd.AddCommand(connectionCmd)
-	rootCmd.AddCommand(lockCmd)
-	rootCmd.AddCommand(planCmd)
-	rootCmd.AddCommand(upstreamCmd)
-	rootCmd.AddCommand(selfCmd)
-	rootCmd.AddCommand(redisCmd)
+	// Note: All commands are now added directly to rootCmd in their respective files using colon-separated names:
+	// - auth commands (auth:login, auth:logout, auth:whoami) in auth.go
+	// - site commands (site:list, site:info, etc.) in site.go
+	// - env commands (env:list, env:info, etc.) in env.go
+	// - workflow commands (workflow:list, workflow:info, etc.) in workflow.go
+	// - backup commands (backup:list, backup:create, etc.) in backup.go
+	// - org commands (org:list, org:info, etc.) in org.go
+	// - domain commands (domain:list, domain:add, etc.) in domain.go
+	// - multidev commands (multidev:create, multidev:delete, etc.) in multidev.go
+	// - connection commands (connection:info, connection:set) in connection.go
+	// - lock commands (lock:info, lock:enable, lock:disable) in lock.go
+	// - plan commands (plan:info) in plan.go
+	// - upstream commands (upstream:info, upstream:list) in upstream.go
+	// - self commands (self:info) in self.go
+	// - art commands (art, art:list) in art.go
+	// - redis commands (redis:enable, redis:disable) in redis.go
 }
 
 // initCLIContext initializes the CLI context

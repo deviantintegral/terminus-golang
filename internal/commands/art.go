@@ -201,14 +201,17 @@ Use 'terminus art:list' to see all available artwork.`,
 }
 
 var artListCmd = &cobra.Command{
-	Use:   "list",
+	Use:   "art:list",
 	Short: "List available ASCII art",
 	Long:  "Display a list of all available ASCII artwork that can be displayed with the 'art' command.",
 	RunE:  runArtList,
 }
 
 func init() {
-	artCmd.AddCommand(artListCmd)
+	// Add art commands directly to rootCmd
+	// Note: artCmd stays as "art" since it's the base command
+	rootCmd.AddCommand(artCmd)
+	rootCmd.AddCommand(artListCmd)
 }
 
 func runArt(_ *cobra.Command, args []string) error {

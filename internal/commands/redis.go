@@ -7,14 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var redisCmd = &cobra.Command{
-	Use:   "redis",
-	Short: "Redis management commands",
-	Long:  "Manage Redis cache for Pantheon sites",
-}
-
 var redisEnableCmd = &cobra.Command{
-	Use:   "enable <site>",
+	Use:   "redis:enable <site>",
 	Short: "Enable Redis for a site",
 	Long:  "Enable Redis object cache for a Pantheon site",
 	Args:  cobra.ExactArgs(1),
@@ -22,7 +16,7 @@ var redisEnableCmd = &cobra.Command{
 }
 
 var redisDisableCmd = &cobra.Command{
-	Use:   "disable <site>",
+	Use:   "redis:disable <site>",
 	Short: "Disable Redis for a site",
 	Long:  "Disable Redis object cache for a Pantheon site",
 	Args:  cobra.ExactArgs(1),
@@ -30,8 +24,9 @@ var redisDisableCmd = &cobra.Command{
 }
 
 func init() {
-	redisCmd.AddCommand(redisEnableCmd)
-	redisCmd.AddCommand(redisDisableCmd)
+	// Add redis commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(redisEnableCmd)
+	rootCmd.AddCommand(redisDisableCmd)
 }
 
 func runRedisEnable(_ *cobra.Command, args []string) error {

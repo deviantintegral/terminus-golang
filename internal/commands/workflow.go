@@ -12,16 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var workflowCmd = &cobra.Command{
-	Use:     "workflow",
-	Aliases: []string{"workflows"},
-	Short:   "Workflow management commands",
-	Long:    "Manage and monitor workflows",
-}
-
 var workflowListCmd = &cobra.Command{
-	Use:     "list <site>",
-	Aliases: []string{"ls"},
+	Use:     "workflow:list <site>",
+	Aliases: []string{"workflows"},
 	Short:   "List workflows",
 	Long:    "Display a list of workflows for a site",
 	Args:    cobra.ExactArgs(1),
@@ -29,7 +22,7 @@ var workflowListCmd = &cobra.Command{
 }
 
 var workflowInfoCmd = &cobra.Command{
-	Use:   "info <site> <workflow-id>",
+	Use:   "workflow:info <site> <workflow-id>",
 	Short: "Show workflow information",
 	Long:  "Display detailed information about a specific workflow",
 	Args:  cobra.ExactArgs(2),
@@ -37,7 +30,7 @@ var workflowInfoCmd = &cobra.Command{
 }
 
 var workflowWaitCmd = &cobra.Command{
-	Use:   "wait <site> <workflow-id>",
+	Use:   "workflow:wait <site> <workflow-id>",
 	Short: "Wait for a workflow to complete",
 	Long:  "Wait for a workflow to finish and display its status",
 	Args:  cobra.ExactArgs(2),
@@ -45,7 +38,7 @@ var workflowWaitCmd = &cobra.Command{
 }
 
 var workflowWatchCmd = &cobra.Command{
-	Use:   "watch <site> <workflow-id>",
+	Use:   "workflow:watch <site> <workflow-id>",
 	Short: "Watch a workflow",
 	Long:  "Watch a workflow and display progress updates",
 	Args:  cobra.ExactArgs(2),
@@ -53,10 +46,11 @@ var workflowWatchCmd = &cobra.Command{
 }
 
 func init() {
-	workflowCmd.AddCommand(workflowListCmd)
-	workflowCmd.AddCommand(workflowInfoCmd)
-	workflowCmd.AddCommand(workflowWaitCmd)
-	workflowCmd.AddCommand(workflowWatchCmd)
+	// Add workflow commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(workflowListCmd)
+	rootCmd.AddCommand(workflowInfoCmd)
+	rootCmd.AddCommand(workflowWaitCmd)
+	rootCmd.AddCommand(workflowWatchCmd)
 }
 
 func runWorkflowList(_ *cobra.Command, args []string) error {

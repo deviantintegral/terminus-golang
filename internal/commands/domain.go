@@ -7,16 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var domainCmd = &cobra.Command{
-	Use:     "domain",
-	Aliases: []string{"domains"},
-	Short:   "Domain management commands",
-	Long:    "Manage environment domains",
-}
-
 var domainListCmd = &cobra.Command{
-	Use:     "list <site>.<env>",
-	Aliases: []string{"ls"},
+	Use:     "domain:list <site>.<env>",
+	Aliases: []string{"domains"},
 	Short:   "List domains",
 	Long:    "Display a list of domains for an environment",
 	Args:    cobra.ExactArgs(1),
@@ -24,7 +17,7 @@ var domainListCmd = &cobra.Command{
 }
 
 var domainAddCmd = &cobra.Command{
-	Use:   "add <site>.<env> <domain>",
+	Use:   "domain:add <site>.<env> <domain>",
 	Short: "Add a domain",
 	Long:  "Add a domain to an environment",
 	Args:  cobra.ExactArgs(2),
@@ -32,7 +25,7 @@ var domainAddCmd = &cobra.Command{
 }
 
 var domainRemoveCmd = &cobra.Command{
-	Use:   "remove <site>.<env> <domain>",
+	Use:   "domain:remove <site>.<env> <domain>",
 	Short: "Remove a domain",
 	Long:  "Remove a domain from an environment",
 	Args:  cobra.ExactArgs(2),
@@ -40,7 +33,7 @@ var domainRemoveCmd = &cobra.Command{
 }
 
 var domainDNSCmd = &cobra.Command{
-	Use:   "dns <site>.<env> <domain>",
+	Use:   "domain:dns <site>.<env> <domain>",
 	Short: "Show DNS recommendations",
 	Long:  "Display DNS recommendations for a domain",
 	Args:  cobra.ExactArgs(2),
@@ -48,10 +41,11 @@ var domainDNSCmd = &cobra.Command{
 }
 
 func init() {
-	domainCmd.AddCommand(domainListCmd)
-	domainCmd.AddCommand(domainAddCmd)
-	domainCmd.AddCommand(domainRemoveCmd)
-	domainCmd.AddCommand(domainDNSCmd)
+	// Add domain commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(domainListCmd)
+	rootCmd.AddCommand(domainAddCmd)
+	rootCmd.AddCommand(domainRemoveCmd)
+	rootCmd.AddCommand(domainDNSCmd)
 }
 
 func runDomainList(_ *cobra.Command, args []string) error {

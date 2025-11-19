@@ -7,14 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var upstreamCmd = &cobra.Command{
-	Use:   "upstream",
-	Short: "Upstream management commands",
-	Long:  "View and manage upstreams",
-}
-
 var upstreamInfoCmd = &cobra.Command{
-	Use:   "info <upstream>",
+	Use:   "upstream:info <upstream>",
 	Short: "Show upstream information",
 	Long:  "Display detailed information about an upstream",
 	Args:  cobra.ExactArgs(1),
@@ -22,17 +16,17 @@ var upstreamInfoCmd = &cobra.Command{
 }
 
 var upstreamListCmd = &cobra.Command{
-	Use:     "list",
-	Aliases: []string{"ls"},
-	Short:   "List upstreams",
-	Long:    "List available upstreams",
-	Args:    cobra.NoArgs,
-	RunE:    runUpstreamList,
+	Use:   "upstream:list",
+	Short: "List upstreams",
+	Long:  "List available upstreams",
+	Args:  cobra.NoArgs,
+	RunE:  runUpstreamList,
 }
 
 func init() {
-	upstreamCmd.AddCommand(upstreamInfoCmd)
-	upstreamCmd.AddCommand(upstreamListCmd)
+	// Add upstream commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(upstreamInfoCmd)
+	rootCmd.AddCommand(upstreamListCmd)
 }
 
 func runUpstreamInfo(_ *cobra.Command, args []string) error {

@@ -7,14 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var planCmd = &cobra.Command{
-	Use:   "plan",
-	Short: "Plan management commands",
-	Long:  "View and manage site service plans",
-}
-
 var planInfoCmd = &cobra.Command{
-	Use:   "info <site>",
+	Use:   "plan:info <site>",
 	Short: "Show site plan information",
 	Long:  "Display the current service plan for a site",
 	Args:  cobra.ExactArgs(1),
@@ -22,7 +16,8 @@ var planInfoCmd = &cobra.Command{
 }
 
 func init() {
-	planCmd.AddCommand(planInfoCmd)
+	// Add plan commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(planInfoCmd)
 }
 
 func runPlanInfo(_ *cobra.Command, args []string) error {

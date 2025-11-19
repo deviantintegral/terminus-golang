@@ -5,52 +5,29 @@ import (
 	"testing"
 )
 
-func TestSelfCmdStructure(t *testing.T) {
-	if selfCmd.Use != "self" {
-		t.Errorf("expected selfCmd.Use to be 'self', got '%s'", selfCmd.Use)
-	}
-
-	if selfCmd.Short == "" {
-		t.Error("selfCmd.Short should not be empty")
-	}
-}
-
 func TestSelfInfoCmdStructure(t *testing.T) {
-	if selfInfoCmd.Use != "info" {
-		t.Errorf("expected selfInfoCmd.Use to be 'info', got '%s'", selfInfoCmd.Use)
+	if selfInfoCmd.Use != "self:info" {
+		t.Errorf("expected selfInfoCmd.Use to be 'self:info', got '%s'", selfInfoCmd.Use)
 	}
 
 	if selfInfoCmd.Short == "" {
 		t.Error("selfInfoCmd.Short should not be empty")
 	}
-
-	// Verify selfInfoCmd is a subcommand of selfCmd
-	found := false
-	for _, cmd := range selfCmd.Commands() {
-		if cmd.Name() == "info" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("selfInfoCmd should be a subcommand of selfCmd")
-	}
 }
 
-func TestSelfSubcommands(t *testing.T) {
-	expectedSubcommands := []string{"info"}
-	subcommands := selfCmd.Commands()
+func TestSelfCommands(t *testing.T) {
+	expectedCommands := []string{"self:info"}
 
-	for _, expected := range expectedSubcommands {
+	for _, expected := range expectedCommands {
 		found := false
-		for _, cmd := range subcommands {
-			if cmd.Name() == expected {
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Use == expected {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("expected subcommand '%s' not found in selfCmd", expected)
+			t.Errorf("expected command '%s' not found in rootCmd", expected)
 		}
 	}
 }

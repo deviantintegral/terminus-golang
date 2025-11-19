@@ -4,96 +4,49 @@ import (
 	"testing"
 )
 
-func TestLockCmdStructure(t *testing.T) {
-	if lockCmd.Use != "lock" {
-		t.Errorf("expected lockCmd.Use to be 'lock', got '%s'", lockCmd.Use)
-	}
-
-	if lockCmd.Short == "" {
-		t.Error("lockCmd.Short should not be empty")
-	}
-}
-
 func TestLockInfoCmdStructure(t *testing.T) {
-	if lockInfoCmd.Use != "info <site>.<env>" {
-		t.Errorf("expected lockInfoCmd.Use to be 'info <site>.<env>', got '%s'", lockInfoCmd.Use)
+	if lockInfoCmd.Use != "lock:info <site>.<env>" {
+		t.Errorf("expected lockInfoCmd.Use to be 'lock:info <site>.<env>', got '%s'", lockInfoCmd.Use)
 	}
 
 	if lockInfoCmd.Short == "" {
 		t.Error("lockInfoCmd.Short should not be empty")
 	}
-
-	// Verify lockInfoCmd is a subcommand of lockCmd
-	found := false
-	for _, cmd := range lockCmd.Commands() {
-		if cmd.Name() == "info" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("lockInfoCmd should be a subcommand of lockCmd")
-	}
 }
 
 func TestLockEnableCmdStructure(t *testing.T) {
-	if lockEnableCmd.Use != "enable <site>.<env>" {
-		t.Errorf("expected lockEnableCmd.Use to be 'enable <site>.<env>', got '%s'", lockEnableCmd.Use)
+	if lockEnableCmd.Use != "lock:enable <site>.<env>" {
+		t.Errorf("expected lockEnableCmd.Use to be 'lock:enable <site>.<env>', got '%s'", lockEnableCmd.Use)
 	}
 
 	if lockEnableCmd.Short == "" {
 		t.Error("lockEnableCmd.Short should not be empty")
 	}
-
-	// Verify lockEnableCmd is a subcommand of lockCmd
-	found := false
-	for _, cmd := range lockCmd.Commands() {
-		if cmd.Name() == "enable" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("lockEnableCmd should be a subcommand of lockCmd")
-	}
 }
 
 func TestLockDisableCmdStructure(t *testing.T) {
-	if lockDisableCmd.Use != "disable <site>.<env>" {
-		t.Errorf("expected lockDisableCmd.Use to be 'disable <site>.<env>', got '%s'", lockDisableCmd.Use)
+	if lockDisableCmd.Use != "lock:disable <site>.<env>" {
+		t.Errorf("expected lockDisableCmd.Use to be 'lock:disable <site>.<env>', got '%s'", lockDisableCmd.Use)
 	}
 
 	if lockDisableCmd.Short == "" {
 		t.Error("lockDisableCmd.Short should not be empty")
 	}
-
-	// Verify lockDisableCmd is a subcommand of lockCmd
-	found := false
-	for _, cmd := range lockCmd.Commands() {
-		if cmd.Name() == "disable" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("lockDisableCmd should be a subcommand of lockCmd")
-	}
 }
 
-func TestLockSubcommands(t *testing.T) {
-	expectedSubcommands := []string{"info", "enable", "disable"}
-	subcommands := lockCmd.Commands()
+func TestLockCommands(t *testing.T) {
+	expectedCommands := []string{"lock:info", "lock:enable", "lock:disable"}
 
-	for _, expected := range expectedSubcommands {
+	for _, expected := range expectedCommands {
 		found := false
-		for _, cmd := range subcommands {
-			if cmd.Name() == expected {
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Use == expected || (len(cmd.Use) > len(expected) && cmd.Use[:len(expected)] == expected) {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("expected subcommand '%s' not found in lockCmd", expected)
+			t.Errorf("expected command '%s' not found in rootCmd", expected)
 		}
 	}
 }

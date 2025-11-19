@@ -7,14 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var lockCmd = &cobra.Command{
-	Use:   "lock",
-	Short: "Lock management commands",
-	Long:  "Manage HTTP basic authentication lock for environments",
-}
-
 var lockInfoCmd = &cobra.Command{
-	Use:   "info <site>.<env>",
+	Use:   "lock:info <site>.<env>",
 	Short: "Show lock status",
 	Long:  "Display HTTP basic authentication lock status for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -22,7 +16,7 @@ var lockInfoCmd = &cobra.Command{
 }
 
 var lockEnableCmd = &cobra.Command{
-	Use:   "enable <site>.<env>",
+	Use:   "lock:enable <site>.<env>",
 	Short: "Enable environment lock",
 	Long:  "Enable HTTP basic authentication for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -30,7 +24,7 @@ var lockEnableCmd = &cobra.Command{
 }
 
 var lockDisableCmd = &cobra.Command{
-	Use:   "disable <site>.<env>",
+	Use:   "lock:disable <site>.<env>",
 	Short: "Disable environment lock",
 	Long:  "Disable HTTP basic authentication for an environment",
 	Args:  cobra.ExactArgs(1),
@@ -43,9 +37,10 @@ var (
 )
 
 func init() {
-	lockCmd.AddCommand(lockInfoCmd)
-	lockCmd.AddCommand(lockEnableCmd)
-	lockCmd.AddCommand(lockDisableCmd)
+	// Add lock commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(lockInfoCmd)
+	rootCmd.AddCommand(lockEnableCmd)
+	rootCmd.AddCommand(lockDisableCmd)
 
 	// Enable flags
 	lockEnableCmd.Flags().StringVar(&lockUsername, "username", "", "Username for HTTP basic auth")

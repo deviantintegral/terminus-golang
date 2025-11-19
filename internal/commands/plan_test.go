@@ -4,52 +4,29 @@ import (
 	"testing"
 )
 
-func TestPlanCmdStructure(t *testing.T) {
-	if planCmd.Use != "plan" {
-		t.Errorf("expected planCmd.Use to be 'plan', got '%s'", planCmd.Use)
-	}
-
-	if planCmd.Short == "" {
-		t.Error("planCmd.Short should not be empty")
-	}
-}
-
 func TestPlanInfoCmdStructure(t *testing.T) {
-	if planInfoCmd.Use != "info <site>" {
-		t.Errorf("expected planInfoCmd.Use to be 'info <site>', got '%s'", planInfoCmd.Use)
+	if planInfoCmd.Use != "plan:info <site>" {
+		t.Errorf("expected planInfoCmd.Use to be 'plan:info <site>', got '%s'", planInfoCmd.Use)
 	}
 
 	if planInfoCmd.Short == "" {
 		t.Error("planInfoCmd.Short should not be empty")
 	}
-
-	// Verify planInfoCmd is a subcommand of planCmd
-	found := false
-	for _, cmd := range planCmd.Commands() {
-		if cmd.Name() == "info" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("planInfoCmd should be a subcommand of planCmd")
-	}
 }
 
-func TestPlanSubcommands(t *testing.T) {
-	expectedSubcommands := []string{"info"}
-	subcommands := planCmd.Commands()
+func TestPlanCommands(t *testing.T) {
+	expectedCommands := []string{"plan:info"}
 
-	for _, expected := range expectedSubcommands {
+	for _, expected := range expectedCommands {
 		found := false
-		for _, cmd := range subcommands {
-			if cmd.Name() == expected {
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Use == expected || (len(cmd.Use) > len(expected) && cmd.Use[:len(expected)] == expected) {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("expected subcommand '%s' not found in planCmd", expected)
+			t.Errorf("expected command '%s' not found in rootCmd", expected)
 		}
 	}
 }
