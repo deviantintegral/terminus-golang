@@ -61,7 +61,7 @@ func init() {
 
 	// Add command groups
 	rootCmd.AddCommand(artCmd)
-	rootCmd.AddCommand(authCmd)
+	// Note: auth commands (auth:login, auth:logout, auth:whoami) are added in auth.go init()
 	rootCmd.AddCommand(siteCmd)
 	rootCmd.AddCommand(envCmd)
 	rootCmd.AddCommand(workflowCmd)
