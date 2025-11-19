@@ -426,7 +426,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | `backup:automatic:info` | Show automatic backup schedule | ✅ | ❌ |
 | `backup:create` | Create a backup of an environment | ✅ | ❌ |
 | `backup:get` | Download a specific backup | ✅ | ❌ |
-| `backup:info` | Show information about a specific backup | ❌ | ❌ |
+| `backup:info` | Show information about a specific backup | ✅ | ❌ |
 | `backup:list` | List backups for an environment | ✅ | ❌ |
 | `backup:restore` | Restore an environment from a backup | ✅ | ❌ |
 
@@ -440,7 +440,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `connection:info` | Show connection info for an environment | ❌ | ❌ |
+| `connection:info` | Show connection info for an environment | ✅ | ❌ |
 | `connection:set` | Set connection mode (git/sftp) | ✅ | ❌ |
 
 ### dashboard
@@ -511,9 +511,9 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `lock:disable` | Disable HTTP basic auth for an environment | ❌ | ❌ |
-| `lock:enable` | Enable HTTP basic auth for an environment | ❌ | ❌ |
-| `lock:info` | Show lock status for an environment | ❌ | ❌ |
+| `lock:disable` | Disable HTTP basic auth for an environment | ✅ | ❌ |
+| `lock:enable` | Enable HTTP basic auth for an environment | ✅ | ❌ |
+| `lock:info` | Show lock status for an environment | ✅ | ❌ |
 
 ### machine-token
 
@@ -569,7 +569,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `plan:info` | Show site plan information | ❌ | ❌ |
+| `plan:info` | Show site plan information | ✅ | ❌ |
 | `plan:list` | List available plans | ❌ | ❌ |
 | `plan:set` | Change the site plan | ❌ | ❌ |
 
@@ -594,7 +594,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | `self:clear-cache` | Clear Terminus cache | ❌ | ❌ |
 | `self:config:dump` | Dump Terminus configuration | ❌ | ❌ |
 | `self:console` | Open interactive console | ❌ | ❌ |
-| `self:info` | Show Terminus information | ❌ | ❌ |
+| `self:info` | Show Terminus information | ✅ | ❌ |
 | `self:plugin:create` | Create a new plugin | ❌ | ❌ |
 | `self:plugin:install` | Install a plugin | ❌ | ❌ |
 | `self:plugin:list` | List installed plugins | ❌ | ❌ |
@@ -656,8 +656,8 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `upstream:info` | Show upstream information | ❌ | ❌ |
-| `upstream:list` | List upstreams | ❌ | ❌ |
+| `upstream:info` | Show upstream information | ✅ | ❌ |
+| `upstream:list` | List upstreams | ✅ | ❌ |
 | `upstream:updates:apply` | Apply upstream updates to a site | ❌ | ❌ |
 | `upstream:updates:list` | List available upstream updates | ❌ | ❌ |
 | `upstream:updates:status` | Check for upstream updates | ❌ | ❌ |
@@ -676,6 +676,6 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | Status | Count |
 |--------|-------|
 | **Total Commands** | 113 |
-| **Implemented** | 37 |
-| **Not Implemented** | 76 |
-| **Implementation Progress** | 33% |
+| **Implemented** | 46 |
+| **Not Implemented** | 67 |
+| **Implementation Progress** | 41% |

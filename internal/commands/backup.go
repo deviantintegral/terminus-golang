@@ -2,11 +2,20 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api"
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 	"github.com/spf13/cobra"
 )
+
+// formatTimestamp formats a Unix timestamp as a human-readable date string
+func formatTimestamp(timestamp int64) string {
+	if timestamp == 0 {
+		return "Never"
+	}
+	return time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
+}
 
 var backupCmd = &cobra.Command{
 	Use:     "backup",
@@ -46,6 +55,14 @@ var backupRestoreCmd = &cobra.Command{
 	Long:  "Restore an environment from a backup",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runBackupRestore,
+}
+
+var backupInfoCmd = &cobra.Command{
+	Use:   "info <site>.<env>",
+	Short: "Show backup information",
+	Long:  "Display detailed information about a specific backup",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runBackupInfo,
 }
 
 var backupAutomaticCmd = &cobra.Command{
@@ -91,6 +108,7 @@ func init() {
 	backupCmd.AddCommand(backupCreateCmd)
 	backupCmd.AddCommand(backupGetCmd)
 	backupCmd.AddCommand(backupRestoreCmd)
+	backupCmd.AddCommand(backupInfoCmd)
 	backupCmd.AddCommand(backupAutomaticCmd)
 
 	backupAutomaticCmd.AddCommand(backupAutomaticInfoCmd)
@@ -112,6 +130,9 @@ func init() {
 
 	// Schedule flags
 	backupAutomaticEnableCmd.Flags().IntVar(&backupScheduleDay, "day", 0, "Day of the week for backups (0-6)")
+
+	// Info flags
+	backupInfoCmd.Flags().StringVar(&backupElementFlag, "element", "files", "Backup element to show (code, database, files)")
 }
 
 func runBackupList(_ *cobra.Command, args []string) error {
@@ -224,6 +245,69 @@ func runBackupRestore(_ *cobra.Command, args []string) error {
 	}
 
 	return waitForWorkflow(siteID, workflow.ID, "Restoring backup")
+}
+
+func runBackupInfo(_ *cobra.Command, args []string) error {
+	if err := requireAuth(); err != nil {
+		return err
+	}
+
+	siteID, envID, err := parseSiteEnv(args[0])
+	if err != nil {
+		return err
+	}
+
+	backupsService := api.NewBackupsService(cliContext.APIClient)
+
+	// List all backups to find matching one
+	backups, err := backupsService.List(getContext(), siteID, envID)
+	if err != nil {
+		return fmt.Errorf("failed to list backups: %w", err)
+	}
+
+	// Find the most recent backup of the specified element type
+	var targetBackup *models.Backup
+	for _, backup := range backups {
+		if backup.ArchiveType == backupElementFlag {
+			if targetBackup == nil || backup.Timestamp > targetBackup.Timestamp {
+				targetBackup = backup
+			}
+		}
+	}
+
+	if targetBackup == nil {
+		return fmt.Errorf("no %s backup found for %s.%s", backupElementFlag, siteID, envID)
+	}
+
+	// Create a response with backup info and download URL
+	type BackupInfo struct {
+		ID        string `json:"id"`
+		File      string `json:"file"`
+		Size      int64  `json:"size"`
+		Date      string `json:"date"`
+		Expiry    string `json:"expiry"`
+		Initiator string `json:"initiator"`
+		URL       string `json:"url"`
+	}
+
+	// Get download URL
+	downloadURL, err := backupsService.GetDownloadURL(getContext(), siteID, envID, targetBackup.ID, backupElementFlag)
+	if err != nil {
+		// URL might not be available, continue without it
+		downloadURL = ""
+	}
+
+	info := BackupInfo{
+		ID:        targetBackup.ID,
+		File:      fmt.Sprintf("%s_%s.tar.gz", targetBackup.ArchiveType, targetBackup.Folder),
+		Size:      targetBackup.Size,
+		Date:      targetBackup.GetDate().Format("2006-01-02 15:04:05"),
+		Expiry:    formatTimestamp(targetBackup.ExpiryTime),
+		Initiator: targetBackup.InitiatorEmail,
+		URL:       downloadURL,
+	}
+
+	return printOutput(info)
 }
 
 func runBackupAutomaticInfo(_ *cobra.Command, args []string) error {

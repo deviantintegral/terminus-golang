@@ -69,6 +69,11 @@ func init() {
 	rootCmd.AddCommand(orgCmd)
 	rootCmd.AddCommand(domainCmd)
 	rootCmd.AddCommand(multidevCmd)
+	rootCmd.AddCommand(connectionCmd)
+	rootCmd.AddCommand(lockCmd)
+	rootCmd.AddCommand(planCmd)
+	rootCmd.AddCommand(upstreamCmd)
+	rootCmd.AddCommand(selfCmd)
 }
 
 // initCLIContext initializes the CLI context
