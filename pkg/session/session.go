@@ -13,7 +13,6 @@ import (
 type Session struct {
 	SessionToken string `json:"session"`
 	UserID       string `json:"user_id"`
-	Email        string `json:"email,omitempty"`
 	ExpiresAt    int64  `json:"expires_at"`
 }
 

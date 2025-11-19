@@ -52,7 +52,6 @@ func TestStoreSaveAndLoadSession(t *testing.T) {
 	sess := &Session{
 		SessionToken: "test-token",
 		UserID:       "test-user-id",
-		Email:        "test@example.com",
 		ExpiresAt:    time.Now().Add(1 * time.Hour).Unix(),
 	}
 
