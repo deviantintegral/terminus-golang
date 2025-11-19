@@ -315,3 +315,23 @@ type ConnectionInfo struct {
 	RedisPassword string `json:"redis_password"`
 	RedisCommand  string `json:"redis_command"`
 }
+
+// Branch represents a git branch for a site
+type Branch struct {
+	ID  string `json:"id"`
+	SHA string `json:"sha"`
+}
+
+// UpstreamUpdateCommit represents a commit in upstream updates
+type UpstreamUpdateCommit struct {
+	Hash     string `json:"hash"`
+	Datetime string `json:"datetime"`
+	Message  string `json:"message"`
+	Author   string `json:"author"`
+}
+
+// SiteOrganizationMembership represents a site's membership in an organization
+type SiteOrganizationMembership struct {
+	OrgID   string `json:"org_id"`
+	OrgName string `json:"org_name"`
+}

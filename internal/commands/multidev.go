@@ -39,6 +39,14 @@ var multidevMergeFromDevCmd = &cobra.Command{
 	RunE:  runMultidevMergeFromDev,
 }
 
+var multidevListCmd = &cobra.Command{
+	Use:   "multidev:list <site>",
+	Short: "List multidev environments",
+	Long:  "Display a list of multidev environments for a site",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runMultidevList,
+}
+
 var (
 	multidevFromEnvFlag  string
 	multidevDeleteDBFlag bool
@@ -50,11 +58,33 @@ func init() {
 	rootCmd.AddCommand(multidevDeleteCmd)
 	rootCmd.AddCommand(multidevMergeToDevCmd)
 	rootCmd.AddCommand(multidevMergeFromDevCmd)
+	rootCmd.AddCommand(multidevListCmd)
 
 	multidevCreateCmd.Flags().StringVar(&multidevFromEnvFlag, "from-env", "dev", "Source environment")
 	multidevDeleteCmd.Flags().BoolVar(&multidevDeleteDBFlag, "delete-db", false, "Delete database")
 	multidevMergeToDevCmd.Flags().BoolVar(&envUpdateDBFlag, "updatedb", false, "Run database updates after merge")
 	multidevMergeFromDevCmd.Flags().BoolVar(&envUpdateDBFlag, "updatedb", false, "Run database updates after merge")
+}
+
+func runMultidevList(_ *cobra.Command, args []string) error {
+	if err := requireAuth(); err != nil {
+		return err
+	}
+
+	siteID := args[0]
+	multidevService := api.NewMultidevService(cliContext.APIClient)
+
+	multidevs, err := multidevService.List(getContext(), siteID)
+	if err != nil {
+		return fmt.Errorf("failed to list multidev environments: %w", err)
+	}
+
+	if len(multidevs) == 0 {
+		printMessage("You have no multidev environments")
+		return nil
+	}
+
+	return printOutput(multidevs)
 }
 
 func runMultidevCreate(_ *cobra.Command, args []string) error {

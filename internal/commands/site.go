@@ -47,6 +47,14 @@ var siteTeamListCmd = &cobra.Command{
 	RunE:  runSiteTeamList,
 }
 
+var siteOrgListCmd = &cobra.Command{
+	Use:   "site:org:list <site>",
+	Short: "List organizations for a site",
+	Long:  "Display a list of supporting organizations for a site",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runSiteOrgList,
+}
+
 var (
 	siteOrgFlag      string
 	siteLabelFlag    string
@@ -61,6 +69,7 @@ func init() {
 	rootCmd.AddCommand(siteCreateCmd)
 	rootCmd.AddCommand(siteDeleteCmd)
 	rootCmd.AddCommand(siteTeamListCmd)
+	rootCmd.AddCommand(siteOrgListCmd)
 
 	// Flags
 	siteListCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Filter by organization")
@@ -70,6 +79,27 @@ func init() {
 	siteCreateCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Organization ID")
 	siteCreateCmd.Flags().StringVar(&siteRegionFlag, "region", "", "Preferred region")
 	_ = siteCreateCmd.MarkFlagRequired("upstream")
+}
+
+func runSiteOrgList(_ *cobra.Command, args []string) error {
+	if err := requireAuth(); err != nil {
+		return err
+	}
+
+	siteID := args[0]
+	sitesService := api.NewSitesService(cliContext.APIClient)
+
+	orgs, err := sitesService.ListOrganizations(getContext(), siteID)
+	if err != nil {
+		return fmt.Errorf("failed to list site organizations: %w", err)
+	}
+
+	if len(orgs) == 0 {
+		printMessage("This site has no supporting organizations")
+		return nil
+	}
+
+	return printOutput(orgs)
 }
 
 func runSiteList(_ *cobra.Command, _ []string) error {
