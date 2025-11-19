@@ -207,23 +207,11 @@ func TestArtCmdStructure(t *testing.T) {
 	if artCmd.Short == "" {
 		t.Error("artCmd.Short should not be empty")
 	}
-
-	// Test that artListCmd is a subcommand
-	found := false
-	for _, cmd := range artCmd.Commands() {
-		if cmd.Name() == "list" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("artListCmd should be a subcommand of artCmd")
-	}
 }
 
 func TestArtListCmdStructure(t *testing.T) {
-	if artListCmd.Use != "list" {
-		t.Errorf("expected artListCmd.Use to be 'list', got '%s'", artListCmd.Use)
+	if artListCmd.Use != "art:list" {
+		t.Errorf("expected artListCmd.Use to be 'art:list', got '%s'", artListCmd.Use)
 	}
 
 	if artListCmd.Short == "" {

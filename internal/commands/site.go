@@ -7,23 +7,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var siteCmd = &cobra.Command{
-	Use:     "site",
-	Aliases: []string{"sites"},
-	Short:   "Site management commands",
-	Long:    "Manage Pantheon sites",
-}
-
 var siteListCmd = &cobra.Command{
-	Use:     "list",
-	Aliases: []string{"ls"},
+	Use:     "site:list",
+	Aliases: []string{"sites"},
 	Short:   "List all sites",
 	Long:    "Display a list of all sites accessible to the authenticated user",
 	RunE:    runSiteList,
 }
 
 var siteInfoCmd = &cobra.Command{
-	Use:   "info <site>",
+	Use:   "site:info <site>",
 	Short: "Show site information",
 	Long:  "Display detailed information about a specific site",
 	Args:  cobra.ExactArgs(1),
@@ -31,7 +24,7 @@ var siteInfoCmd = &cobra.Command{
 }
 
 var siteCreateCmd = &cobra.Command{
-	Use:   "create <site-name>",
+	Use:   "site:create <site-name>",
 	Short: "Create a new site",
 	Long:  "Create a new site on Pantheon",
 	Args:  cobra.ExactArgs(1),
@@ -39,7 +32,7 @@ var siteCreateCmd = &cobra.Command{
 }
 
 var siteDeleteCmd = &cobra.Command{
-	Use:   "delete <site>",
+	Use:   "site:delete <site>",
 	Short: "Delete a site",
 	Long:  "Delete a site from Pantheon",
 	Args:  cobra.ExactArgs(1),
@@ -47,17 +40,11 @@ var siteDeleteCmd = &cobra.Command{
 }
 
 var siteTeamListCmd = &cobra.Command{
-	Use:   "list <site>",
+	Use:   "site:team:list <site>",
 	Short: "List site team members",
 	Long:  "Display team members for a site",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runSiteTeamList,
-}
-
-var siteTeamCmd = &cobra.Command{
-	Use:   "team",
-	Short: "Site team management",
-	Long:  "Manage site team members",
 }
 
 var (
@@ -68,15 +55,12 @@ var (
 )
 
 func init() {
-	// Site commands
-	siteCmd.AddCommand(siteListCmd)
-	siteCmd.AddCommand(siteInfoCmd)
-	siteCmd.AddCommand(siteCreateCmd)
-	siteCmd.AddCommand(siteDeleteCmd)
-	siteCmd.AddCommand(siteTeamCmd)
-
-	// Team commands
-	siteTeamCmd.AddCommand(siteTeamListCmd)
+	// Add site commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(siteListCmd)
+	rootCmd.AddCommand(siteInfoCmd)
+	rootCmd.AddCommand(siteCreateCmd)
+	rootCmd.AddCommand(siteDeleteCmd)
+	rootCmd.AddCommand(siteTeamListCmd)
 
 	// Flags
 	siteListCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Filter by organization")

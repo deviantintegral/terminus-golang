@@ -4,25 +4,10 @@ import (
 	"testing"
 )
 
-func TestRedisCmdStructure(t *testing.T) {
-	// Test command structure
-	if redisCmd.Use != "redis" {
-		t.Errorf("expected redisCmd.Use to be 'redis', got '%s'", redisCmd.Use)
-	}
-
-	if redisCmd.Short == "" {
-		t.Error("redisCmd.Short should not be empty")
-	}
-
-	if redisCmd.Long == "" {
-		t.Error("redisCmd.Long should not be empty")
-	}
-}
-
 func TestRedisEnableCmdStructure(t *testing.T) {
 	// Test enable command structure
-	if redisEnableCmd.Use != "enable <site>" {
-		t.Errorf("expected redisEnableCmd.Use to be 'enable <site>', got '%s'", redisEnableCmd.Use)
+	if redisEnableCmd.Use != "redis:enable <site>" {
+		t.Errorf("expected redisEnableCmd.Use to be 'redis:enable <site>', got '%s'", redisEnableCmd.Use)
 	}
 
 	if redisEnableCmd.Short == "" {
@@ -36,8 +21,8 @@ func TestRedisEnableCmdStructure(t *testing.T) {
 
 func TestRedisDisableCmdStructure(t *testing.T) {
 	// Test disable command structure
-	if redisDisableCmd.Use != "disable <site>" {
-		t.Errorf("expected redisDisableCmd.Use to be 'disable <site>', got '%s'", redisDisableCmd.Use)
+	if redisDisableCmd.Use != "redis:disable <site>" {
+		t.Errorf("expected redisDisableCmd.Use to be 'redis:disable <site>', got '%s'", redisDisableCmd.Use)
 	}
 
 	if redisDisableCmd.Short == "" {
@@ -49,24 +34,19 @@ func TestRedisDisableCmdStructure(t *testing.T) {
 	}
 }
 
-func TestRedisSubcommands(t *testing.T) {
-	// Test that enable and disable are subcommands of redis
-	subcommands := redisCmd.Commands()
+func TestRedisCommands(t *testing.T) {
+	expectedCommands := []string{"redis:enable", "redis:disable"}
 
-	expectedCommands := map[string]bool{
-		"enable":  false,
-		"disable": false,
-	}
-
-	for _, cmd := range subcommands {
-		if _, exists := expectedCommands[cmd.Name()]; exists {
-			expectedCommands[cmd.Name()] = true
+	for _, expected := range expectedCommands {
+		found := false
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Use == expected || (len(cmd.Use) > len(expected) && cmd.Use[:len(expected)] == expected) {
+				found = true
+				break
+			}
 		}
-	}
-
-	for cmdName, found := range expectedCommands {
 		if !found {
-			t.Errorf("expected '%s' to be a subcommand of redis", cmdName)
+			t.Errorf("expected command '%s' not found in rootCmd", expected)
 		}
 	}
 }
@@ -116,45 +96,5 @@ func TestRedisDisableRequiresArg(t *testing.T) {
 	// The command should have Args set to ExactArgs(1)
 	if cmd.Args == nil {
 		t.Error("redisDisableCmd should have Args validator set")
-	}
-}
-
-func TestRedisCommandsRegistered(t *testing.T) {
-	// Verify redis commands are properly registered
-	// Find redis in root commands
-	found := false
-	for _, cmd := range rootCmd.Commands() {
-		if cmd.Name() != "redis" {
-			continue
-		}
-
-		found = true
-
-		// Check subcommands
-		subCmds := cmd.Commands()
-		hasEnable := false
-		hasDisable := false
-
-		for _, subCmd := range subCmds {
-			switch subCmd.Name() {
-			case "enable":
-				hasEnable = true
-			case "disable":
-				hasDisable = true
-			}
-		}
-
-		if !hasEnable {
-			t.Error("redis command should have 'enable' subcommand")
-		}
-		if !hasDisable {
-			t.Error("redis command should have 'disable' subcommand")
-		}
-
-		break
-	}
-
-	if !found {
-		t.Error("redis command should be registered with root command")
 	}
 }

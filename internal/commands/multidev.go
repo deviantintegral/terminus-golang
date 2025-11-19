@@ -7,14 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var multidevCmd = &cobra.Command{
-	Use:   "multidev",
-	Short: "Multidev environment management",
-	Long:  "Manage multidev environments",
-}
-
 var multidevCreateCmd = &cobra.Command{
-	Use:   "create <site>.<multidev>",
+	Use:   "multidev:create <site>.<multidev>",
 	Short: "Create a multidev environment",
 	Long:  "Create a new multidev environment",
 	Args:  cobra.ExactArgs(1),
@@ -22,7 +16,7 @@ var multidevCreateCmd = &cobra.Command{
 }
 
 var multidevDeleteCmd = &cobra.Command{
-	Use:   "delete <site>.<multidev>",
+	Use:   "multidev:delete <site>.<multidev>",
 	Short: "Delete a multidev environment",
 	Long:  "Delete a multidev environment",
 	Args:  cobra.ExactArgs(1),
@@ -30,7 +24,7 @@ var multidevDeleteCmd = &cobra.Command{
 }
 
 var multidevMergeToDevCmd = &cobra.Command{
-	Use:   "merge-to-dev <site>.<multidev>",
+	Use:   "multidev:merge-to-dev <site>.<multidev>",
 	Short: "Merge multidev to dev",
 	Long:  "Merge a multidev environment into dev",
 	Args:  cobra.ExactArgs(1),
@@ -38,7 +32,7 @@ var multidevMergeToDevCmd = &cobra.Command{
 }
 
 var multidevMergeFromDevCmd = &cobra.Command{
-	Use:   "merge-from-dev <site>.<multidev>",
+	Use:   "multidev:merge-from-dev <site>.<multidev>",
 	Short: "Merge dev into multidev",
 	Long:  "Merge dev into a multidev environment",
 	Args:  cobra.ExactArgs(1),
@@ -51,10 +45,11 @@ var (
 )
 
 func init() {
-	multidevCmd.AddCommand(multidevCreateCmd)
-	multidevCmd.AddCommand(multidevDeleteCmd)
-	multidevCmd.AddCommand(multidevMergeToDevCmd)
-	multidevCmd.AddCommand(multidevMergeFromDevCmd)
+	// Add multidev commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(multidevCreateCmd)
+	rootCmd.AddCommand(multidevDeleteCmd)
+	rootCmd.AddCommand(multidevMergeToDevCmd)
+	rootCmd.AddCommand(multidevMergeFromDevCmd)
 
 	multidevCreateCmd.Flags().StringVar(&multidevFromEnvFlag, "from-env", "dev", "Source environment")
 	multidevDeleteCmd.Flags().BoolVar(&multidevDeleteDBFlag, "delete-db", false, "Delete database")
