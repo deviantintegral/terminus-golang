@@ -91,6 +91,12 @@ func printTable(data interface{}, opts *Options) error {
 		return nil
 	}
 
+	// For single item, use vertical layout (PHP terminus style)
+	if len(rows) == 1 {
+		return printVerticalTable(rows[0], headers, opts)
+	}
+
+	// For multiple items, use horizontal layout
 	// Calculate column widths
 	widths := make([]int, len(headers))
 	for i, h := range headers {
@@ -127,6 +133,112 @@ func printTable(data interface{}, opts *Options) error {
 	}
 
 	return nil
+}
+
+// printVerticalTable prints a single item as a vertical table (PHP terminus style)
+func printVerticalTable(row, headers []string, opts *Options) error {
+	// Calculate column widths
+	fieldWidth := 0
+	valueWidth := 0
+
+	// Convert headers to human-readable titles and calculate widths
+	titles := make([]string, len(headers))
+	for i, h := range headers {
+		titles[i] = toHumanReadable(h)
+		if len(titles[i]) > fieldWidth {
+			fieldWidth = len(titles[i])
+		}
+	}
+
+	for _, cell := range row {
+		if len(cell) > valueWidth {
+			valueWidth = len(cell)
+		}
+	}
+
+	// Print top border
+	_, _ = fmt.Fprintf(opts.Writer, " %s %s\n",
+		strings.Repeat("-", fieldWidth),
+		strings.Repeat("-", valueWidth))
+
+	// Print each field-value pair
+	for i, title := range titles {
+		value := ""
+		if i < len(row) {
+			value = row[i]
+		}
+		_, _ = fmt.Fprintf(opts.Writer, "  %-*s   %s\n", fieldWidth, title, value)
+	}
+
+	// Print bottom border
+	_, _ = fmt.Fprintf(opts.Writer, " %s %s\n",
+		strings.Repeat("-", fieldWidth),
+		strings.Repeat("-", valueWidth))
+
+	return nil
+}
+
+// toHumanReadable converts a field name to a human-readable title
+func toHumanReadable(fieldName string) string {
+	// Handle special cases
+	switch strings.ToLower(fieldName) {
+	case "id":
+		return "ID"
+	case "firstname":
+		return "First Name"
+	case "lastname":
+		return "Last Name"
+	case "email":
+		return "Email"
+	case "profile":
+		return "Profile"
+	}
+
+	// Default: capitalize first letter
+	if fieldName == "" {
+		return fieldName
+	}
+
+	// Split camelCase or handle simple cases
+	words := splitCamelCase(fieldName)
+	for i, word := range words {
+		if word != "" {
+			words[i] = strings.ToUpper(word[0:1]) + strings.ToLower(word[1:])
+		}
+	}
+
+	return strings.Join(words, " ")
+}
+
+// splitCamelCase splits a camelCase or lowercase string into words
+func splitCamelCase(s string) []string {
+	// If string has underscores, split by them
+	if strings.Contains(s, "_") {
+		return strings.Split(s, "_")
+	}
+
+	// Simple case: all lowercase or uppercase
+	if s == strings.ToLower(s) || s == strings.ToUpper(s) {
+		return []string{s}
+	}
+
+	// Split camelCase
+	var words []string
+	var currentWord strings.Builder
+
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			words = append(words, currentWord.String())
+			currentWord.Reset()
+		}
+		currentWord.WriteRune(r)
+	}
+
+	if currentWord.Len() > 0 {
+		words = append(words, currentWord.String())
+	}
+
+	return words
 }
 
 // printCSV prints data as CSV
