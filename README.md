@@ -1,5 +1,8 @@
 # Terminus Go
 
+[![CI](https://github.com/deviantintegral/terminus-golang/actions/workflows/ci.yml/badge.svg)](https://github.com/deviantintegral/terminus-golang/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/deviantintegral/terminus-golang)](https://github.com/deviantintegral/terminus-golang/releases/latest)
+
 A command-line interface for managing Pantheon sites, written in Go. This is a complete rewrite of the [Pantheon Terminus](https://github.com/pantheon-systems/terminus) CLI tool.
 
 ## Features
