@@ -182,10 +182,9 @@ func TestAuthLogin(t *testing.T) {
 	authService := NewAuthService(client)
 
 	ctx := context.Background()
-	email := "test@example.com"
 
 	// Test login
-	session, err := authService.Login(ctx, token, email)
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -236,7 +235,7 @@ func TestAuthWhoami(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -286,7 +285,7 @@ func TestAuthLogout(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -320,7 +319,7 @@ func TestOrgList(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -367,7 +366,7 @@ func TestOrgInfo(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -428,7 +427,7 @@ func TestSiteList(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -475,7 +474,7 @@ func TestSiteInfo(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -539,7 +538,7 @@ func TestIntegrationSequence(t *testing.T) {
 	var session *SessionResponse
 	t.Run("Login", func(t *testing.T) {
 		var err error
-		session, err = authService.Login(ctx, token, "integration@example.com")
+		session, err = authService.Login(ctx, token)
 		if err != nil {
 			t.Fatalf("Login failed: %v", err)
 		}
@@ -621,7 +620,7 @@ func setupSiteLifecycleTest(t *testing.T) *siteLifecycleTestData {
 	data.siteService = NewSitesService(data.client)
 
 	// Login
-	session, err := data.authService.Login(data.ctx, token, "")
+	session, err := data.authService.Login(data.ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -803,7 +802,7 @@ func TestRedisEnable(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
@@ -859,7 +858,7 @@ func TestRedisDisable(t *testing.T) {
 	ctx := context.Background()
 
 	// Login first
-	session, err := authService.Login(ctx, token, "")
+	session, err := authService.Login(ctx, token)
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}

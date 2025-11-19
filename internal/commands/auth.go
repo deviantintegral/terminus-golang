@@ -69,7 +69,7 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 
 	// Authenticate
 	printMessage("Logging in...")
-	sess, err := authService.Login(getContext(), token, email)
+	sess, err := authService.Login(getContext(), token)
 	if err != nil {
 		return fmt.Errorf("login failed: %w", err)
 	}

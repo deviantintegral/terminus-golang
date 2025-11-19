@@ -23,7 +23,7 @@ func NewAuthService(client *Client) *AuthService {
 // LoginRequest represents a machine token login request
 type LoginRequest struct {
 	MachineToken string `json:"machine_token"`
-	Email        string `json:"email,omitempty"`
+	Client       string `json:"client"`
 }
 
 // SessionResponse represents the session response from login
@@ -35,10 +35,10 @@ type SessionResponse struct {
 }
 
 // Login authenticates using a machine token and returns a session
-func (s *AuthService) Login(ctx context.Context, machineToken, email string) (*SessionResponse, error) {
+func (s *AuthService) Login(ctx context.Context, machineToken string) (*SessionResponse, error) {
 	req := LoginRequest{
 		MachineToken: machineToken,
-		Email:        email,
+		Client:       "terminus",
 	}
 
 	resp, err := s.client.Post(ctx, "/authorize/machine-token", req)
