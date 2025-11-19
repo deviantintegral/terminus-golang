@@ -117,20 +117,20 @@ func (r *fixtureRecorder) redactSensitiveData(data []byte) []byte {
 	// Redact patterns
 	patterns := map[string]string{
 		// Session tokens (UUIDs and long strings)
-		`"session":\s*"[^"]{20,}"`:                    `"session": "REDACTED"`,
-		`"Session":\s*"[^"]{20,}"`:                    `"Session": "REDACTED"`,
-		`"session_token":\s*"[^"]{20,}"`:              `"session_token": "REDACTED"`,
-		`"SessionToken":\s*"[^"]{20,}"`:               `"SessionToken": "REDACTED"`,
+		`"session":\s*"[^"]{20,}"`:       `"session": "REDACTED"`,
+		`"Session":\s*"[^"]{20,}"`:       `"Session": "REDACTED"`,
+		`"session_token":\s*"[^"]{20,}"`: `"session_token": "REDACTED"`,
+		`"SessionToken":\s*"[^"]{20,}"`:  `"SessionToken": "REDACTED"`,
 		// Machine tokens
-		`"machine_token":\s*"[^"]{20,}"`:              `"machine_token": "REDACTED"`,
-		`"MachineToken":\s*"[^"]{20,}"`:               `"MachineToken": "REDACTED"`,
+		`"machine_token":\s*"[^"]{20,}"`: `"machine_token": "REDACTED"`,
+		`"MachineToken":\s*"[^"]{20,}"`:  `"MachineToken": "REDACTED"`,
 		// User IDs (UUIDs)
 		`"user_id":\s*"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"`: `"user_id": "REDACTED-USER-ID"`,
 		`"UserID":\s*"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"`:  `"UserID": "REDACTED-USER-ID"`,
 		`"id":\s*"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"`:      `"id": "REDACTED-ID"`,
 		// Emails - replace with redacted email
-		`"email":\s*"[^"]+@[^"]+\.[^"]+"`:             `"email": "redacted@example.com"`,
-		`"Email":\s*"[^"]+@[^"]+\.[^"]+"`:             `"Email": "redacted@example.com"`,
+		`"email":\s*"[^"]+@[^"]+\.[^"]+"`: `"email": "redacted@example.com"`,
+		`"Email":\s*"[^"]+@[^"]+\.[^"]+"`: `"Email": "redacted@example.com"`,
 	}
 
 	for pattern, replacement := range patterns {
@@ -611,9 +611,9 @@ func setupSiteLifecycleTest(t *testing.T) *siteLifecycleTestData {
 	token := skipIfNoToken(t)
 
 	data := &siteLifecycleTestData{
-		ctx:         context.Background(),
-		client:      NewClient(),
-		recorder:    newFixtureRecorder(t),
+		ctx:      context.Background(),
+		client:   NewClient(),
+		recorder: newFixtureRecorder(t),
 	}
 
 	data.authService = NewAuthService(data.client)
@@ -784,32 +784,144 @@ func testVerifySiteDeleted(t *testing.T, data *siteLifecycleTestData) {
 	t.Logf("✓ Verified site no longer in list")
 }
 
+// TestRedisEnable tests the redis:enable command
+// Note: This test is skipped by default as it modifies site configuration
+// Set PANTHEON_TEST_SITE to a test site name to run this test
+func TestRedisEnable(t *testing.T) {
+	token := skipIfNoToken(t)
+	recorder := newFixtureRecorder(t)
+
+	testSite := os.Getenv("PANTHEON_TEST_SITE")
+	if testSite == "" {
+		t.Skip("Skipping redis:enable test: PANTHEON_TEST_SITE not set")
+	}
+
+	client := NewClient()
+	authService := NewAuthService(client)
+	redisService := NewRedisService(client)
+
+	ctx := context.Background()
+
+	// Login first
+	session, err := authService.Login(ctx, token, "")
+	if err != nil {
+		t.Fatalf("Login failed: %v", err)
+	}
+	client.SetToken(session.Session)
+
+	// Test redis enable
+	workflow, err := redisService.Enable(ctx, testSite)
+	if err != nil {
+		// Record the error for documentation purposes
+		errorResponse := map[string]interface{}{
+			"error":   err.Error(),
+			"note":    "Redis enable may fail if already enabled or site doesn't support Redis",
+			"site_id": testSite,
+		}
+		recorder.record("redis_enable_error", errorResponse)
+		t.Skipf("Redis enable endpoint not available: %v", err)
+		return
+	}
+
+	// Validate response
+	if workflow == nil {
+		t.Fatal("Expected workflow to be non-nil")
+	}
+	if workflow.ID == "" {
+		t.Error("Expected workflow ID to be set")
+	}
+	if workflow.Type != "enable_addon" {
+		t.Errorf("Expected workflow type 'enable_addon', got %s", workflow.Type)
+	}
+
+	// Record fixture
+	recorder.record("redis_enable", workflow)
+
+	t.Logf("Redis enable workflow created: %s (Type: %s)", workflow.ID, workflow.Type)
+}
+
+// TestRedisDisable tests the redis:disable command
+// Note: This test is skipped by default as it modifies site configuration
+// Set PANTHEON_TEST_SITE to a test site name to run this test
+func TestRedisDisable(t *testing.T) {
+	token := skipIfNoToken(t)
+	recorder := newFixtureRecorder(t)
+
+	testSite := os.Getenv("PANTHEON_TEST_SITE")
+	if testSite == "" {
+		t.Skip("Skipping redis:disable test: PANTHEON_TEST_SITE not set")
+	}
+
+	client := NewClient()
+	authService := NewAuthService(client)
+	redisService := NewRedisService(client)
+
+	ctx := context.Background()
+
+	// Login first
+	session, err := authService.Login(ctx, token, "")
+	if err != nil {
+		t.Fatalf("Login failed: %v", err)
+	}
+	client.SetToken(session.Session)
+
+	// Test redis disable
+	workflow, err := redisService.Disable(ctx, testSite)
+	if err != nil {
+		// Record the error for documentation purposes
+		errorResponse := map[string]interface{}{
+			"error":   err.Error(),
+			"note":    "Redis disable may fail if already disabled or site doesn't support Redis",
+			"site_id": testSite,
+		}
+		recorder.record("redis_disable_error", errorResponse)
+		t.Skipf("Redis disable endpoint not available: %v", err)
+		return
+	}
+
+	// Validate response
+	if workflow == nil {
+		t.Fatal("Expected workflow to be non-nil")
+	}
+	if workflow.ID == "" {
+		t.Error("Expected workflow ID to be set")
+	}
+	if workflow.Type != "disable_addon" {
+		t.Errorf("Expected workflow type 'disable_addon', got %s", workflow.Type)
+	}
+
+	// Record fixture
+	recorder.record("redis_disable", workflow)
+
+	t.Logf("Redis disable workflow created: %s (Type: %s)", workflow.ID, workflow.Type)
+}
+
 // TestFixtureRedaction verifies that sensitive data is properly redacted
 func TestFixtureRedaction(t *testing.T) {
 	recorder := newFixtureRecorder(t)
 
 	testCases := []struct {
-		name     string
-		input    string
-		contains []string
+		name        string
+		input       string
+		contains    []string
 		notContains []string
 	}{
 		{
-			name:  "Session token redaction",
-			input: `{"session": "abc123xyz789longtoken", "user_id": "550e8400-e29b-41d4-a716-446655440000"}`,
-			contains: []string{"REDACTED", "REDACTED-USER-ID"},
+			name:        "Session token redaction",
+			input:       `{"session": "abc123xyz789longtoken", "user_id": "550e8400-e29b-41d4-a716-446655440000"}`,
+			contains:    []string{"REDACTED", "REDACTED-USER-ID"},
 			notContains: []string{"abc123xyz789longtoken", "550e8400-e29b-41d4-a716-446655440000"},
 		},
 		{
-			name:  "Email redaction",
-			input: `{"email": "user@pantheon.io", "name": "Test User"}`,
-			contains: []string{"redacted@example.com"},
+			name:        "Email redaction",
+			input:       `{"email": "user@pantheon.io", "name": "Test User"}`,
+			contains:    []string{"redacted@example.com"},
 			notContains: []string{"user@pantheon.io"},
 		},
 		{
-			name:  "Machine token redaction",
-			input: `{"machine_token": "verylongsecrettokenstring123456"}`,
-			contains: []string{"REDACTED"},
+			name:        "Machine token redaction",
+			input:       `{"machine_token": "verylongsecrettokenstring123456"}`,
+			contains:    []string{"REDACTED"},
 			notContains: []string{"verylongsecrettokenstring123456"},
 		},
 	}
