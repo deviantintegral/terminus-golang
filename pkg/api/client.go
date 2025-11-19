@@ -169,7 +169,16 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 		resp, err = c.httpClient.Do(req)
 
 		if c.shouldStopRetrying(resp, err) {
-			c.logSuccessfulResponse(resp)
+			c.logResponse(resp)
+			// Check if the response indicates an error (4XX or 5XX)
+			if resp.StatusCode >= 400 {
+				body, _ := io.ReadAll(resp.Body)
+				_ = resp.Body.Close()
+				return nil, &Error{
+					StatusCode: resp.StatusCode,
+					Message:    string(body),
+				}
+			}
 			return resp, nil
 		}
 
@@ -208,8 +217,8 @@ func (c *Client) shouldStopRetrying(resp *http.Response, err error) bool {
 	return err == nil && !shouldRetry(resp.StatusCode)
 }
 
-// logSuccessfulResponse logs the response if trace logging is enabled
-func (c *Client) logSuccessfulResponse(resp *http.Response) {
+// logResponse logs the response if trace logging is enabled
+func (c *Client) logResponse(resp *http.Response) {
 	if httpLogger, ok := AsHTTPLogger(c.logger); ok && httpLogger.IsTraceEnabled() {
 		c.logHTTPResponse(resp, httpLogger)
 	}
@@ -343,12 +352,6 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 		resp, err := c.Get(ctx, path)
 		if err != nil {
 			return nil, err
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			body, _ := io.ReadAll(resp.Body)
-			_ = resp.Body.Close()
-			return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 		}
 
 		var results []json.RawMessage
