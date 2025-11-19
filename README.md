@@ -387,3 +387,295 @@ While this Go version aims for feature parity with the PHP Terminus, there are s
 - [ ] Plugin system
 - [ ] Shell completion
 - [ ] Man page generation
+
+## Implementation Status
+
+This section tracks the implementation status of all PHP Terminus commands in this Go version. Commands are compared against [PHP Terminus 3.x](https://github.com/pantheon-systems/terminus/tree/3.x).
+
+**Legend:**
+- ✅ = Implemented / Tested
+- ❌ = Not implemented / Not tested
+
+### aliases
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `aliases` | Print all site aliases | ❌ | ❌ |
+
+### art
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `art` | Display Pantheon ASCII art | ✅ | ❌ |
+| `art:list` | List available ASCII art | ✅ | ❌ |
+
+### auth
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `auth:login` | Log in to Pantheon using a machine token | ✅ | ❌ |
+| `auth:logout` | Log out of Pantheon and delete saved session | ✅ | ❌ |
+| `auth:whoami` | Display current user information | ✅ | ❌ |
+
+### backup
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `backup:automatic:disable` | Disable automatic backups for an environment | ✅ | ❌ |
+| `backup:automatic:enable` | Enable automatic backups for an environment | ✅ | ❌ |
+| `backup:automatic:info` | Show automatic backup schedule | ✅ | ❌ |
+| `backup:create` | Create a backup of an environment | ✅ | ❌ |
+| `backup:get` | Download a specific backup | ✅ | ❌ |
+| `backup:info` | Show information about a specific backup | ❌ | ❌ |
+| `backup:list` | List backups for an environment | ✅ | ❌ |
+| `backup:restore` | Restore an environment from a backup | ✅ | ❌ |
+
+### branch
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `branch:list` | List git branches for a site | ❌ | ❌ |
+
+### connection
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `connection:info` | Show connection info for an environment | ❌ | ❌ |
+| `connection:set` | Set connection mode (git/sftp) | ✅ | ❌ |
+
+### dashboard
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `dashboard:view` | Open site dashboard in a browser | ❌ | ❌ |
+
+### domain
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `domain:add` | Add a domain to an environment | ✅ | ❌ |
+| `domain:dns` | Show DNS recommendations for a domain | ✅ | ❌ |
+| `domain:list` | List domains for an environment | ✅ | ❌ |
+| `domain:lookup` | Find the site associated with a domain | ❌ | ❌ |
+| `domain:primary:add` | Add a primary domain to an environment | ❌ | ❌ |
+| `domain:primary:remove` | Remove primary domain designation | ❌ | ❌ |
+| `domain:remove` | Remove a domain from an environment | ✅ | ❌ |
+
+### env
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `env:clear-cache` | Clear caches for an environment | ✅ | ❌ |
+| `env:clone-content` | Clone database and/or files between environments | ✅ | ❌ |
+| `env:code-log` | Show code log for an environment | ❌ | ❌ |
+| `env:code-rebuild` | Rebuild code for an environment | ❌ | ❌ |
+| `env:commit` | Commit changes in SFTP mode | ✅ | ❌ |
+| `env:deploy` | Deploy code to an environment | ✅ | ❌ |
+| `env:diffstat` | Show diff statistics for an environment | ❌ | ❌ |
+| `env:info` | Show environment information | ✅ | ❌ |
+| `env:list` | List environments for a site | ✅ | ❌ |
+| `env:metrics` | Show environment metrics | ❌ | ❌ |
+| `env:rotate-random-seed` | Rotate the Drupal hash salt | ❌ | ❌ |
+| `env:view` | Open environment in a browser | ❌ | ❌ |
+| `env:wake` | Wake a sleeping environment | ❌ | ❌ |
+| `env:wipe` | Wipe database and files from an environment | ✅ | ❌ |
+
+### https
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `https:info` | Show HTTPS/SSL information | ❌ | ❌ |
+| `https:remove` | Remove HTTPS certificate | ❌ | ❌ |
+| `https:set` | Enable HTTPS with a certificate | ❌ | ❌ |
+
+### import
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `import:complete` | Complete site import | ❌ | ❌ |
+| `import:database` | Import database to an environment | ❌ | ❌ |
+| `import:files` | Import files to an environment | ❌ | ❌ |
+| `import:site` | Import a site archive | ❌ | ❌ |
+
+### local
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `local:clone` | Clone a Pantheon site locally | ❌ | ❌ |
+| `local:commitAndPush` | Commit and push local changes | ❌ | ❌ |
+| `local:dockerize` | Create Docker setup for local development | ❌ | ❌ |
+| `local:getLiveDB` | Download database from live environment | ❌ | ❌ |
+| `local:getLiveFiles` | Download files from live environment | ❌ | ❌ |
+
+### lock
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `lock:disable` | Disable HTTP basic auth for an environment | ❌ | ❌ |
+| `lock:enable` | Enable HTTP basic auth for an environment | ❌ | ❌ |
+| `lock:info` | Show lock status for an environment | ❌ | ❌ |
+
+### machine-token
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `machine-token:delete` | Delete a machine token | ❌ | ❌ |
+| `machine-token:delete-all` | Delete all machine tokens | ❌ | ❌ |
+| `machine-token:list` | List machine tokens | ❌ | ❌ |
+
+### multidev
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `multidev:create` | Create a multidev environment | ✅ | ❌ |
+| `multidev:delete` | Delete a multidev environment | ✅ | ❌ |
+| `multidev:list` | List multidev environments | ❌ | ❌ |
+| `multidev:merge-from-dev` | Merge code from dev into multidev | ✅ | ❌ |
+| `multidev:merge-to-dev` | Merge code from multidev to dev | ✅ | ❌ |
+
+### new-relic
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `new-relic:disable` | Disable New Relic for a site | ❌ | ❌ |
+| `new-relic:enable` | Enable New Relic for a site | ❌ | ❌ |
+| `new-relic:info` | Show New Relic information | ❌ | ❌ |
+
+### org
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `org:info` | Show organization information | ✅ | ❌ |
+| `org:list` | List organizations | ✅ | ❌ |
+| `org:people:list` | List organization members | ✅ | ❌ |
+| `org:site:list` | List sites belonging to an organization | ✅ | ❌ |
+| `org:upstream:list` | List upstreams for an organization | ✅ | ❌ |
+
+### owner
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `owner:set` | Change site owner | ❌ | ❌ |
+
+### payment-method
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `payment-method:add` | Add a payment method | ❌ | ❌ |
+| `payment-method:list` | List payment methods | ❌ | ❌ |
+| `payment-method:remove` | Remove a payment method | ❌ | ❌ |
+
+### plan
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `plan:info` | Show site plan information | ❌ | ❌ |
+| `plan:list` | List available plans | ❌ | ❌ |
+| `plan:set` | Change the site plan | ❌ | ❌ |
+
+### redis
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `redis:disable` | Disable Redis for a site | ❌ | ❌ |
+| `redis:enable` | Enable Redis for a site | ❌ | ❌ |
+
+### remote
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `drush` | Run a Drush command on a site | ❌ | ❌ |
+| `wp` | Run a WP-CLI command on a site | ❌ | ❌ |
+
+### self
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `self:clear-cache` | Clear Terminus cache | ❌ | ❌ |
+| `self:config:dump` | Dump Terminus configuration | ❌ | ❌ |
+| `self:console` | Open interactive console | ❌ | ❌ |
+| `self:info` | Show Terminus information | ❌ | ❌ |
+| `self:plugin:create` | Create a new plugin | ❌ | ❌ |
+| `self:plugin:install` | Install a plugin | ❌ | ❌ |
+| `self:plugin:list` | List installed plugins | ❌ | ❌ |
+| `self:plugin:reload` | Reload plugins | ❌ | ❌ |
+| `self:plugin:search` | Search for plugins | ❌ | ❌ |
+| `self:plugin:uninstall` | Uninstall a plugin | ❌ | ❌ |
+| `self:plugin:update` | Update a plugin | ❌ | ❌ |
+
+### service-level
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `service-level:set` | Set the service level of a site | ❌ | ❌ |
+
+### site
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `site:create` | Create a new site | ✅ | ❌ |
+| `site:delete` | Delete a site | ✅ | ❌ |
+| `site:info` | Show site information | ✅ | ❌ |
+| `site:label` | Set site label | ❌ | ❌ |
+| `site:list` | List sites | ✅ | ❌ |
+| `site:lookup` | Look up a site by UUID | ❌ | ❌ |
+| `site:org:add` | Add site to an organization | ❌ | ❌ |
+| `site:org:list` | List organizations a site belongs to | ❌ | ❌ |
+| `site:org:remove` | Remove site from an organization | ❌ | ❌ |
+| `site:team:add` | Add a user to the site team | ❌ | ❌ |
+| `site:team:list` | List site team members | ✅ | ❌ |
+| `site:team:remove` | Remove a user from the site team | ❌ | ❌ |
+| `site:team:role` | Change a team member's role | ❌ | ❌ |
+| `site:upstream:clear-cache` | Clear upstream cache | ❌ | ❌ |
+| `site:upstream:set` | Set the upstream for a site | ❌ | ❌ |
+
+### solr
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `solr:disable` | Disable Solr for a site | ❌ | ❌ |
+| `solr:enable` | Enable Solr for a site | ❌ | ❌ |
+
+### ssh-key
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `ssh-key:add` | Add an SSH key to your account | ❌ | ❌ |
+| `ssh-key:list` | List SSH keys on your account | ❌ | ❌ |
+| `ssh-key:remove` | Remove an SSH key from your account | ❌ | ❌ |
+
+### tag
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `tag:add` | Add a tag to a site | ❌ | ❌ |
+| `tag:list` | List tags for a site | ❌ | ❌ |
+| `tag:remove` | Remove a tag from a site | ❌ | ❌ |
+
+### upstream
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `upstream:info` | Show upstream information | ❌ | ❌ |
+| `upstream:list` | List upstreams | ❌ | ❌ |
+| `upstream:updates:apply` | Apply upstream updates to a site | ❌ | ❌ |
+| `upstream:updates:list` | List available upstream updates | ❌ | ❌ |
+| `upstream:updates:status` | Check for upstream updates | ❌ | ❌ |
+
+### workflow
+
+| Command | Description | Implemented | Human Tested |
+|---------|-------------|:-----------:|:------------:|
+| `workflow:info` | Show workflow information | ✅ | ❌ |
+| `workflow:list` | List workflows for a site | ✅ | ❌ |
+| `workflow:wait` | Wait for a workflow to complete | ✅ | ❌ |
+| `workflow:watch` | Watch a workflow with live progress | ✅ | ❌ |
+
+### Implementation Summary
+
+| Status | Count |
+|--------|-------|
+| **Total Commands** | 113 |
+| **Implemented** | 37 |
+| **Not Implemented** | 76 |
+| **Implementation Progress** | 33% |
