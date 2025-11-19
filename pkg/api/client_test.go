@@ -72,6 +72,76 @@ func TestClientRequest(t *testing.T) {
 	}
 }
 
+func TestClientRequestErrorResponse(t *testing.T) {
+	// Create a test server that returns a 404 error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error": "not found"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(
+		WithBaseURL(server.URL),
+		WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	ctx := context.Background()
+	resp, err := client.Get(ctx, "/test")
+	if resp != nil {
+		defer func() { _ = resp.Body.Close() }()
+	}
+	if err == nil {
+		t.Fatal("expected error for 404 response")
+	}
+
+	// Verify it's an API error
+	apiErr, ok := err.(*Error)
+	if !ok {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	if apiErr.StatusCode != http.StatusNotFound {
+		t.Errorf("expected status code 404, got %d", apiErr.StatusCode)
+	}
+
+	if !IsNotFound(err) {
+		t.Error("expected IsNotFound to return true")
+	}
+}
+
+func TestClientRequestBadRequest(t *testing.T) {
+	// Create a test server that returns a 400 error (no retries)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error": "bad request"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(
+		WithBaseURL(server.URL),
+		WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	ctx := context.Background()
+	resp, err := client.Get(ctx, "/test")
+	if resp != nil {
+		defer func() { _ = resp.Body.Close() }()
+	}
+	if err == nil {
+		t.Fatal("expected error for 400 response")
+	}
+
+	// Verify it's an API error with correct status
+	apiErr, ok := err.(*Error)
+	if !ok {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	if apiErr.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected status code 400, got %d", apiErr.StatusCode)
+	}
+}
+
 func TestShouldRetry(t *testing.T) {
 	tests := []struct {
 		statusCode int
