@@ -259,3 +259,19 @@ func (s *SitesService) RemoveTag(ctx context.Context, siteID, orgID, tagName str
 
 	return nil
 }
+
+// GetPlan returns the plan for a site
+func (s *SitesService) GetPlan(ctx context.Context, siteID string) (*models.Plan, error) {
+	path := fmt.Sprintf("/sites/%s/plan", siteID)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return nil, fmt.Errorf("failed to get site plan: %w", err)
+	}
+
+	var plan models.Plan
+	if err := DecodeResponse(resp, &plan); err != nil {
+		return nil, err
+	}
+
+	return &plan, nil
+}

@@ -232,12 +232,21 @@ type PaymentMethod struct {
 
 // Plan represents a service plan
 type Plan struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Label        string  `json:"label"`
-	SKU          string  `json:"sku"`
-	BillingCycle string  `json:"billing_cycle"`
-	Price        float64 `json:"price"`
+	ID                   string  `json:"id"`
+	Name                 string  `json:"name"`
+	Label                string  `json:"label"`
+	SKU                  string  `json:"sku"`
+	BillingCycle         string  `json:"billing_cycle"`
+	Price                float64 `json:"price"`
+	MonthlyPrice         float64 `json:"monthly_price"`
+	AutomatedBackups     bool    `json:"automated_backups"`
+	CacheServer          bool    `json:"cache_server"`
+	CustomUpstreams      bool    `json:"custom_upstreams"`
+	MultidevEnvironments int     `json:"multidev_environments"`
+	NewRelic             bool    `json:"new_relic"`
+	SecureRuntimeAccess  bool    `json:"secure_runtime_access"`
+	StorageGB            int     `json:"storage_gb"`
+	SupportPlan          string  `json:"support_plan"`
 }
 
 // MachineToken represents a machine token
