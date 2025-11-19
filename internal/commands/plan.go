@@ -15,9 +15,18 @@ var planInfoCmd = &cobra.Command{
 	RunE:  runPlanInfo,
 }
 
+var planListCmd = &cobra.Command{
+	Use:   "plan:list <site>",
+	Short: "List available plans for a site",
+	Long:  "Display a list of available plans for a site",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runPlanList,
+}
+
 func init() {
 	// Add plan commands directly to rootCmd with colon-separated names
 	rootCmd.AddCommand(planInfoCmd)
+	rootCmd.AddCommand(planListCmd)
 }
 
 func runPlanInfo(_ *cobra.Command, args []string) error {
@@ -35,4 +44,25 @@ func runPlanInfo(_ *cobra.Command, args []string) error {
 	}
 
 	return printOutput(plan)
+}
+
+func runPlanList(_ *cobra.Command, args []string) error {
+	if err := requireAuth(); err != nil {
+		return err
+	}
+
+	siteID := args[0]
+	sitesService := api.NewSitesService(cliContext.APIClient)
+
+	plans, err := sitesService.GetPlans(getContext(), siteID)
+	if err != nil {
+		return fmt.Errorf("failed to list plans: %w", err)
+	}
+
+	if len(plans) == 0 {
+		printMessage("No plans found for site %s", siteID)
+		return nil
+	}
+
+	return printOutput(plans)
 }

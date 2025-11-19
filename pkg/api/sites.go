@@ -275,3 +275,73 @@ func (s *SitesService) GetPlan(ctx context.Context, siteID string) (*models.Plan
 
 	return &plan, nil
 }
+
+// ListBranches returns git branches for a site
+func (s *SitesService) ListBranches(ctx context.Context, siteID string) ([]*models.Branch, error) {
+	path := fmt.Sprintf("/sites/%s/code-tips", siteID)
+
+	rawResults, err := s.client.GetPaged(ctx, path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list branches: %w", err)
+	}
+
+	branches := make([]*models.Branch, 0, len(rawResults))
+	for _, raw := range rawResults {
+		var branch models.Branch
+		if err := json.Unmarshal(raw, &branch); err != nil {
+			return nil, fmt.Errorf("failed to decode branch: %w", err)
+		}
+		branches = append(branches, &branch)
+	}
+
+	return branches, nil
+}
+
+// GetPlans returns available plans for a site
+func (s *SitesService) GetPlans(ctx context.Context, siteID string) ([]*models.Plan, error) {
+	path := fmt.Sprintf("/sites/%s/plans", siteID)
+
+	rawResults, err := s.client.GetPaged(ctx, path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plans: %w", err)
+	}
+
+	plans := make([]*models.Plan, 0, len(rawResults))
+	for _, raw := range rawResults {
+		var plan models.Plan
+		if err := json.Unmarshal(raw, &plan); err != nil {
+			return nil, fmt.Errorf("failed to decode plan: %w", err)
+		}
+		plans = append(plans, &plan)
+	}
+
+	return plans, nil
+}
+
+// ListOrganizations returns organizations that a site belongs to
+func (s *SitesService) ListOrganizations(ctx context.Context, siteID string) ([]*models.SiteOrganizationMembership, error) {
+	path := fmt.Sprintf("/sites/%s/memberships/organizations", siteID)
+
+	rawResults, err := s.client.GetPaged(ctx, path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list site organizations: %w", err)
+	}
+
+	memberships := make([]*models.SiteOrganizationMembership, 0, len(rawResults))
+	for _, raw := range rawResults {
+		var membership struct {
+			Organization *models.Organization `json:"organization"`
+		}
+		if err := json.Unmarshal(raw, &membership); err != nil {
+			return nil, fmt.Errorf("failed to decode organization membership: %w", err)
+		}
+		if membership.Organization != nil {
+			memberships = append(memberships, &models.SiteOrganizationMembership{
+				OrgID:   membership.Organization.ID,
+				OrgName: membership.Organization.Name,
+			})
+		}
+	}
+
+	return memberships, nil
+}

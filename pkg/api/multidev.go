@@ -119,3 +119,27 @@ func (s *MultidevService) MergeFromDev(ctx context.Context, siteID, envID string
 
 	return &workflow, nil
 }
+
+// List returns multidev environments for a site (excludes dev, test, live)
+func (s *MultidevService) List(ctx context.Context, siteID string) ([]*models.Environment, error) {
+	path := fmt.Sprintf("/sites/%s/environments", siteID)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return nil, fmt.Errorf("failed to list environments: %w", err)
+	}
+
+	var allEnvs []*models.Environment
+	if err := DecodeResponse(resp, &allEnvs); err != nil {
+		return nil, err
+	}
+
+	// Filter for multidev environments only (not dev, test, or live)
+	multidevs := make([]*models.Environment, 0)
+	for _, env := range allEnvs {
+		if env.ID != "dev" && env.ID != "test" && env.ID != "live" {
+			multidevs = append(multidevs, env)
+		}
+	}
+
+	return multidevs, nil
+}

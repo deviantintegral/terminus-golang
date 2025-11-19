@@ -61,20 +61,25 @@ func init() {
 
 	// Note: All commands are now added directly to rootCmd in their respective files using colon-separated names:
 	// - auth commands (auth:login, auth:logout, auth:whoami) in auth.go
-	// - site commands (site:list, site:info, etc.) in site.go
+	// - site commands (site:list, site:info, site:org:list, etc.) in site.go
 	// - env commands (env:list, env:info, etc.) in env.go
 	// - workflow commands (workflow:list, workflow:info, etc.) in workflow.go
 	// - backup commands (backup:list, backup:create, etc.) in backup.go
 	// - org commands (org:list, org:info, etc.) in org.go
 	// - domain commands (domain:list, domain:add, etc.) in domain.go
-	// - multidev commands (multidev:create, multidev:delete, etc.) in multidev.go
+	// - multidev commands (multidev:create, multidev:delete, multidev:list, etc.) in multidev.go
 	// - connection commands (connection:info, connection:set) in connection.go
 	// - lock commands (lock:info, lock:enable, lock:disable) in lock.go
-	// - plan commands (plan:info) in plan.go
-	// - upstream commands (upstream:info, upstream:list) in upstream.go
+	// - plan commands (plan:info, plan:list) in plan.go
+	// - upstream commands (upstream:info, upstream:list, upstream:updates:list) in upstream.go
 	// - self commands (self:info) in self.go
 	// - art commands (art, art:list) in art.go
 	// - redis commands (redis:enable, redis:disable) in redis.go
+	// - branch commands (branch:list) in branch.go
+	// - machine-token commands (machine-token:list) in machine_token.go
+	// - payment-method commands (payment-method:list) in payment_method.go
+	// - ssh-key commands (ssh-key:list) in ssh_key.go
+	// - tag commands (tag:list) in tag.go
 }
 
 // initCLIContext initializes the CLI context
