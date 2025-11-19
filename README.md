@@ -413,9 +413,9 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `auth:login` | Log in to Pantheon using a machine token | ✅ | ❌ |
-| `auth:logout` | Log out of Pantheon and delete saved session | ✅ | ❌ |
-| `auth:whoami` | Display current user information | ✅ | ❌ |
+| `auth:login` | Log in to Pantheon using a machine token | ✅ | ✅ |
+| `auth:logout` | Log out of Pantheon and delete saved session | ✅ | ✅ |
+| `auth:whoami` | Display current user information | ✅ | ✅ |
 
 ### backup
 
