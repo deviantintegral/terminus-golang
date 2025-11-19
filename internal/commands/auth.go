@@ -9,28 +9,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var authCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authentication commands",
-	Long:  "Manage authentication with Pantheon",
-}
-
 var authLoginCmd = &cobra.Command{
-	Use:   "login",
+	Use:   "auth:login",
 	Short: "Log in to Pantheon",
 	Long:  "Authenticate with Pantheon using a machine token",
 	RunE:  runAuthLogin,
 }
 
 var authLogoutCmd = &cobra.Command{
-	Use:   "logout",
+	Use:   "auth:logout",
 	Short: "Log out of Pantheon",
 	Long:  "Remove stored authentication credentials",
 	RunE:  runAuthLogout,
 }
 
 var authWhoamiCmd = &cobra.Command{
-	Use:   "whoami",
+	Use:   "auth:whoami",
 	Short: "Show current user",
 	Long:  "Display information about the currently authenticated user",
 	RunE:  runAuthWhoami,
@@ -42,9 +36,10 @@ var (
 )
 
 func init() {
-	authCmd.AddCommand(authLoginCmd)
-	authCmd.AddCommand(authLogoutCmd)
-	authCmd.AddCommand(authWhoamiCmd)
+	// Add auth commands directly to rootCmd with colon-separated names
+	rootCmd.AddCommand(authLoginCmd)
+	rootCmd.AddCommand(authLogoutCmd)
+	rootCmd.AddCommand(authWhoamiCmd)
 
 	authLoginCmd.Flags().StringVar(&machineTokenFlag, "machine-token", "", "Machine token for authentication")
 	authLoginCmd.Flags().StringVar(&emailFlag, "email", "", "Email address (for token storage)")
