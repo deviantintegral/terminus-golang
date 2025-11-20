@@ -62,14 +62,18 @@ func (s *BackupsService) Create(ctx context.Context, siteID, envID string, req *
 	path := fmt.Sprintf("/sites/%s/environments/%s/workflows", siteID, envID)
 
 	params := map[string]interface{}{
+		"code":       true,
+		"database":   true,
+		"files":      true,
 		"entry_type": "backup",
 	}
 	if req != nil && req.KeepFor > 0 {
-		params["ttl"] = req.KeepFor
+		// Convert days to seconds
+		params["ttl"] = req.KeepFor * 86400
 	}
 
 	workflowReq := map[string]interface{}{
-		"type":   "backup",
+		"type":   "do_export",
 		"params": params,
 	}
 
@@ -90,11 +94,16 @@ func (s *BackupsService) Create(ctx context.Context, siteID, envID string, req *
 func (s *BackupsService) CreateElement(ctx context.Context, siteID, envID, element string) (*models.Workflow, error) {
 	path := fmt.Sprintf("/sites/%s/environments/%s/workflows", siteID, envID)
 
+	params := map[string]interface{}{
+		"code":       element == "code",
+		"database":   element == "database",
+		"files":      element == "files",
+		"entry_type": "backup",
+	}
+
 	workflowReq := map[string]interface{}{
-		"type": "backup",
-		"params": map[string]interface{}{
-			"entry_type": element,
-		},
+		"type":   "do_export",
+		"params": params,
 	}
 
 	resp, err := s.client.Post(ctx, path, workflowReq) //nolint:bodyclose // DecodeResponse closes body

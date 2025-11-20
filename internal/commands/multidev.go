@@ -48,8 +48,8 @@ var multidevListCmd = &cobra.Command{
 }
 
 var (
-	multidevFromEnvFlag  string
-	multidevDeleteDBFlag bool
+	multidevFromEnvFlag      string
+	multidevDeleteBranchFlag bool
 )
 
 func init() {
@@ -61,7 +61,7 @@ func init() {
 	rootCmd.AddCommand(multidevListCmd)
 
 	multidevCreateCmd.Flags().StringVar(&multidevFromEnvFlag, "from-env", "dev", "Source environment")
-	multidevDeleteCmd.Flags().BoolVar(&multidevDeleteDBFlag, "delete-db", false, "Delete database")
+	multidevDeleteCmd.Flags().BoolVar(&multidevDeleteBranchFlag, "delete-branch", false, "Delete git branch")
 	multidevMergeToDevCmd.Flags().BoolVar(&envUpdateDBFlag, "updatedb", false, "Run database updates after merge")
 	multidevMergeFromDevCmd.Flags().BoolVar(&envUpdateDBFlag, "updatedb", false, "Run database updates after merge")
 }
@@ -128,7 +128,7 @@ func runMultidevDelete(_ *cobra.Command, args []string) error {
 
 	printMessage("Deleting multidev %s.%s...", siteID, envID)
 
-	workflow, err := multidevService.Delete(getContext(), siteID, envID, multidevDeleteDBFlag)
+	workflow, err := multidevService.Delete(getContext(), siteID, envID, multidevDeleteBranchFlag)
 	if err != nil {
 		return fmt.Errorf("failed to delete multidev: %w", err)
 	}
