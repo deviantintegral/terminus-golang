@@ -150,19 +150,12 @@ func (s *SitesService) Delete(ctx context.Context, siteID string) error {
 	workflowsService := NewWorkflowsService(s.client)
 
 	// Create a delete_site workflow
-	workflow, err := workflowsService.CreateForSite(ctx, siteID, "delete_site", map[string]interface{}{})
+	// Note: We don't wait for the workflow to complete because once the site
+	// is deleted, we can no longer query the workflow status via the site endpoint.
+	// The deletion will complete asynchronously in the background.
+	_, err := workflowsService.CreateForSite(ctx, siteID, "delete_site", map[string]interface{}{})
 	if err != nil {
 		return fmt.Errorf("failed to start site deletion workflow: %w", err)
-	}
-
-	// Wait for the workflow to complete
-	completedWorkflow, err := workflowsService.Wait(ctx, siteID, workflow.ID, nil)
-	if err != nil {
-		return fmt.Errorf("site deletion workflow failed: %w", err)
-	}
-
-	if !completedWorkflow.IsSuccessful() {
-		return fmt.Errorf("site deletion workflow failed: %s", completedWorkflow.GetMessage())
 	}
 
 	return nil
