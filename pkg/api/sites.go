@@ -196,7 +196,17 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 }
 
 // Delete deletes a site using the delete_site workflow
-func (s *SitesService) Delete(ctx context.Context, siteID string) error {
+func (s *SitesService) Delete(ctx context.Context, siteIdentifier string) error {
+	// Resolve site identifier to UUID if needed
+	siteID := siteIdentifier
+	if !isUUID(siteIdentifier) {
+		resolvedID, err := s.resolveNameToID(ctx, siteIdentifier)
+		if err != nil {
+			return fmt.Errorf("failed to resolve site name: %w", err)
+		}
+		siteID = resolvedID
+	}
+
 	workflowsService := NewWorkflowsService(s.client)
 
 	// Create a delete_site workflow
