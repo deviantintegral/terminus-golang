@@ -33,3 +33,6 @@ terminus
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Downloaded artifacts
+installer.phar
