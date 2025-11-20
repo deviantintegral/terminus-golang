@@ -18,16 +18,28 @@ func NewEnvironmentsService(client *Client) *EnvironmentsService {
 }
 
 // List returns all environments for a site
-func (s *EnvironmentsService) List(ctx context.Context, siteID string) ([]*models.Environment, error) {
+func (s *EnvironmentsService) List(ctx context.Context, siteIdentifier string) ([]*models.Environment, error) {
+	siteID, err := EnsureSiteUUID(ctx, s.client, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/sites/%s/environments", siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to list environments: %w", err)
 	}
 
-	var envs []*models.Environment
-	if err := DecodeResponse(resp, &envs); err != nil {
+	// The API returns a map of environment_id -> environment object
+	var envsMap map[string]*models.Environment
+	if err := DecodeResponse(resp, &envsMap); err != nil {
 		return nil, err
+	}
+
+	// Convert map to slice
+	envs := make([]*models.Environment, 0, len(envsMap))
+	for _, env := range envsMap {
+		envs = append(envs, env)
 	}
 
 	return envs, nil
