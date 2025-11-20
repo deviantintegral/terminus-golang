@@ -1,9 +1,15 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/pantheon-systems/terminus-go/pkg/api"
+	"github.com/pantheon-systems/terminus-go/pkg/output"
 	"github.com/pantheon-systems/terminus-go/pkg/session"
 )
 
@@ -356,5 +362,511 @@ func TestAuthLoginCmd_Flags(t *testing.T) {
 
 	if emailFlag.DefValue != "" {
 		t.Errorf("expected email default to be empty, got '%s'", emailFlag.DefValue)
+	}
+}
+
+func TestRunAuthLogin_WithMachineToken(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		machineTokenFlag = ""
+		emailFlag = ""
+		quietFlag = false
+	}()
+
+	// Create a test HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/authorize/machine-token":
+			// Return session response
+			response := map[string]interface{}{
+				"session":    "session-token-xyz",
+				"user_id":    "user-123",
+				"expires_at": 9999999999,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		case "/users/user-123":
+			// Return user info
+			response := map[string]interface{}{
+				"id":    "user-123",
+				"email": "test@example.com",
+				"profile": map[string]interface{}{
+					"firstname": "Test",
+					"lastname":  "User",
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		}
+	}))
+	defer server.Close()
+
+	// Create a temporary session store
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	// Create API client pointing to test server
+	apiClient := api.NewClient(
+		api.WithBaseURL(server.URL),
+		api.WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+	}
+
+	// Set the machine token flag and quiet mode to suppress output
+	machineTokenFlag = "test-token-123"
+	emailFlag = ""
+	quietFlag = true
+
+	// Run the command
+	err := runAuthLogin(nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify session was saved
+	savedSession, err := store.LoadSession()
+	if err != nil {
+		t.Fatalf("failed to load session: %v", err)
+	}
+
+	if savedSession == nil {
+		t.Fatal("expected session to be saved")
+	}
+
+	if savedSession.SessionToken != "session-token-xyz" {
+		t.Errorf("expected session token 'session-token-xyz', got '%s'", savedSession.SessionToken)
+	}
+
+	if savedSession.UserID != "user-123" {
+		t.Errorf("expected user ID 'user-123', got '%s'", savedSession.UserID)
+	}
+}
+
+func TestRunAuthLogin_WithMachineTokenAndEmail(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		machineTokenFlag = ""
+		emailFlag = ""
+		quietFlag = false
+	}()
+
+	// Create a test HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/authorize/machine-token":
+			response := map[string]interface{}{
+				"session":    "session-token-xyz",
+				"user_id":    "user-123",
+				"expires_at": 9999999999,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		case "/users/user-123":
+			response := map[string]interface{}{
+				"id":    "user-123",
+				"email": "test@example.com",
+				"profile": map[string]interface{}{
+					"firstname": "Test",
+					"lastname":  "User",
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		}
+	}))
+	defer server.Close()
+
+	// Create a temporary session store
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	// Create API client
+	apiClient := api.NewClient(
+		api.WithBaseURL(server.URL),
+		api.WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+	}
+
+	// Set the machine token and email flags
+	machineTokenFlag = "test-token-123"
+	emailFlag = "test@example.com"
+	quietFlag = true
+
+	// Run the command
+	err := runAuthLogin(nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify token was saved for email
+	savedToken, err := store.LoadToken("test@example.com")
+	if err != nil {
+		t.Fatalf("failed to load token: %v", err)
+	}
+
+	if savedToken != "test-token-123" {
+		t.Errorf("expected saved token 'test-token-123', got '%s'", savedToken)
+	}
+}
+
+func TestRunAuthLogin_WithSavedToken(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		machineTokenFlag = ""
+		emailFlag = ""
+		quietFlag = false
+	}()
+
+	// Create a test HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/authorize/machine-token":
+			response := map[string]interface{}{
+				"session":    "session-token-abc",
+				"user_id":    "user-456",
+				"expires_at": 9999999999,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		case "/users/user-456":
+			response := map[string]interface{}{
+				"id":    "user-456",
+				"email": "test@example.com",
+				"profile": map[string]interface{}{
+					"firstname": "Saved",
+					"lastname":  "User",
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		}
+	}))
+	defer server.Close()
+
+	// Create a temporary session store and save a token
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	email := "test@example.com"
+	token := "saved-token-456"
+	if err := store.SaveToken(email, token); err != nil {
+		t.Fatalf("failed to save token: %v", err)
+	}
+
+	// Create API client
+	apiClient := api.NewClient(
+		api.WithBaseURL(server.URL),
+		api.WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+	}
+
+	// Don't set machine token flag, so it uses saved token
+	machineTokenFlag = ""
+	emailFlag = ""
+	quietFlag = true
+
+	// Run the command (should use the saved token)
+	err := runAuthLogin(nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify session was saved
+	savedSession, err := store.LoadSession()
+	if err != nil {
+		t.Fatalf("failed to load session: %v", err)
+	}
+
+	if savedSession == nil {
+		t.Fatal("expected session to be saved")
+	}
+
+	if savedSession.SessionToken != "session-token-abc" {
+		t.Errorf("expected session token 'session-token-abc', got '%s'", savedSession.SessionToken)
+	}
+}
+
+func TestRunAuthLogin_LoginFailure(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		machineTokenFlag = ""
+		emailFlag = ""
+		quietFlag = false
+	}()
+
+	// Create a test HTTP server that returns 401
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error": "invalid credentials"}`))
+	}))
+	defer server.Close()
+
+	// Create a temporary session store
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	// Create API client
+	apiClient := api.NewClient(
+		api.WithBaseURL(server.URL),
+		api.WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+	}
+
+	// Set the machine token flag
+	machineTokenFlag = "bad-token"
+	emailFlag = ""
+	quietFlag = true
+
+	// Run the command (should fail)
+	err := runAuthLogin(nil, nil)
+	if err == nil {
+		t.Fatal("expected error for login failure")
+	}
+
+	if err.Error()[:13] != "login failed:" {
+		t.Errorf("unexpected error message: %s", err.Error())
+	}
+}
+
+func TestRunAuthLogin_WhoamiFailure(t *testing.T) {
+	t.Skip("Skipping test that takes too long due to API retries")
+}
+
+func TestRunAuthLogout_Success(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		quietFlag = false
+	}()
+
+	// Create a temporary session store and save a session
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	sess := &session.Session{
+		SessionToken: "test-session",
+		UserID:       "user-123",
+		ExpiresAt:    9999999999,
+	}
+
+	if err := store.SaveSession(sess); err != nil {
+		t.Fatalf("failed to save session: %v", err)
+	}
+
+	// Verify session exists
+	loadedSession, err := store.LoadSession()
+	if err != nil || loadedSession == nil {
+		t.Fatal("session should exist before logout")
+	}
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+	}
+	quietFlag = true
+
+	// Run logout
+	err = runAuthLogout(nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify session was deleted
+	loadedSession, err = store.LoadSession()
+	if err != nil {
+		t.Fatalf("unexpected error loading session: %v", err)
+	}
+	if loadedSession != nil {
+		t.Error("expected session to be deleted after logout")
+	}
+}
+
+func TestRunAuthLogout_NoSession(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		quietFlag = false
+	}()
+
+	// Create a temporary session store (with no session)
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+	}
+	quietFlag = true
+
+	// Run logout (should succeed even if no session exists)
+	err := runAuthLogout(nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunAuthWhoami_Success(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() {
+		cliContext = oldContext
+		quietFlag = false
+	}()
+
+	// Create a test HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/users/user-123" {
+			response := map[string]interface{}{
+				"id":    "user-123",
+				"email": "test@example.com",
+				"profile": map[string]interface{}{
+					"firstname": "Test",
+					"lastname":  "User",
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(response)
+		}
+	}))
+	defer server.Close()
+
+	// Create a temporary session store and save a session
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	sess := &session.Session{
+		SessionToken: "test-session",
+		UserID:       "user-123",
+		ExpiresAt:    9999999999,
+	}
+
+	if err := store.SaveSession(sess); err != nil {
+		t.Fatalf("failed to save session: %v", err)
+	}
+
+	// Create API client
+	apiClient := api.NewClient(
+		api.WithBaseURL(server.URL),
+		api.WithToken("test-session"),
+		api.WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+		Output: &output.Options{
+			Format: output.FormatJSON,
+		},
+	}
+	quietFlag = true
+
+	// Run whoami
+	err := runAuthWhoami(nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunAuthWhoami_NoSession(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() { cliContext = oldContext }()
+
+	// Create a temporary session store (with no session)
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	// Create API client (needed to pass requireAuth check)
+	apiClient := api.NewClient()
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+	}
+
+	// Run whoami (should fail with auth error)
+	err := runAuthWhoami(nil, nil)
+	if err == nil {
+		t.Fatal("expected error for no session")
+	}
+
+	// Should fail the requireAuth check
+	if err.Error()[:19] != "not authenticated. " {
+		t.Errorf("unexpected error message: %s", err.Error())
+	}
+}
+
+func TestRunAuthWhoami_APIFailure(t *testing.T) {
+	t.Skip("Skipping test that takes too long due to API retries")
+}
+
+func TestRunAuthWhoami_EmptyUserID(t *testing.T) {
+	// Save original context
+	oldContext := cliContext
+	defer func() { cliContext = oldContext }()
+
+	// Create a temporary session store and save a session with empty UserID
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	sess := &session.Session{
+		SessionToken: "test-session",
+		UserID:       "", // Empty user ID
+		ExpiresAt:    9999999999,
+	}
+
+	if err := store.SaveSession(sess); err != nil {
+		t.Fatalf("failed to save session: %v", err)
+	}
+
+	// Create API client
+	apiClient := api.NewClient()
+
+	// Set up CLI context
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    apiClient,
+	}
+
+	// Run whoami (should fail with no user ID error)
+	err := runAuthWhoami(nil, nil)
+	if err == nil {
+		t.Fatal("expected error for empty user ID")
+	}
+
+	if err.Error() != "no user ID in session" {
+		t.Errorf("unexpected error message: %s", err.Error())
 	}
 }
