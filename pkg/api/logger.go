@@ -115,12 +115,7 @@ func (l *DefaultLogger) LogHTTPResponse(statusCode int, status string, headers m
 		}
 	}
 	if body != "" {
-		// Truncate very long responses
-		if len(body) > 1000 {
-			l.logger.Printf("[TRACE]   Body: %s... (truncated, %d bytes total)", body[:1000], len(body))
-		} else {
-			l.logger.Printf("[TRACE]   Body: %s", body)
-		}
+		l.logger.Printf("[TRACE]   Body: %s", body)
 	}
 }
 
