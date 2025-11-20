@@ -10,28 +10,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dashboardLaunchCmd = &cobra.Command{
-	Use:   "dashboard:launch [site[.env]]",
+var dashboardViewCmd = &cobra.Command{
+	Use:   "dashboard:view [site[.env]]",
 	Short: "Open the Pantheon Dashboard in a browser",
 	Long: `Display the URL for the Pantheon Dashboard or open the Dashboard in a browser.
 
 Usage examples:
-  dashboard:launch                  Open your account dashboard
-  dashboard:launch --print          Print your account dashboard URL
-  dashboard:launch <site>           Open the specified site's dashboard
-  dashboard:launch <site>.<env>     Open a specific environment's dashboard`,
+  dashboard:view                  Open your account dashboard
+  dashboard:view --print          Print your account dashboard URL
+  dashboard:view <site>           Open the specified site's dashboard
+  dashboard:view <site>.<env>     Open a specific environment's dashboard`,
 	Args: cobra.MaximumNArgs(1),
-	RunE: runDashboardLaunch,
+	RunE: runDashboardView,
 }
 
 var printURLFlag bool
 
 func init() {
-	rootCmd.AddCommand(dashboardLaunchCmd)
-	dashboardLaunchCmd.Flags().BoolVar(&printURLFlag, "print", false, "Print URL instead of opening browser")
+	rootCmd.AddCommand(dashboardViewCmd)
+	dashboardViewCmd.Flags().BoolVar(&printURLFlag, "print", false, "Print URL instead of opening browser")
 }
 
-func runDashboardLaunch(_ *cobra.Command, args []string) error {
+func runDashboardView(_ *cobra.Command, args []string) error {
 	if err := requireAuth(); err != nil {
 		return err
 	}
