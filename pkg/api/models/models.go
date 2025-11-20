@@ -76,7 +76,7 @@ type Environment struct {
 	Initialized         bool                   `json:"initialized"`
 	ConnectionMode      string                 `json:"connection_mode"`
 	PHP                 string                 `json:"php_version"`
-	Drush               string                 `json:"drush_version"`
+	Drush               int                    `json:"drush_version"`
 	TargetRef           string                 `json:"target_ref"`
 	TargetCommit        string                 `json:"target_commit"`
 	DiffstatCodeCommits int                    `json:"diffstat_code_commits"`
