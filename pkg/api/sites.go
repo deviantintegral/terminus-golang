@@ -150,6 +150,10 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 		return nil, fmt.Errorf("site creation workflow failed: %w", err)
 	}
 
+	// DEBUG: Log workflow structure
+	workflowJSON, _ := json.MarshalIndent(completedWorkflow, "", "  ")
+	fmt.Printf("DEBUG: Completed workflow:\n%s\n", workflowJSON)
+
 	// Extract the site_id from the workflow's waiting_for_task
 	// This matches the behavior of PHP Terminus
 	var siteID string
