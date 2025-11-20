@@ -1,1 +1,36 @@
-[]
+[
+  {
+    "id": "REDACTED-ID",
+    "name": "test-go-terminus-123456",
+    "label": "Test Go Terminus",
+    "created": 1763647338,
+    "framework": "",
+    "organization": "",
+    "service_level": "free",
+    "upstream": "",
+    "php_version": "",
+    "holder_type": "user",
+    "holder_id": "9cbc8751-968b-4d4f-9d23-909aea390817",
+    "owner": "9cbc8751-968b-4d4f-9d23-909aea390817",
+    "frozen": false,
+    "is_frozen": false,
+    "preferred_zone": "us-central1"
+  },
+  {
+    "id": "REDACTED-ID",
+    "name": "test-go-terminus-789012",
+    "label": "Test Go Terminus 2",
+    "created": 1763647355,
+    "framework": "",
+    "organization": "",
+    "service_level": "free",
+    "upstream": "",
+    "php_version": "",
+    "holder_type": "user",
+    "holder_id": "9cbc8751-968b-4d4f-9d23-909aea390817",
+    "owner": "9cbc8751-968b-4d4f-9d23-909aea390817",
+    "frozen": false,
+    "is_frozen": false,
+    "preferred_zone": "us-central1"
+  }
+]
