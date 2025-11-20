@@ -24,10 +24,10 @@ var siteInfoCmd = &cobra.Command{
 }
 
 var siteCreateCmd = &cobra.Command{
-	Use:   "site:create <site-name>",
+	Use:   "site:create <site_name> <label> <upstream_id>",
 	Short: "Create a new site",
-	Long:  "Create a new site on Pantheon",
-	Args:  cobra.ExactArgs(1),
+	Long:  "Creates a new site named <site_name>, human-readably labeled <label>, using code from <upstream_id>.",
+	Args:  cobra.ExactArgs(3),
 	RunE:  runSiteCreate,
 }
 
@@ -56,10 +56,8 @@ var siteOrgListCmd = &cobra.Command{
 }
 
 var (
-	siteOrgFlag      string
-	siteLabelFlag    string
-	siteUpstreamFlag string
-	siteRegionFlag   string
+	siteOrgFlag    string
+	siteRegionFlag string
 )
 
 func init() {
@@ -74,11 +72,8 @@ func init() {
 	// Flags
 	siteListCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Filter by organization")
 
-	siteCreateCmd.Flags().StringVar(&siteLabelFlag, "label", "", "Site label")
-	siteCreateCmd.Flags().StringVar(&siteUpstreamFlag, "upstream", "", "Upstream ID")
 	siteCreateCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Organization ID")
 	siteCreateCmd.Flags().StringVar(&siteRegionFlag, "region", "", "Preferred region")
-	_ = siteCreateCmd.MarkFlagRequired("upstream")
 }
 
 func runSiteOrgList(_ *cobra.Command, args []string) error {
@@ -155,18 +150,16 @@ func runSiteCreate(_ *cobra.Command, args []string) error {
 	}
 
 	siteName := args[0]
+	label := args[1]
+	upstreamID := args[2]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 
 	req := &api.CreateSiteRequest{
 		SiteName:     siteName,
-		Label:        siteLabelFlag,
-		UpstreamID:   siteUpstreamFlag,
+		Label:        label,
+		UpstreamID:   upstreamID,
 		Organization: siteOrgFlag,
 		Region:       siteRegionFlag,
-	}
-
-	if req.Label == "" {
-		req.Label = siteName
 	}
 
 	printMessage("Creating site %s...", siteName)
