@@ -155,8 +155,11 @@ func (s *SitesService) Delete(ctx context.Context, siteID string) error {
 		return fmt.Errorf("failed to start site deletion workflow: %w", err)
 	}
 
-	// Wait for the workflow to complete
-	completedWorkflow, err := workflowsService.Wait(ctx, siteID, workflow.ID, nil)
+	// Wait for the workflow to complete using the user endpoint
+	// Note: We can't use the site endpoint to monitor the workflow because
+	// the site is deleted during workflow execution. Instead, we use the user
+	// endpoint which remains available throughout the deletion process.
+	completedWorkflow, err := workflowsService.WaitForUser(ctx, workflow.UserID, workflow.ID, nil)
 	if err != nil {
 		return fmt.Errorf("site deletion workflow failed: %w", err)
 	}

@@ -1,0 +1,5 @@
+{
+  "error": "failed to decode response: json: cannot unmarshal object into Go struct field Site.upstream of type string",
+  "note": "This endpoint may not be available for all Pantheon accounts",
+  "site_id": "4d1961c1-541c-480f-bed0-6e3e217a098d"
+}
