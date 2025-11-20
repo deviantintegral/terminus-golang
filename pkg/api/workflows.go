@@ -167,3 +167,99 @@ func (s *WorkflowsService) Watch(ctx context.Context, siteID, workflowID string,
 		}
 	}
 }
+
+// CreateForUser creates a workflow for a user
+func (s *WorkflowsService) CreateForUser(ctx context.Context, userID, workflowType string, params map[string]interface{}) (*models.Workflow, error) {
+	path := fmt.Sprintf("/users/%s/workflows", userID)
+
+	body := map[string]interface{}{
+		"type":   workflowType,
+		"params": params,
+	}
+
+	resp, err := s.client.Post(ctx, path, body) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user workflow: %w", err)
+	}
+
+	var workflow models.Workflow
+	if err := DecodeResponse(resp, &workflow); err != nil {
+		return nil, err
+	}
+
+	return &workflow, nil
+}
+
+// GetForUser gets a workflow for a user
+func (s *WorkflowsService) GetForUser(ctx context.Context, userID, workflowID string) (*models.Workflow, error) {
+	path := fmt.Sprintf("/users/%s/workflows/%s", userID, workflowID)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user workflow: %w", err)
+	}
+
+	var workflow models.Workflow
+	if err := DecodeResponse(resp, &workflow); err != nil {
+		return nil, err
+	}
+
+	return &workflow, nil
+}
+
+// WaitForUser waits for a user workflow to complete
+func (s *WorkflowsService) WaitForUser(ctx context.Context, userID, workflowID string, opts *WaitOptions) (*models.Workflow, error) {
+	if opts == nil {
+		opts = DefaultWaitOptions()
+	}
+
+	// Create a context with timeout
+	timeoutCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(opts.PollInterval)
+	defer ticker.Stop()
+
+	for {
+		workflow, err := s.GetForUser(timeoutCtx, userID, workflowID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check workflow status: %w", err)
+		}
+
+		if opts.OnProgress != nil {
+			opts.OnProgress(workflow)
+		}
+
+		if workflow.IsFinished() {
+			return workflow, nil
+		}
+
+		select {
+		case <-timeoutCtx.Done():
+			return nil, fmt.Errorf("workflow did not complete within timeout")
+		case <-ticker.C:
+			// Continue polling
+		}
+	}
+}
+
+// CreateForSite creates a workflow for a site
+func (s *WorkflowsService) CreateForSite(ctx context.Context, siteID, workflowType string, params map[string]interface{}) (*models.Workflow, error) {
+	path := fmt.Sprintf("/sites/%s/workflows", siteID)
+
+	body := map[string]interface{}{
+		"type":   workflowType,
+		"params": params,
+	}
+
+	resp, err := s.client.Post(ctx, path, body) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return nil, fmt.Errorf("failed to create site workflow: %w", err)
+	}
+
+	var workflow models.Workflow
+	if err := DecodeResponse(resp, &workflow); err != nil {
+		return nil, err
+	}
+
+	return &workflow, nil
+}
