@@ -145,17 +145,24 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 	return site, nil
 }
 
-// Delete deletes a site
+// Delete deletes a site using the delete_site workflow
 func (s *SitesService) Delete(ctx context.Context, siteID string) error {
-	path := fmt.Sprintf("/sites/%s", siteID)
-	resp, err := s.client.Delete(ctx, path)
-	if err != nil {
-		return fmt.Errorf("failed to delete site: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
+	workflowsService := NewWorkflowsService(s.client)
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("delete failed with status %d", resp.StatusCode)
+	// Create a delete_site workflow
+	workflow, err := workflowsService.CreateForSite(ctx, siteID, "delete_site", map[string]interface{}{})
+	if err != nil {
+		return fmt.Errorf("failed to start site deletion workflow: %w", err)
+	}
+
+	// Wait for the workflow to complete
+	completedWorkflow, err := workflowsService.Wait(ctx, siteID, workflow.ID, nil)
+	if err != nil {
+		return fmt.Errorf("site deletion workflow failed: %w", err)
+	}
+
+	if !completedWorkflow.IsSuccessful() {
+		return fmt.Errorf("site deletion workflow failed: %s", completedWorkflow.GetMessage())
 	}
 
 	return nil
