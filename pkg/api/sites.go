@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
@@ -49,7 +50,20 @@ func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site,
 }
 
 // Get returns a specific site by ID or name
-func (s *SitesService) Get(ctx context.Context, siteID string) (*models.Site, error) {
+func (s *SitesService) Get(ctx context.Context, siteIdentifier string) (*models.Site, error) {
+	// First, try to resolve the identifier to a UUID if it's a name
+	siteID := siteIdentifier
+
+	// Check if the identifier looks like a UUID (contains dashes in UUID pattern)
+	// If not, try to resolve it as a name
+	if !isUUID(siteIdentifier) {
+		resolvedID, err := s.resolveNameToID(ctx, siteIdentifier)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve site name: %w", err)
+		}
+		siteID = resolvedID
+	}
+
 	path := fmt.Sprintf("/sites/%s", siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
@@ -62,6 +76,35 @@ func (s *SitesService) Get(ctx context.Context, siteID string) (*models.Site, er
 	}
 
 	return &site, nil
+}
+
+// resolveNameToID converts a site name to a site UUID
+func (s *SitesService) resolveNameToID(ctx context.Context, siteName string) (string, error) {
+	path := fmt.Sprintf("/site-names/%s", siteName)
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return "", fmt.Errorf("site not found: %w", err)
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := DecodeResponse(resp, &result); err != nil {
+		return "", err
+	}
+
+	if result.ID == "" {
+		return "", fmt.Errorf("site name resolution returned empty ID")
+	}
+
+	return result.ID, nil
+}
+
+// isUUID checks if a string looks like a UUID
+func isUUID(s string) bool {
+	// Simple check: UUIDs have dashes and are 36 characters long
+	// Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	return len(s) == 36 && s[8] == '-' && s[13] == '-' && s[18] == '-' && s[23] == '-'
 }
 
 // CreateSiteRequest represents a site creation request
@@ -102,47 +145,54 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 		return nil, fmt.Errorf("site creation workflow failed: %w", err)
 	}
 
-	// Extract the site ID from the completed workflow
-	// The site_id might be in the workflow's SiteID field or in the Params
-	siteID := completedWorkflow.SiteID
-	if siteID == "" {
-		// Try getting from params
-		if id, ok := completedWorkflow.Params["site_id"].(string); ok {
-			siteID = id
+	// Extract the site name from the workflow params to look up the site
+	siteName, ok := completedWorkflow.Params["site_name"].(string)
+	if !ok || siteName == "" {
+		return nil, fmt.Errorf("failed to get site_name from workflow params")
+	}
+
+	// Get the created site details from the user's site list
+	// We do this instead of using Get() because the site-names endpoint
+	// may not be immediately available after site creation
+	// Retry a few times with delays to handle propagation
+	var site *models.Site
+	retryDelays := []time.Duration{
+		0,               // immediate
+		1 * time.Second, // 1s
+		2 * time.Second, // 2s
+		4 * time.Second, // 4s
+		8 * time.Second, // 8s
+	}
+
+	for _, delay := range retryDelays {
+		if delay > 0 {
+			time.Sleep(delay)
+		}
+
+		sites, err := s.List(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list sites after creation: %w", err)
+		}
+
+		// Find the site with the matching name
+		for _, s := range sites {
+			if s.Name == siteName {
+				site = s
+				break
+			}
+		}
+
+		if site != nil {
+			break
 		}
 	}
 
-	if siteID == "" {
-		return nil, fmt.Errorf("failed to get site_id from workflow (result=%s)", completedWorkflow.Result)
-	}
-
-	// Step 2: Deploy the upstream/product via site workflow
-	deployParams := map[string]interface{}{
-		"product_id": req.UpstreamID,
-	}
-
-	deployWorkflow, err := workflowsService.CreateForSite(ctx, siteID, "deploy_product", deployParams)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start deploy workflow: %w", err)
-	}
-
-	// Wait for the deploy workflow to complete
-	completedDeployWorkflow, err := workflowsService.Wait(ctx, siteID, deployWorkflow.ID, nil)
-	if err != nil {
-		return nil, fmt.Errorf("deploy workflow failed: %w", err)
-	}
-
-	if !completedDeployWorkflow.IsSuccessful() {
-		return nil, fmt.Errorf("deploy workflow failed: %s", completedDeployWorkflow.GetMessage())
-	}
-
-	// Step 3: Get the created site details
-	site, err := s.Get(ctx, siteID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get created site: %w", err)
+	if site == nil {
+		return nil, fmt.Errorf("created site %s not found in site list after retries", siteName)
 	}
 
 	return site, nil
+
 }
 
 // Delete deletes a site using the delete_site workflow
