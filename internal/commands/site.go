@@ -149,6 +149,15 @@ func runSiteCreate(_ *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Load session to get user ID
+	sess, err := cliContext.SessionStore.LoadSession()
+	if err != nil {
+		return fmt.Errorf("failed to load session: %w", err)
+	}
+	if sess == nil || sess.UserID == "" {
+		return fmt.Errorf("no user ID in session")
+	}
+
 	siteName := args[0]
 	label := args[1]
 	upstreamID := args[2]
@@ -164,7 +173,7 @@ func runSiteCreate(_ *cobra.Command, args []string) error {
 
 	printMessage("Creating site %s...", siteName)
 
-	site, err := sitesService.Create(getContext(), req)
+	site, err := sitesService.Create(getContext(), sess.UserID, req)
 	if err != nil {
 		return fmt.Errorf("failed to create site: %w", err)
 	}
