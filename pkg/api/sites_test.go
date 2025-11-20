@@ -163,7 +163,7 @@ func TestSitesService_ListOrganizations(t *testing.T) {
 	}
 }
 
-func TestSitesService_List_ExcludesUpstream(t *testing.T) {
+func TestSitesService_List_ReturnsSites(t *testing.T) {
 	testUserID := "user-123"
 
 	// Create a test server
@@ -180,7 +180,7 @@ func TestSitesService_List_ExcludesUpstream(t *testing.T) {
 					"id":       "site1",
 					"name":     "test-site-1",
 					"label":    "Test Site 1",
-					"upstream": "wordpress", // This should be excluded from output
+					"upstream": "wordpress",
 				},
 			},
 			{
@@ -188,7 +188,7 @@ func TestSitesService_List_ExcludesUpstream(t *testing.T) {
 					"id":    "site2",
 					"name":  "test-site-2",
 					"label": "Test Site 2",
-					"upstream": map[string]interface{}{ // This should also be excluded
+					"upstream": map[string]interface{}{
 						"id":    "upstream-id",
 						"label": "WordPress",
 					},
@@ -223,35 +223,24 @@ func TestSitesService_List_ExcludesUpstream(t *testing.T) {
 		t.Errorf("expected site ID 'site1', got '%s'", sites[0].ID)
 	}
 
-	// Now verify that when we marshal the sites back to JSON,
-	// the upstream field is not present
-	for i, site := range sites {
-		jsonData, err := json.Marshal(site)
-		if err != nil {
-			t.Fatalf("failed to marshal site %d: %v", i, err)
-		}
+	// Verify Site includes upstream field in JSON
+	jsonData, err := json.Marshal(sites[0])
+	if err != nil {
+		t.Fatalf("failed to marshal site: %v", err)
+	}
 
-		var result map[string]interface{}
-		if err := json.Unmarshal(jsonData, &result); err != nil {
-			t.Fatalf("failed to unmarshal site %d JSON: %v", i, err)
-		}
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Fatalf("failed to unmarshal JSON: %v", err)
+	}
 
-		// Verify upstream field is NOT in the output
-		if _, exists := result["upstream"]; exists {
-			t.Errorf("site %d: upstream field should not be present in JSON output", i)
-		}
-
-		// Verify other fields are present
-		if result["id"] == nil {
-			t.Errorf("site %d: id field should be present", i)
-		}
-		if result["name"] == nil {
-			t.Errorf("site %d: name field should be present", i)
-		}
+	// Site should include upstream
+	if _, exists := result["upstream"]; !exists {
+		t.Errorf("Site JSON should include upstream field")
 	}
 }
 
-func TestSitesService_Get_ExcludesUpstream(t *testing.T) {
+func TestSitesService_Get_IncludesUpstream(t *testing.T) {
 	testSiteID := "12345678-1234-1234-1234-123456789abc"
 
 	// Create a test server
@@ -266,7 +255,7 @@ func TestSitesService_Get_ExcludesUpstream(t *testing.T) {
 			"id":       testSiteID,
 			"name":     "test-site",
 			"label":    "Test Site",
-			"upstream": "wordpress", // This should be excluded from output
+			"upstream": "wordpress",
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -292,7 +281,7 @@ func TestSitesService_Get_ExcludesUpstream(t *testing.T) {
 		t.Errorf("expected site ID '%s', got '%s'", testSiteID, site.ID)
 	}
 
-	// Marshal to JSON to verify upstream is excluded
+	// Marshal to JSON to verify upstream is included in Site
 	jsonData, err := json.Marshal(site)
 	if err != nil {
 		t.Fatalf("failed to marshal site: %v", err)
@@ -303,9 +292,9 @@ func TestSitesService_Get_ExcludesUpstream(t *testing.T) {
 		t.Fatalf("failed to unmarshal site JSON: %v", err)
 	}
 
-	// Verify upstream field is NOT in the output
-	if _, exists := result["upstream"]; exists {
-		t.Errorf("upstream field should not be present in JSON output")
+	// Verify upstream field IS in Site output
+	if _, exists := result["upstream"]; !exists {
+		t.Errorf("upstream field should be present in Site JSON output")
 	}
 
 	// Verify other fields are present
@@ -314,20 +303,22 @@ func TestSitesService_Get_ExcludesUpstream(t *testing.T) {
 	}
 }
 
-func TestSite_JSONOutput_Structure(t *testing.T) {
-	// This test verifies the complete JSON structure of a Site
-	// to ensure upstream is excluded and other fields are included
+func TestSiteListItem_ExcludesUpstream(t *testing.T) {
+	// This test verifies that SiteListItem excludes upstream
 	site := &models.Site{
 		ID:       "test-id",
 		Name:     "test-name",
 		Label:    "Test Label",
 		Created:  1234567890,
-		Upstream: "should-not-appear",
+		Upstream: "wordpress",
 	}
 
-	jsonData, err := json.Marshal(site)
+	// Convert to list item
+	listItem := site.ToListItem()
+
+	jsonData, err := json.Marshal(listItem)
 	if err != nil {
-		t.Fatalf("failed to marshal site: %v", err)
+		t.Fatalf("failed to marshal site list item: %v", err)
 	}
 
 	var result map[string]interface{}
@@ -342,8 +333,8 @@ func TestSite_JSONOutput_Structure(t *testing.T) {
 		}
 	}
 
-	// Ensure upstream is NOT present
+	// Ensure upstream is NOT present in list item
 	if _, exists := result["upstream"]; exists {
-		t.Errorf("upstream field should not be present in JSON output")
+		t.Errorf("upstream field should not be present in SiteListItem JSON output")
 	}
 }
