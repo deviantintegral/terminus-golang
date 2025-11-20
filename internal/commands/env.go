@@ -155,6 +155,11 @@ func runEnvClearCache(_ *cobra.Command, args []string) error {
 		return err
 	}
 
+	if !confirm(fmt.Sprintf("Are you sure you want to clear the cache for %s.%s?", siteID, envID)) {
+		printMessage("Canceled")
+		return nil
+	}
+
 	envsService := api.NewEnvironmentsService(cliContext.APIClient)
 
 	printMessage("Clearing cache for %s.%s...", siteID, envID)
@@ -203,6 +208,24 @@ func runEnvCloneContent(_ *cobra.Command, args []string) error {
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
+	}
+
+	// Build confirmation message based on what's being cloned
+	var cloneTypes []string
+	if envDatabaseFlag {
+		cloneTypes = append(cloneTypes, "database")
+	}
+	if envFilesFlag {
+		cloneTypes = append(cloneTypes, "files")
+	}
+	cloneTypeStr := "content"
+	if len(cloneTypes) > 0 {
+		cloneTypeStr = fmt.Sprintf("%v", cloneTypes)
+	}
+
+	if !confirm(fmt.Sprintf("Are you sure you want to clone %s from %s to %s.%s? This will overwrite existing content.", cloneTypeStr, envFromEnvFlag, siteID, envID)) {
+		printMessage("Canceled")
+		return nil
 	}
 
 	envsService := api.NewEnvironmentsService(cliContext.APIClient)

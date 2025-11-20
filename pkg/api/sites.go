@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
@@ -125,6 +124,13 @@ type CreateSiteRequest struct {
 // Create creates a new site using workflows
 func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSiteRequest) (*models.Site, error) {
 	workflowsService := NewWorkflowsService(s.client)
+	upstreamsService := NewUpstreamsService(s.client)
+
+	// Resolve upstream identifier to UUID (handles both UUIDs and machine names)
+	upstreamID, err := upstreamsService.ResolveToID(ctx, req.UpstreamID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve upstream: %w", err)
+	}
 
 	// Step 1: Create the site via user workflow
 	createParams := map[string]interface{}{
@@ -151,50 +157,40 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 		return nil, fmt.Errorf("site creation workflow failed: %w", err)
 	}
 
-	// Extract the site name from the workflow params to look up the site
-	siteName, ok := completedWorkflow.Params["site_name"].(string)
-	if !ok || siteName == "" {
-		return nil, fmt.Errorf("failed to get site_name from workflow params")
+	// Extract the site_id from the workflow's final_task
+	// When the site creation workflow completes, the site_id is in final_task.site_id
+	var siteID string
+	switch {
+	case completedWorkflow.FinalTask != nil && completedWorkflow.FinalTask.SiteID != "":
+		siteID = completedWorkflow.FinalTask.SiteID
+	case completedWorkflow.SiteID != "":
+		// Fallback to the workflow's site_id field
+		siteID = completedWorkflow.SiteID
+	default:
+		return nil, fmt.Errorf("failed to get site_id from workflow (result=%s)", completedWorkflow.Result)
 	}
 
-	// Get the created site details from the user's site list
-	// We do this instead of using Get() because the site-names endpoint
-	// may not be immediately available after site creation
-	// Retry a few times with delays to handle propagation
-	var site *models.Site
-	retryDelays := []time.Duration{
-		0,               // immediate
-		1 * time.Second, // 1s
-		2 * time.Second, // 2s
-		4 * time.Second, // 4s
-		8 * time.Second, // 8s
+	// Step 2: Deploy the upstream/product to the site
+	// This matches PHP Terminus behavior: $site->deployProduct($upstream->id)
+	deployParams := map[string]interface{}{
+		"product_id": upstreamID,
 	}
 
-	for _, delay := range retryDelays {
-		if delay > 0 {
-			time.Sleep(delay)
-		}
-
-		sites, err := s.List(ctx, userID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list sites after creation: %w", err)
-		}
-
-		// Find the site with the matching name
-		for _, s := range sites {
-			if s.Name == siteName {
-				site = s
-				break
-			}
-		}
-
-		if site != nil {
-			break
-		}
+	deployWorkflow, err := workflowsService.CreateForSite(ctx, siteID, "deploy_product", deployParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start product deployment workflow: %w", err)
 	}
 
-	if site == nil {
-		return nil, fmt.Errorf("created site %s not found in site list after retries", siteName)
+	// Wait for the product deployment to complete
+	_, err = workflowsService.Wait(ctx, siteID, deployWorkflow.ID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("product deployment workflow failed: %w", err)
+	}
+
+	// Get the created site details
+	site, err := s.Get(ctx, siteID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get created site: %w", err)
 	}
 
 	return site, nil

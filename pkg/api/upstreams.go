@@ -18,6 +18,28 @@ func NewUpstreamsService(client *Client) *UpstreamsService {
 	return &UpstreamsService{client: client}
 }
 
+// ResolveToID converts an upstream identifier (machine name or UUID) to a UUID
+func (s *UpstreamsService) ResolveToID(ctx context.Context, upstreamIdentifier, userID string) (string, error) {
+	// If it's already a UUID, return it
+	if IsUUID(upstreamIdentifier) {
+		return upstreamIdentifier, nil
+	}
+
+	// Otherwise, search for it by machine name
+	upstreams, err := s.List(ctx, userID)
+	if err != nil {
+		return "", fmt.Errorf("failed to list upstreams: %w", err)
+	}
+
+	for _, upstream := range upstreams {
+		if upstream.MachineName == upstreamIdentifier {
+			return upstream.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("upstream not found: %s", upstreamIdentifier)
+}
+
 // Get returns a specific upstream by ID
 func (s *UpstreamsService) Get(ctx context.Context, upstreamID string) (*models.Upstream, error) {
 	path := fmt.Sprintf("/upstreams/%s", upstreamID)
