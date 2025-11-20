@@ -15,7 +15,7 @@ type Site struct {
 	Framework     string                 `json:"framework"`
 	Organization  string                 `json:"organization"`
 	Service       string                 `json:"service_level"`
-	Upstream      string                 `json:"upstream"`
+	Upstream      interface{}            `json:"upstream"` // Can be string or object
 	PHP           string                 `json:"php_version"`
 	Holder        string                 `json:"holder_type"`
 	HolderID      string                 `json:"holder_id"`
@@ -60,6 +60,7 @@ type Workflow struct {
 	CurrentOperation string                 `json:"current_operation"`
 	Step             int                    `json:"step"`
 	FinalTask        *Task                  `json:"final_task,omitempty"`
+	WaitingForTask   *Task                  `json:"waiting_for_task,omitempty"`
 	Operations       []Operation            `json:"operations,omitempty"`
 	Params           map[string]interface{} `json:"params,omitempty"`
 	Active           bool                   `json:"active"`
@@ -77,6 +78,7 @@ type Task struct {
 	StartTime   float64                `json:"start_time"`
 	EndTime     float64                `json:"end_time"`
 	Params      map[string]interface{} `json:"params,omitempty"`
+	SiteID      string                 `json:"site_id,omitempty"`
 }
 
 // Operation represents a workflow operation
