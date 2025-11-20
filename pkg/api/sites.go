@@ -4,9 +4,47 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
+
+// IsUUID checks if a string looks like a UUID
+func IsUUID(s string) bool {
+	// Simple check: UUIDs have dashes and are 36 characters long
+	// Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	return len(s) == 36 && s[8] == '-' && s[13] == '-' && s[18] == '-' && s[23] == '-'
+}
+
+// ResolveSiteNameToID converts a site name to a UUID using the API
+func ResolveSiteNameToID(ctx context.Context, client *Client, siteName string) (string, error) {
+	path := fmt.Sprintf("/site-names/%s", siteName)
+	resp, err := client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return "", fmt.Errorf("site not found: %w", err)
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := DecodeResponse(resp, &result); err != nil {
+		return "", err
+	}
+
+	if result.ID == "" {
+		return "", fmt.Errorf("site name resolution returned empty ID")
+	}
+
+	return result.ID, nil
+}
+
+// EnsureSiteUUID converts a site identifier (name or UUID) to a UUID
+func EnsureSiteUUID(ctx context.Context, client *Client, siteIdentifier string) (string, error) {
+	if IsUUID(siteIdentifier) {
+		return siteIdentifier, nil
+	}
+	return ResolveSiteNameToID(ctx, client, siteIdentifier)
+}
 
 // SitesService handles site-related operations
 type SitesService struct {
@@ -49,7 +87,13 @@ func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site,
 }
 
 // Get returns a specific site by ID or name
-func (s *SitesService) Get(ctx context.Context, siteID string) (*models.Site, error) {
+func (s *SitesService) Get(ctx context.Context, siteIdentifier string) (*models.Site, error) {
+	// Resolve identifier to UUID if needed
+	siteID, err := EnsureSiteUUID(ctx, s.client, siteIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve site identifier: %w", err)
+	}
+
 	path := fmt.Sprintf("/sites/%s", siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
@@ -62,6 +106,11 @@ func (s *SitesService) Get(ctx context.Context, siteID string) (*models.Site, er
 	}
 
 	return &site, nil
+}
+
+// ensureSiteUUID converts a site identifier (name or UUID) to a UUID
+func (s *SitesService) ensureSiteUUID(ctx context.Context, siteIdentifier string) (string, error) {
+	return EnsureSiteUUID(ctx, s.client, siteIdentifier)
 }
 
 // CreateSiteRequest represents a site creation request
@@ -102,51 +151,64 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 		return nil, fmt.Errorf("site creation workflow failed: %w", err)
 	}
 
-	// Extract the site ID from the completed workflow
-	// The site_id might be in the workflow's SiteID field or in the Params
-	siteID := completedWorkflow.SiteID
-	if siteID == "" {
-		// Try getting from params
-		if id, ok := completedWorkflow.Params["site_id"].(string); ok {
-			siteID = id
+	// Extract the site name from the workflow params to look up the site
+	siteName, ok := completedWorkflow.Params["site_name"].(string)
+	if !ok || siteName == "" {
+		return nil, fmt.Errorf("failed to get site_name from workflow params")
+	}
+
+	// Get the created site details from the user's site list
+	// We do this instead of using Get() because the site-names endpoint
+	// may not be immediately available after site creation
+	// Retry a few times with delays to handle propagation
+	var site *models.Site
+	retryDelays := []time.Duration{
+		0,               // immediate
+		1 * time.Second, // 1s
+		2 * time.Second, // 2s
+		4 * time.Second, // 4s
+		8 * time.Second, // 8s
+	}
+
+	for _, delay := range retryDelays {
+		if delay > 0 {
+			time.Sleep(delay)
+		}
+
+		sites, err := s.List(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list sites after creation: %w", err)
+		}
+
+		// Find the site with the matching name
+		for _, s := range sites {
+			if s.Name == siteName {
+				site = s
+				break
+			}
+		}
+
+		if site != nil {
+			break
 		}
 	}
 
-	if siteID == "" {
-		return nil, fmt.Errorf("failed to get site_id from workflow (result=%s)", completedWorkflow.Result)
-	}
-
-	// Step 2: Deploy the upstream/product via site workflow
-	deployParams := map[string]interface{}{
-		"product_id": req.UpstreamID,
-	}
-
-	deployWorkflow, err := workflowsService.CreateForSite(ctx, siteID, "deploy_product", deployParams)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start deploy workflow: %w", err)
-	}
-
-	// Wait for the deploy workflow to complete
-	completedDeployWorkflow, err := workflowsService.Wait(ctx, siteID, deployWorkflow.ID, nil)
-	if err != nil {
-		return nil, fmt.Errorf("deploy workflow failed: %w", err)
-	}
-
-	if !completedDeployWorkflow.IsSuccessful() {
-		return nil, fmt.Errorf("deploy workflow failed: %s", completedDeployWorkflow.GetMessage())
-	}
-
-	// Step 3: Get the created site details
-	site, err := s.Get(ctx, siteID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get created site: %w", err)
+	if site == nil {
+		return nil, fmt.Errorf("created site %s not found in site list after retries", siteName)
 	}
 
 	return site, nil
+
 }
 
 // Delete deletes a site using the delete_site workflow
-func (s *SitesService) Delete(ctx context.Context, siteID string) error {
+func (s *SitesService) Delete(ctx context.Context, siteIdentifier string) error {
+	// Resolve site identifier to UUID if needed
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return err
+	}
+
 	workflowsService := NewWorkflowsService(s.client)
 
 	// Create a delete_site workflow
@@ -178,7 +240,12 @@ type UpdateRequest struct {
 }
 
 // Update updates a site
-func (s *SitesService) Update(ctx context.Context, siteID string, req *UpdateRequest) (*models.Site, error) {
+func (s *SitesService) Update(ctx context.Context, siteIdentifier string, req *UpdateRequest) (*models.Site, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/sites/%s", siteID)
 	resp, err := s.client.Put(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
@@ -219,8 +286,13 @@ func (s *SitesService) ListByOrganization(ctx context.Context, orgID string) ([]
 }
 
 // GetTeam returns team members for a site
-func (s *SitesService) GetTeam(ctx context.Context, siteID string) ([]*models.TeamMember, error) {
-	path := fmt.Sprintf("/sites/%s/team", siteID)
+func (s *SitesService) GetTeam(ctx context.Context, siteIdentifier string) ([]*models.TeamMember, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/sites/%s/memberships/users", siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get site team: %w", err)
@@ -241,8 +313,13 @@ type AddTeamMemberRequest struct {
 }
 
 // AddTeamMember adds a team member to a site
-func (s *SitesService) AddTeamMember(ctx context.Context, siteID string, req *AddTeamMemberRequest) (*models.TeamMember, error) {
-	path := fmt.Sprintf("/sites/%s/team", siteID)
+func (s *SitesService) AddTeamMember(ctx context.Context, siteIdentifier string, req *AddTeamMemberRequest) (*models.TeamMember, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/sites/%s/memberships/users", siteID)
 	resp, err := s.client.Post(ctx, path, req) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to add team member: %w", err)
@@ -257,8 +334,13 @@ func (s *SitesService) AddTeamMember(ctx context.Context, siteID string, req *Ad
 }
 
 // RemoveTeamMember removes a team member from a site
-func (s *SitesService) RemoveTeamMember(ctx context.Context, siteID, userID string) error {
-	path := fmt.Sprintf("/sites/%s/team/%s", siteID, userID)
+func (s *SitesService) RemoveTeamMember(ctx context.Context, siteIdentifier, userID string) error {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return err
+	}
+
+	path := fmt.Sprintf("/sites/%s/memberships/users/%s", siteID, userID)
 	resp, err := s.client.Delete(ctx, path)
 	if err != nil {
 		return fmt.Errorf("failed to remove team member: %w", err)
@@ -273,7 +355,12 @@ func (s *SitesService) RemoveTeamMember(ctx context.Context, siteID, userID stri
 }
 
 // GetTags returns tags for a site
-func (s *SitesService) GetTags(ctx context.Context, siteID, orgID string) ([]*models.Tag, error) {
+func (s *SitesService) GetTags(ctx context.Context, siteIdentifier, orgID string) ([]*models.Tag, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/organizations/%s/tags/sites/%s", orgID, siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
@@ -289,7 +376,12 @@ func (s *SitesService) GetTags(ctx context.Context, siteID, orgID string) ([]*mo
 }
 
 // AddTag adds a tag to a site
-func (s *SitesService) AddTag(ctx context.Context, siteID, orgID, tagName string) error {
+func (s *SitesService) AddTag(ctx context.Context, siteIdentifier, orgID, tagName string) error {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return err
+	}
+
 	path := fmt.Sprintf("/organizations/%s/tags/%s/sites", orgID, tagName)
 
 	req := struct {
@@ -312,7 +404,12 @@ func (s *SitesService) AddTag(ctx context.Context, siteID, orgID, tagName string
 }
 
 // RemoveTag removes a tag from a site
-func (s *SitesService) RemoveTag(ctx context.Context, siteID, orgID, tagName string) error {
+func (s *SitesService) RemoveTag(ctx context.Context, siteIdentifier, orgID, tagName string) error {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return err
+	}
+
 	path := fmt.Sprintf("/organizations/%s/tags/%s/sites/%s", orgID, tagName, siteID)
 	resp, err := s.client.Delete(ctx, path)
 	if err != nil {
@@ -328,7 +425,12 @@ func (s *SitesService) RemoveTag(ctx context.Context, siteID, orgID, tagName str
 }
 
 // GetPlan returns the plan for a site
-func (s *SitesService) GetPlan(ctx context.Context, siteID string) (*models.Plan, error) {
+func (s *SitesService) GetPlan(ctx context.Context, siteIdentifier string) (*models.Plan, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/sites/%s/plan", siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
@@ -344,7 +446,12 @@ func (s *SitesService) GetPlan(ctx context.Context, siteID string) (*models.Plan
 }
 
 // ListBranches returns git branches for a site
-func (s *SitesService) ListBranches(ctx context.Context, siteID string) ([]*models.Branch, error) {
+func (s *SitesService) ListBranches(ctx context.Context, siteIdentifier string) ([]*models.Branch, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/sites/%s/code-tips", siteID)
 
 	rawResults, err := s.client.GetPaged(ctx, path)
@@ -365,7 +472,12 @@ func (s *SitesService) ListBranches(ctx context.Context, siteID string) ([]*mode
 }
 
 // GetPlans returns available plans for a site
-func (s *SitesService) GetPlans(ctx context.Context, siteID string) ([]*models.Plan, error) {
+func (s *SitesService) GetPlans(ctx context.Context, siteIdentifier string) ([]*models.Plan, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/sites/%s/plans", siteID)
 
 	rawResults, err := s.client.GetPaged(ctx, path)
@@ -386,7 +498,12 @@ func (s *SitesService) GetPlans(ctx context.Context, siteID string) ([]*models.P
 }
 
 // ListOrganizations returns organizations that a site belongs to
-func (s *SitesService) ListOrganizations(ctx context.Context, siteID string) ([]*models.SiteOrganizationMembership, error) {
+func (s *SitesService) ListOrganizations(ctx context.Context, siteIdentifier string) ([]*models.SiteOrganizationMembership, error) {
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/sites/%s/memberships/organizations", siteID)
 
 	rawResults, err := s.client.GetPaged(ctx, path)

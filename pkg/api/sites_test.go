@@ -10,9 +10,12 @@ import (
 )
 
 func TestSitesService_ListBranches(t *testing.T) {
+	testSiteID := "12345678-1234-1234-1234-123456789abc"
+
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/sites/site1/code-tips" {
+		expectedPath := "/sites/" + testSiteID + "/code-tips"
+		if r.URL.Path != expectedPath {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 
@@ -34,7 +37,7 @@ func TestSitesService_ListBranches(t *testing.T) {
 
 	sitesService := NewSitesService(client)
 
-	branches, err := sitesService.ListBranches(context.Background(), "site1")
+	branches, err := sitesService.ListBranches(context.Background(), testSiteID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -53,9 +56,12 @@ func TestSitesService_ListBranches(t *testing.T) {
 }
 
 func TestSitesService_GetPlans(t *testing.T) {
+	testSiteID := "12345678-1234-1234-1234-123456789abc"
+
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/sites/site1/plans" {
+		expectedPath := "/sites/" + testSiteID + "/plans"
+		if r.URL.Path != expectedPath {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 
@@ -77,7 +83,7 @@ func TestSitesService_GetPlans(t *testing.T) {
 
 	sitesService := NewSitesService(client)
 
-	plans, err := sitesService.GetPlans(context.Background(), "site1")
+	plans, err := sitesService.GetPlans(context.Background(), testSiteID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -100,9 +106,12 @@ func TestSitesService_GetPlans(t *testing.T) {
 }
 
 func TestSitesService_ListOrganizations(t *testing.T) {
+	testSiteID := "12345678-1234-1234-1234-123456789abc"
+
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/sites/site1/memberships/organizations" {
+		expectedPath := "/sites/" + testSiteID + "/memberships/organizations"
+		if r.URL.Path != expectedPath {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 
@@ -134,7 +143,7 @@ func TestSitesService_ListOrganizations(t *testing.T) {
 
 	sitesService := NewSitesService(client)
 
-	orgs, err := sitesService.ListOrganizations(context.Background(), "site1")
+	orgs, err := sitesService.ListOrganizations(context.Background(), testSiteID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
