@@ -167,6 +167,23 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 		return nil, fmt.Errorf("failed to get site_id from workflow (result=%s)", completedWorkflow.Result)
 	}
 
+	// Step 2: Deploy the upstream/product to the site
+	// This matches PHP Terminus behavior: $site->deployProduct($upstream->id)
+	deployParams := map[string]interface{}{
+		"product_id": req.UpstreamID,
+	}
+
+	deployWorkflow, err := workflowsService.CreateForSite(ctx, siteID, "deploy_product", deployParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start product deployment workflow: %w", err)
+	}
+
+	// Wait for the product deployment to complete
+	_, err = workflowsService.Wait(ctx, siteID, deployWorkflow.ID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("product deployment workflow failed: %w", err)
+	}
+
 	// Get the created site details
 	site, err := s.Get(ctx, siteID)
 	if err != nil {
