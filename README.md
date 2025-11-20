@@ -447,7 +447,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `dashboard:view` | Open site dashboard in a browser | ❌ | ❌ |
+| `dashboard:view` | Open site dashboard in a browser | ✅ | ✅ |
 
 ### domain
 
