@@ -26,6 +26,46 @@ type Site struct {
 	Info          map[string]interface{} `json:"info,omitempty"`
 }
 
+// SiteListItem represents a site in list output (excludes upstream field)
+type SiteListItem struct {
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	Label         string                 `json:"label"`
+	Created       int64                  `json:"created"`
+	Framework     string                 `json:"framework"`
+	Organization  string                 `json:"organization"`
+	Service       string                 `json:"service_level"`
+	PHP           string                 `json:"php_version"`
+	Holder        string                 `json:"holder_type"`
+	HolderID      string                 `json:"holder_id"`
+	Owner         string                 `json:"owner"`
+	Frozen        bool                   `json:"frozen"`
+	IsFrozen      bool                   `json:"is_frozen"`
+	PreferredZone string                 `json:"preferred_zone"`
+	Info          map[string]interface{} `json:"info,omitempty"`
+}
+
+// ToListItem converts a Site to a SiteListItem (excludes upstream)
+func (s *Site) ToListItem() *SiteListItem {
+	return &SiteListItem{
+		ID:            s.ID,
+		Name:          s.Name,
+		Label:         s.Label,
+		Created:       s.Created,
+		Framework:     s.Framework,
+		Organization:  s.Organization,
+		Service:       s.Service,
+		PHP:           s.PHP,
+		Holder:        s.Holder,
+		HolderID:      s.HolderID,
+		Owner:         s.Owner,
+		Frozen:        s.Frozen,
+		IsFrozen:      s.IsFrozen,
+		PreferredZone: s.PreferredZone,
+		Info:          s.Info,
+	}
+}
+
 // Environment represents a site environment
 type Environment struct {
 	ID                  string                 `json:"id"`

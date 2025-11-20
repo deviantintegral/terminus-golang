@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api"
+	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 	"github.com/spf13/cobra"
 )
 
@@ -113,7 +114,7 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 
 	sitesService := api.NewSitesService(cliContext.APIClient)
 
-	var sites interface{}
+	var sites []*models.Site
 
 	if siteOrgFlag != "" {
 		sites, err = sitesService.ListByOrganization(getContext(), siteOrgFlag)
@@ -125,7 +126,13 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to list sites: %w", err)
 	}
 
-	return printOutput(sites)
+	// Convert to SiteListItem to exclude upstream field from output
+	listItems := make([]*models.SiteListItem, len(sites))
+	for i, site := range sites {
+		listItems[i] = site.ToListItem()
+	}
+
+	return printOutput(listItems)
 }
 
 func runSiteInfo(_ *cobra.Command, args []string) error {

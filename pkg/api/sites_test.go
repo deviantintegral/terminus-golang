@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
 
 func TestSitesService_ListBranches(t *testing.T) {
@@ -158,5 +160,181 @@ func TestSitesService_ListOrganizations(t *testing.T) {
 
 	if orgs[0].OrgName != "Organization 1" {
 		t.Errorf("expected org name 'Organization 1', got '%s'", orgs[0].OrgName)
+	}
+}
+
+func TestSitesService_List_ReturnsSites(t *testing.T) {
+	testUserID := "user-123"
+
+	// Create a test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedPath := "/users/" + testUserID + "/memberships/sites"
+		if r.URL.Path != expectedPath {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+
+		// Simulate API response that includes upstream field
+		sites := []map[string]interface{}{
+			{
+				"site": map[string]interface{}{
+					"id":       "site1",
+					"name":     "test-site-1",
+					"label":    "Test Site 1",
+					"upstream": "wordpress",
+				},
+			},
+			{
+				"site": map[string]interface{}{
+					"id":    "site2",
+					"name":  "test-site-2",
+					"label": "Test Site 2",
+					"upstream": map[string]interface{}{
+						"id":    "upstream-id",
+						"label": "WordPress",
+					},
+				},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(sites)
+	}))
+	defer server.Close()
+
+	client := NewClient(
+		WithBaseURL(server.URL),
+		WithToken("test-token"),
+		WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	sitesService := NewSitesService(client)
+
+	sites, err := sitesService.List(context.Background(), testUserID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(sites) != 2 {
+		t.Errorf("expected 2 sites, got %d", len(sites))
+	}
+
+	// Verify sites were unmarshaled correctly
+	if sites[0].ID != "site1" {
+		t.Errorf("expected site ID 'site1', got '%s'", sites[0].ID)
+	}
+
+	// Verify Site includes upstream field in JSON
+	jsonData, err := json.Marshal(sites[0])
+	if err != nil {
+		t.Fatalf("failed to marshal site: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Fatalf("failed to unmarshal JSON: %v", err)
+	}
+
+	// Site should include upstream
+	if _, exists := result["upstream"]; !exists {
+		t.Errorf("Site JSON should include upstream field")
+	}
+}
+
+func TestSitesService_Get_IncludesUpstream(t *testing.T) {
+	testSiteID := "12345678-1234-1234-1234-123456789abc"
+
+	// Create a test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedPath := "/sites/" + testSiteID
+		if r.URL.Path != expectedPath {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+
+		// Simulate API response that includes upstream field
+		site := map[string]interface{}{
+			"id":       testSiteID,
+			"name":     "test-site",
+			"label":    "Test Site",
+			"upstream": "wordpress",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(site)
+	}))
+	defer server.Close()
+
+	client := NewClient(
+		WithBaseURL(server.URL),
+		WithToken("test-token"),
+		WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
+	)
+
+	sitesService := NewSitesService(client)
+
+	site, err := sitesService.Get(context.Background(), testSiteID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify site was unmarshaled correctly
+	if site.ID != testSiteID {
+		t.Errorf("expected site ID '%s', got '%s'", testSiteID, site.ID)
+	}
+
+	// Marshal to JSON to verify upstream is included in Site
+	jsonData, err := json.Marshal(site)
+	if err != nil {
+		t.Fatalf("failed to marshal site: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Fatalf("failed to unmarshal site JSON: %v", err)
+	}
+
+	// Verify upstream field IS in Site output
+	if _, exists := result["upstream"]; !exists {
+		t.Errorf("upstream field should be present in Site JSON output")
+	}
+
+	// Verify other fields are present
+	if result["id"] != testSiteID {
+		t.Errorf("expected id '%s', got '%v'", testSiteID, result["id"])
+	}
+}
+
+func TestSiteListItem_ExcludesUpstream(t *testing.T) {
+	// This test verifies that SiteListItem excludes upstream
+	site := &models.Site{
+		ID:       "test-id",
+		Name:     "test-name",
+		Label:    "Test Label",
+		Created:  1234567890,
+		Upstream: "wordpress",
+	}
+
+	// Convert to list item
+	listItem := site.ToListItem()
+
+	jsonData, err := json.Marshal(listItem)
+	if err != nil {
+		t.Fatalf("failed to marshal site list item: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Fatalf("failed to unmarshal JSON: %v", err)
+	}
+
+	expectedFields := []string{"id", "name", "label", "created"}
+	for _, field := range expectedFields {
+		if _, exists := result[field]; !exists {
+			t.Errorf("expected field '%s' to be present in JSON", field)
+		}
+	}
+
+	// Ensure upstream is NOT present in list item
+	if _, exists := result["upstream"]; exists {
+		t.Errorf("upstream field should not be present in SiteListItem JSON output")
 	}
 }
