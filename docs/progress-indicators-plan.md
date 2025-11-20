@@ -61,30 +61,36 @@ type Operation struct {
 
 ### Commands Requiring Progress Indicators
 
-**15+ commands** across multiple categories trigger workflows:
+**16+ commands** across multiple categories trigger workflows:
 
-1. **Backup Operations** (4 commands)
+1. **Site Operations** (1 command)
+   - `site:create` - Creates new site (3-10 minutes)
+   - **Note:** Workflow waiting happens in API layer (`pkg/api/sites.go:149`)
+
+2. **Backup Operations** (4 commands)
    - `backup:create` - Creates backup (5-10 minutes)
    - `backup:restore` - Restores from backup (10-15 minutes)
 
-2. **Environment Operations** (5 commands)
+3. **Environment Operations** (5 commands)
    - `env:deploy` - Deploys code (2-5 minutes)
    - `env:clone-content` - Clones database/files (5-15 minutes)
    - `env:clear-cache` - Clears environment cache (1-3 minutes)
    - `env:commit` - Commits code changes (1-3 minutes)
    - `connection:set` - Modifies connection mode (2-5 minutes)
 
-3. **Multidev Operations** (4 commands)
+4. **Multidev Operations** (4 commands)
    - `multidev:create` - Creates new multidev (3-8 minutes)
    - `multidev:delete` - Deletes multidev (2-5 minutes)
    - `multidev:merge-to-dev` - Merges to dev (2-5 minutes)
    - `multidev:merge-from-dev` - Merges from dev (2-5 minutes)
 
-4. **Feature Operations** (2 commands)
+5. **Feature Operations** (2 commands)
    - `redis:enable` - Enables Redis (2-5 minutes)
    - `redis:disable` - Disables Redis (2-5 minutes)
 
-All these commands currently use: `waitForWorkflow(siteID, workflowID, description)`
+**Command-layer workflow waiting:** Commands 2-5 use `waitForWorkflow(siteID, workflowID, description)` at the command layer (`internal/commands/workflow.go:143`).
+
+**API-layer workflow waiting:** `site:create` calls `workflowsService.WaitForUser()` directly in the API layer with `nil` options, providing no progress feedback to the user.
 
 ## Requirements
 
@@ -257,6 +263,92 @@ func waitForWorkflow(siteID, workflowID, description string) error {
     return handleWorkflowResult(workflow, description)
 }
 ```
+
+#### 5. API-Layer Workflow Operations
+
+**Challenge:** `site:create` calls `workflowsService.WaitForUser()` directly in the API layer (`pkg/api/sites.go:149`) with `nil` options, bypassing the command-layer progress infrastructure.
+
+**Location:** `pkg/api/sites.go:126-196`
+
+Current implementation:
+```go
+func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSiteRequest) (*models.Site, error) {
+    workflowsService := NewWorkflowsService(s.client)
+
+    // Create workflow
+    createWorkflow, err := workflowsService.CreateForUser(ctx, userID, "create_site", createParams)
+
+    // Wait with NO progress indication
+    completedWorkflow, err := workflowsService.WaitForUser(ctx, userID, createWorkflow.ID, nil)
+
+    // Then retry to find created site (up to 15 seconds of additional waiting)
+    ...
+}
+```
+
+**Proposed Solutions:**
+
+**Option A: Return Workflow ID (Recommended)**
+Refactor API method to return workflow ID and let command layer handle waiting with progress:
+
+```go
+// In pkg/api/sites.go
+func (s *SitesService) CreateAsync(ctx context.Context, userID string, req *CreateSiteRequest) (workflowID string, error) {
+    // Create workflow and return ID immediately
+    createWorkflow, err := workflowsService.CreateForUser(ctx, userID, "create_site", createParams)
+    return createWorkflow.ID, err
+}
+
+// In internal/commands/site.go
+func runSiteCreate(_ *cobra.Command, args []string) error {
+    workflowID, err := sitesService.CreateAsync(getContext(), sess.UserID, req)
+    if err != nil {
+        return err
+    }
+
+    // Wait with progress indicator
+    if err := waitForWorkflowUser(sess.UserID, workflowID, "Creating site"); err != nil {
+        return err
+    }
+
+    // Then fetch the created site
+    site, err := sitesService.GetCreatedSite(getContext(), sess.UserID, siteName)
+    return printOutput(site)
+}
+```
+
+**Pros:** Clean separation, consistent with other commands, full progress control
+**Cons:** Requires refactoring existing API method, more complex command logic
+
+**Option B: Pass Progress Callback to API**
+Add WaitOptions parameter to Create method:
+
+```go
+func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSiteRequest, waitOpts *WaitOptions) (*models.Site, error) {
+    // ... create workflow ...
+    completedWorkflow, err := workflowsService.WaitForUser(ctx, userID, createWorkflow.ID, waitOpts)
+    // ... rest of logic ...
+}
+```
+
+**Pros:** Minimal changes, preserves existing API interface
+**Cons:** Progress callback at API layer is awkward, harder to test
+
+**Option C: Hybrid Approach**
+Keep both synchronous and asynchronous methods:
+
+```go
+// Existing method stays for backward compatibility
+func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSiteRequest) (*models.Site, error)
+
+// New async method for progress support
+func (s *SitesService) CreateWithProgress(ctx context.Context, userID string, req *CreateSiteRequest, waitOpts *WaitOptions) (*models.Site, error)
+```
+
+**Pros:** Backward compatible, flexibility
+**Cons:** API surface duplication
+
+**Recommendation:** Option A (Return Workflow ID) for consistency with the overall architecture and better separation of concerns.
 
 ### Display Format Examples
 
@@ -465,13 +557,18 @@ Use `PANTHEON_MACHINE_TOKEN_TESTING` environment variable for live testing.
 - [ ] Implement `WorkflowProgressIndicator`
 - [ ] Write unit tests for progress indicators
 - [ ] Refactor `waitForWorkflow()` to use abstraction
-- [ ] Update all workflow-triggering commands
+- [ ] Create `waitForWorkflowUser()` helper for user-scoped workflows
+- [ ] Refactor `site:create` to support progress (Option A recommended)
+  - [ ] Create `CreateAsync()` or similar API method
+  - [ ] Update command layer to wait with progress
+  - [ ] Move site lookup/retry logic to command layer
+- [ ] Update all remaining workflow-triggering commands
 - [ ] Add integration tests
 - [ ] Update documentation
 
-**Estimated effort:** 8-12 hours
-**Files changed:** ~10-15
-**Lines of code:** ~300-500
+**Estimated effort:** 10-14 hours (includes site:create refactoring)
+**Files changed:** ~12-18
+**Lines of code:** ~400-600
 
 ### Phase 4 (Optional)
 
@@ -540,7 +637,7 @@ Users might prefer simpler output or find updates distracting.
 - <100ms overhead per progress update
 - Zero test failures introduced
 - 100% backward compatibility with existing scripts
-- All 15+ workflow commands display progress
+- All 16+ workflow commands display progress (including site:create)
 
 ### Code Quality
 - >80% test coverage for progress code
