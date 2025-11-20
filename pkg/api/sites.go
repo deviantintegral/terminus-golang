@@ -9,6 +9,43 @@ import (
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
 
+// IsUUID checks if a string looks like a UUID
+func IsUUID(s string) bool {
+	// Simple check: UUIDs have dashes and are 36 characters long
+	// Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	return len(s) == 36 && s[8] == '-' && s[13] == '-' && s[18] == '-' && s[23] == '-'
+}
+
+// ResolveSiteNameToID converts a site name to a UUID using the API
+func ResolveSiteNameToID(ctx context.Context, client *Client, siteName string) (string, error) {
+	path := fmt.Sprintf("/site-names/%s", siteName)
+	resp, err := client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return "", fmt.Errorf("site not found: %w", err)
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := DecodeResponse(resp, &result); err != nil {
+		return "", err
+	}
+
+	if result.ID == "" {
+		return "", fmt.Errorf("site name resolution returned empty ID")
+	}
+
+	return result.ID, nil
+}
+
+// EnsureSiteUUID converts a site identifier (name or UUID) to a UUID
+func EnsureSiteUUID(ctx context.Context, client *Client, siteIdentifier string) (string, error) {
+	if IsUUID(siteIdentifier) {
+		return siteIdentifier, nil
+	}
+	return ResolveSiteNameToID(ctx, client, siteIdentifier)
+}
+
 // SitesService handles site-related operations
 type SitesService struct {
 	client *Client
@@ -51,17 +88,10 @@ func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site,
 
 // Get returns a specific site by ID or name
 func (s *SitesService) Get(ctx context.Context, siteIdentifier string) (*models.Site, error) {
-	// First, try to resolve the identifier to a UUID if it's a name
-	siteID := siteIdentifier
-
-	// Check if the identifier looks like a UUID (contains dashes in UUID pattern)
-	// If not, try to resolve it as a name
-	if !isUUID(siteIdentifier) {
-		resolvedID, err := s.resolveNameToID(ctx, siteIdentifier)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve site name: %w", err)
-		}
-		siteID = resolvedID
+	// Resolve identifier to UUID if needed
+	siteID, err := EnsureSiteUUID(ctx, s.client, siteIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve site identifier: %w", err)
 	}
 
 	path := fmt.Sprintf("/sites/%s", siteID)
@@ -78,41 +108,9 @@ func (s *SitesService) Get(ctx context.Context, siteIdentifier string) (*models.
 	return &site, nil
 }
 
-// resolveNameToID converts a site name to a site UUID
-func (s *SitesService) resolveNameToID(ctx context.Context, siteName string) (string, error) {
-	path := fmt.Sprintf("/site-names/%s", siteName)
-	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
-	if err != nil {
-		return "", fmt.Errorf("site not found: %w", err)
-	}
-
-	var result struct {
-		ID string `json:"id"`
-	}
-	if err := DecodeResponse(resp, &result); err != nil {
-		return "", err
-	}
-
-	if result.ID == "" {
-		return "", fmt.Errorf("site name resolution returned empty ID")
-	}
-
-	return result.ID, nil
-}
-
-// isUUID checks if a string looks like a UUID
-func isUUID(s string) bool {
-	// Simple check: UUIDs have dashes and are 36 characters long
-	// Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-	return len(s) == 36 && s[8] == '-' && s[13] == '-' && s[18] == '-' && s[23] == '-'
-}
-
 // ensureSiteUUID converts a site identifier (name or UUID) to a UUID
 func (s *SitesService) ensureSiteUUID(ctx context.Context, siteIdentifier string) (string, error) {
-	if isUUID(siteIdentifier) {
-		return siteIdentifier, nil
-	}
-	return s.resolveNameToID(ctx, siteIdentifier)
+	return EnsureSiteUUID(ctx, s.client, siteIdentifier)
 }
 
 // CreateSiteRequest represents a site creation request
@@ -206,13 +204,9 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 // Delete deletes a site using the delete_site workflow
 func (s *SitesService) Delete(ctx context.Context, siteIdentifier string) error {
 	// Resolve site identifier to UUID if needed
-	siteID := siteIdentifier
-	if !isUUID(siteIdentifier) {
-		resolvedID, err := s.resolveNameToID(ctx, siteIdentifier)
-		if err != nil {
-			return fmt.Errorf("failed to resolve site name: %w", err)
-		}
-		siteID = resolvedID
+	siteID, err := s.ensureSiteUUID(ctx, siteIdentifier)
+	if err != nil {
+		return err
 	}
 
 	workflowsService := NewWorkflowsService(s.client)
