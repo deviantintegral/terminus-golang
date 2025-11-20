@@ -15,7 +15,7 @@ type Site struct {
 	Framework     string                 `json:"framework"`
 	Organization  string                 `json:"organization"`
 	Service       string                 `json:"service_level"`
-	Upstream      interface{}            `json:"upstream"` // Can be string or object
+	Upstream      interface{}            `json:"-"` // Can be string or object
 	PHP           string                 `json:"php_version"`
 	Holder        string                 `json:"holder_type"`
 	HolderID      string                 `json:"holder_id"`
