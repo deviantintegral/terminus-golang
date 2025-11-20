@@ -21,6 +21,9 @@ If there are any linting errors, **STOP** and fix them before proceeding.
 - A SessionStart hook is configured to automatically install the correct version
 - When in doubt, verify changes pass in CI rather than relying solely on local linting
 
+If a PANTHEON_MACHINE_TOKEN_TESTING environment variable is available, use it to run live API requests, using PHP terminus or terminus-golang.
+Feel free to use this token as it points to a sandbox account.
+
 ## Development Workflow
 
 ### 1. After Every Code Change
