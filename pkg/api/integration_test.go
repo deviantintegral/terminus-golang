@@ -697,7 +697,7 @@ func testCreateSite(t *testing.T, data *siteLifecycleTestData) {
 		Organization: data.orgID,
 	}
 
-	site, err := data.siteService.Create(data.ctx, req)
+	site, err := data.siteService.Create(data.ctx, data.session.UserID, req)
 	if err != nil {
 		t.Fatalf("Failed to create site: %v", err)
 	}

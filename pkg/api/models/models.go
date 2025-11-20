@@ -52,9 +52,9 @@ type Workflow struct {
 	SiteID           string                 `json:"site_id"`
 	EnvironmentID    string                 `json:"environment"`
 	UserID           string                 `json:"user_id"`
-	FinishedAt       int64                  `json:"finished_at"`
-	StartedAt        int64                  `json:"started_at"`
-	CreatedAt        int64                  `json:"created_at"`
+	FinishedAt       float64                `json:"finished_at"`
+	StartedAt        float64                `json:"started_at"`
+	CreatedAt        float64                `json:"created_at"`
 	Result           string                 `json:"result"`
 	TotalTime        float64                `json:"total_time"`
 	CurrentOperation string                 `json:"current_operation"`
@@ -73,9 +73,9 @@ type Task struct {
 	Description string                 `json:"description"`
 	Status      string                 `json:"status"`
 	Result      string                 `json:"result"`
-	Messages    []Message              `json:"messages,omitempty"`
-	StartTime   int64                  `json:"start_time"`
-	EndTime     int64                  `json:"end_time"`
+	Messages    interface{}            `json:"messages,omitempty"`
+	StartTime   float64                `json:"start_time"`
+	EndTime     float64                `json:"end_time"`
 	Params      map[string]interface{} `json:"params,omitempty"`
 }
 
@@ -90,9 +90,9 @@ type Operation struct {
 
 // Message represents a workflow message
 type Message struct {
-	Level   string `json:"level"`
-	Message string `json:"message"`
-	Time    int64  `json:"time"`
+	Level   string  `json:"level"`
+	Message string  `json:"message"`
+	Time    float64 `json:"time"`
 }
 
 // IsFinished returns true if the workflow has finished
@@ -112,8 +112,15 @@ func (w *Workflow) IsFailed() bool {
 
 // GetMessage returns the workflow message
 func (w *Workflow) GetMessage() string {
-	if w.FinalTask != nil && len(w.FinalTask.Messages) > 0 {
-		return w.FinalTask.Messages[0].Message
+	if w.FinalTask != nil && w.FinalTask.Messages != nil {
+		// Messages can be either an array or an object, try to extract a message
+		if msgs, ok := w.FinalTask.Messages.([]interface{}); ok && len(msgs) > 0 {
+			if msg, ok := msgs[0].(map[string]interface{}); ok {
+				if message, ok := msg["message"].(string); ok {
+					return message
+				}
+			}
+		}
 	}
 	return w.Description
 }

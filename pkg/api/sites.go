@@ -73,19 +73,76 @@ type CreateSiteRequest struct {
 	Region       string `json:"preferred_zone,omitempty"`
 }
 
-// Create creates a new site
-func (s *SitesService) Create(ctx context.Context, req *CreateSiteRequest) (*models.Site, error) {
-	resp, err := s.client.Post(ctx, "/sites", req) //nolint:bodyclose // DecodeResponse closes body
+// Create creates a new site using workflows
+func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSiteRequest) (*models.Site, error) {
+	workflowsService := NewWorkflowsService(s.client)
+
+	// Step 1: Create the site via user workflow
+	createParams := map[string]interface{}{
+		"site_name": req.SiteName,
+		"label":     req.Label,
+	}
+
+	// Add optional organization and region if provided
+	if req.Organization != "" {
+		createParams["organization_id"] = req.Organization
+	}
+	if req.Region != "" {
+		createParams["preferred_zone"] = req.Region
+	}
+
+	createWorkflow, err := workflowsService.CreateForUser(ctx, userID, "create_site", createParams)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create site: %w", err)
+		return nil, fmt.Errorf("failed to start site creation workflow: %w", err)
 	}
 
-	var site models.Site
-	if err := DecodeResponse(resp, &site); err != nil {
-		return nil, err
+	// Wait for the site creation workflow to complete
+	completedWorkflow, err := workflowsService.WaitForUser(ctx, userID, createWorkflow.ID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("site creation workflow failed: %w", err)
 	}
 
-	return &site, nil
+	// Extract the site ID from the completed workflow
+	// The site_id might be in the workflow's SiteID field or in the Params
+	siteID := completedWorkflow.SiteID
+	if siteID == "" {
+		// Try getting from params
+		if id, ok := completedWorkflow.Params["site_id"].(string); ok {
+			siteID = id
+		}
+	}
+
+	if siteID == "" {
+		return nil, fmt.Errorf("failed to get site_id from workflow (result=%s)", completedWorkflow.Result)
+	}
+
+	// Step 2: Deploy the upstream/product via site workflow
+	deployParams := map[string]interface{}{
+		"product_id": req.UpstreamID,
+	}
+
+	deployWorkflow, err := workflowsService.CreateForSite(ctx, siteID, "deploy_product", deployParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start deploy workflow: %w", err)
+	}
+
+	// Wait for the deploy workflow to complete
+	completedDeployWorkflow, err := workflowsService.Wait(ctx, siteID, deployWorkflow.ID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("deploy workflow failed: %w", err)
+	}
+
+	if !completedDeployWorkflow.IsSuccessful() {
+		return nil, fmt.Errorf("deploy workflow failed: %s", completedDeployWorkflow.GetMessage())
+	}
+
+	// Step 3: Get the created site details
+	site, err := s.Get(ctx, siteID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get created site: %w", err)
+	}
+
+	return site, nil
 }
 
 // Delete deletes a site
