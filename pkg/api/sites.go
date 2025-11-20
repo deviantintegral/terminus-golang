@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/pantheon-systems/terminus-go/pkg/api/models"
 )
@@ -151,50 +150,23 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 		return nil, fmt.Errorf("site creation workflow failed: %w", err)
 	}
 
-	// Extract the site name from the workflow params to look up the site
-	siteName, ok := completedWorkflow.Params["site_name"].(string)
-	if !ok || siteName == "" {
-		return nil, fmt.Errorf("failed to get site_name from workflow params")
+	// Extract the site_id from the workflow's waiting_for_task
+	// This matches the behavior of PHP Terminus
+	var siteID string
+	switch {
+	case completedWorkflow.WaitingForTask != nil && completedWorkflow.WaitingForTask.SiteID != "":
+		siteID = completedWorkflow.WaitingForTask.SiteID
+	case completedWorkflow.SiteID != "":
+		// Fallback to the workflow's site_id field
+		siteID = completedWorkflow.SiteID
+	default:
+		return nil, fmt.Errorf("failed to get site_id from workflow (result=%s)", completedWorkflow.Result)
 	}
 
-	// Get the created site details from the user's site list
-	// We do this instead of using Get() because the site-names endpoint
-	// may not be immediately available after site creation
-	// Retry a few times with delays to handle propagation
-	var site *models.Site
-	retryDelays := []time.Duration{
-		0,               // immediate
-		1 * time.Second, // 1s
-		2 * time.Second, // 2s
-		4 * time.Second, // 4s
-		8 * time.Second, // 8s
-	}
-
-	for _, delay := range retryDelays {
-		if delay > 0 {
-			time.Sleep(delay)
-		}
-
-		sites, err := s.List(ctx, userID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list sites after creation: %w", err)
-		}
-
-		// Find the site with the matching name
-		for _, s := range sites {
-			if s.Name == siteName {
-				site = s
-				break
-			}
-		}
-
-		if site != nil {
-			break
-		}
-	}
-
-	if site == nil {
-		return nil, fmt.Errorf("created site %s not found in site list after retries", siteName)
+	// Get the created site details
+	site, err := s.Get(ctx, siteID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get created site: %w", err)
 	}
 
 	return site, nil
