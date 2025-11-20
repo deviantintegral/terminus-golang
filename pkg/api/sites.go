@@ -124,6 +124,13 @@ type CreateSiteRequest struct {
 // Create creates a new site using workflows
 func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSiteRequest) (*models.Site, error) {
 	workflowsService := NewWorkflowsService(s.client)
+	upstreamsService := NewUpstreamsService(s.client)
+
+	// Resolve upstream identifier to UUID (handles both UUIDs and machine names)
+	upstreamID, err := upstreamsService.ResolveToID(ctx, req.UpstreamID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve upstream: %w", err)
+	}
 
 	// Step 1: Create the site via user workflow
 	createParams := map[string]interface{}{
@@ -166,7 +173,7 @@ func (s *SitesService) Create(ctx context.Context, userID string, req *CreateSit
 	// Step 2: Deploy the upstream/product to the site
 	// This matches PHP Terminus behavior: $site->deployProduct($upstream->id)
 	deployParams := map[string]interface{}{
-		"product_id": req.UpstreamID,
+		"product_id": upstreamID,
 	}
 
 	deployWorkflow, err := workflowsService.CreateForSite(ctx, siteID, "deploy_product", deployParams)
