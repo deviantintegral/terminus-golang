@@ -148,19 +148,43 @@ func TestDashboardViewMaxArgs(t *testing.T) {
 }
 
 func TestOpenBrowserFunction(t *testing.T) {
-	// Test that openBrowser function exists and can be called
-	// We won't actually open a browser in tests, but we can verify the function signature
+	// Save the original browserOpener
+	originalOpener := browserOpener
+	defer func() { browserOpener = originalOpener }()
+
+	// Track what command would be executed
+	var capturedCmd string
+	var capturedArgs []string
+
+	// Mock the browserOpener to capture the command without executing it
+	browserOpener = func(cmd string, args []string) error {
+		capturedCmd = cmd
+		capturedArgs = args
+		return nil
+	}
+
 	testURL := "https://dashboard.pantheon.io/sites/test-site-id"
 
-	// This test verifies the function exists and has the correct signature
-	// We expect an error because we're not actually opening a browser,
-	// but the function should execute without panic
-	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("openBrowser panicked: %v", r)
-		}
-	}()
+	// Call openBrowser
+	err := openBrowser(testURL)
+	if err != nil {
+		t.Errorf("openBrowser returned error: %v", err)
+	}
 
-	// Call the function - it may or may not error depending on the system
-	_ = openBrowser(testURL)
+	// Verify the correct command was prepared based on the OS
+	if capturedCmd == "" {
+		t.Error("browserOpener was not called")
+	}
+
+	// Verify the URL is in the captured args
+	urlFound := false
+	for _, arg := range capturedArgs {
+		if arg == testURL {
+			urlFound = true
+			break
+		}
+	}
+	if !urlFound {
+		t.Errorf("expected URL '%s' in args, got %v", testURL, capturedArgs)
+	}
 }
