@@ -47,6 +47,9 @@ if ! command -v golangci-lint &> /dev/null; then
   fi
 fi
 
+# Install goimports
+go install golang.org/x/tools/cmd/goimports@latest
+
 # Install pre-commit hooks if not already installed
 if [ -f ".pre-commit-config.yaml" ] && command -v pre-commit &> /dev/null; then
     echo "Installing pre-commit hooks..."
