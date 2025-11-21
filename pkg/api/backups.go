@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api/models"
+	"github.com/deviantintegral/terminus-golang/pkg/api/models"
 )
 
 // BackupsService handles backup-related operations

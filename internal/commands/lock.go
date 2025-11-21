@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api"
+	"github.com/deviantintegral/terminus-golang/pkg/api"
 	"github.com/spf13/cobra"
 )
 

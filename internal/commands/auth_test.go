@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api"
-	"github.com/pantheon-systems/terminus-go/pkg/output"
-	"github.com/pantheon-systems/terminus-go/pkg/session"
+	"github.com/deviantintegral/terminus-golang/pkg/api"
+	"github.com/deviantintegral/terminus-golang/pkg/output"
+	"github.com/deviantintegral/terminus-golang/pkg/session"
 )
 
 func TestAuthLoginCmdStructure(t *testing.T) {
