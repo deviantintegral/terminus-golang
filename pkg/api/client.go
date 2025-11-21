@@ -8,7 +8,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"runtime"
 	"time"
 
@@ -326,28 +325,59 @@ func (c *Client) Patch(ctx context.Context, path string, body interface{}) (*htt
 	return c.Request(ctx, http.MethodPatch, path, body)
 }
 
-// GetPaged makes paginated GET requests and returns all results
+// buildPagedPath constructs a URL with pagination parameters
+func buildPagedPath(basePath string, limit int, start string) string {
+	separator := "?"
+	// Check if basePath already has query parameters
+	for i := len(basePath) - 1; i >= 0; i-- {
+		if basePath[i] == '?' {
+			separator = "&"
+			break
+		}
+	}
+
+	path := fmt.Sprintf("%s%slimit=%d", basePath, separator, limit)
+	if start != "" {
+		path = fmt.Sprintf("%s&start=%s", path, start)
+	}
+	return path
+}
+
+// processPageResults processes a page of results, extracting IDs and detecting duplicates
+func processPageResults(results []json.RawMessage, seenIDs map[string]bool, allResults *[]json.RawMessage) (lastID string, foundDuplicate bool) {
+	for _, result := range results {
+		// Try to extract ID from the result
+		var item struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(result, &item); err == nil && item.ID != "" {
+			// Check if we've seen this ID before (duplicate detection)
+			if seenIDs[item.ID] {
+				// We've received a duplicate, pagination is complete
+				return "", true
+			}
+			seenIDs[item.ID] = true
+			*allResults = append(*allResults, result)
+			lastID = item.ID
+		} else {
+			// If we can't extract an ID, just add the result
+			*allResults = append(*allResults, result)
+		}
+	}
+	return lastID, false
+}
+
+// GetPaged makes paginated GET requests using cursor-based pagination and returns all results
+// The Pantheon API uses cursor-based pagination with 'start' parameter (ID of last item)
+// rather than page-based pagination
 func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessage, error) {
 	var allResults []json.RawMessage
-	page := 1
+	seenIDs := make(map[string]bool) // Track IDs to detect duplicates
 	limit := 100
+	var start string // Cursor for pagination (ID of last item from previous page)
 
 	for {
-		// Build path with pagination parameters
-		u, err := url.Parse(basePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse path: %w", err)
-		}
-
-		q := u.Query()
-		q.Set("limit", fmt.Sprintf("%d", limit))
-		q.Set("page", fmt.Sprintf("%d", page))
-		u.RawQuery = q.Encode()
-
-		path := basePath
-		if u.RawQuery != "" {
-			path = basePath + "?" + u.RawQuery
-		}
+		path := buildPagedPath(basePath, limit, start)
 
 		resp, err := c.Get(ctx, path)
 		if err != nil {
@@ -365,14 +395,24 @@ func (c *Client) GetPaged(ctx context.Context, basePath string) ([]json.RawMessa
 			break
 		}
 
-		allResults = append(allResults, results...)
+		// Process results and check for duplicates
+		lastID, foundDuplicate := processPageResults(results, seenIDs, &allResults)
+		if foundDuplicate {
+			break
+		}
 
 		// If we got fewer results than the limit, we're done
 		if len(results) < limit {
 			break
 		}
 
-		page++
+		// If we couldn't extract any IDs, we can't paginate further
+		if lastID == "" {
+			break
+		}
+
+		// Update cursor to the last ID for next page
+		start = lastID
 	}
 
 	return allResults, nil
