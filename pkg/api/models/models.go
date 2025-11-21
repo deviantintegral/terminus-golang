@@ -16,6 +16,7 @@ type Site struct {
 	Organization  string                 `json:"organization"`
 	Service       string                 `json:"service_level"`
 	Upstream      interface{}            `json:"upstream"` // Can be string or object
+	UpstreamLabel string                 `json:"upstream_label,omitempty"`
 	PHP           string                 `json:"php_version"`
 	Holder        string                 `json:"holder_type"`
 	HolderID      string                 `json:"holder_id"`
@@ -64,6 +65,32 @@ func (s *Site) ToListItem() *SiteListItem {
 		PreferredZone: s.PreferredZone,
 		Info:          s.Info,
 	}
+}
+
+// UnmarshalJSON implements custom unmarshaling to extract upstream label
+func (s *Site) UnmarshalJSON(data []byte) error {
+	// Define a temporary struct to unmarshal the raw data
+	type SiteAlias Site
+	aux := &struct {
+		*SiteAlias
+	}{
+		SiteAlias: (*SiteAlias)(s),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Extract upstream label if upstream is an object
+	if s.Upstream != nil {
+		if upstreamMap, ok := s.Upstream.(map[string]interface{}); ok {
+			if label, ok := upstreamMap["label"].(string); ok {
+				s.UpstreamLabel = label
+			}
+		}
+	}
+
+	return nil
 }
 
 // Environment represents a site environment
