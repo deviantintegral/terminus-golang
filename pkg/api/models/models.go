@@ -3,6 +3,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -81,11 +82,25 @@ func (s *Site) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Extract upstream label if upstream is an object
+	// Extract upstream information if upstream is an object
 	if s.Upstream != nil {
 		if upstreamMap, ok := s.Upstream.(map[string]interface{}); ok {
+			// Extract label
 			if label, ok := upstreamMap["label"].(string); ok {
 				s.UpstreamLabel = label
+			}
+
+			// Format upstream as "id: url" to match PHP terminus
+			var upstreamID, upstreamURL string
+			if id, ok := upstreamMap["id"].(string); ok {
+				upstreamID = id
+			}
+			if url, ok := upstreamMap["url"].(string); ok {
+				upstreamURL = url
+			}
+
+			if upstreamID != "" && upstreamURL != "" {
+				s.Upstream = fmt.Sprintf("%s: %s", upstreamID, upstreamURL)
 			}
 		}
 	}
