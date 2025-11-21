@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0](https://github.com/deviantintegral/terminus-golang/compare/v0.4.0...v0.5.0) (2025-11-21)
+
+
+### Features
+
+* add Serializer interface for PHP-like CSV ([d609317](https://github.com/deviantintegral/terminus-golang/commit/d609317dbf203464fb2ce29999660ace54a0151d))
+* update CSV column names to match PHP format ([3a60ab4](https://github.com/deviantintegral/terminus-golang/commit/3a60ab4bd59cc893dc42783ed45b217267ca5a52))
+* use friendly plan names from API ([c65056b](https://github.com/deviantintegral/terminus-golang/commit/c65056b8451af1ae3249c48ef6a8577c7cb6da0b))
+* use friendly region names from API ([649f8e6](https://github.com/deviantintegral/terminus-golang/commit/649f8e6a57addff3c1b54ac0615efc0ffb8a3d4f))
+
+
+### Bug Fixes
+
+* add GOPATH/bin to PATH in SessionStart hook ([58725be](https://github.com/deviantintegral/terminus-golang/commit/58725be4c9f0bcfa44c0bd4d438c71c40f386160))
+* populate Memberships field in site:list ([720f17e](https://github.com/deviantintegral/terminus-golang/commit/720f17e378c9b3f1034af8e0c45f4c28777fa5e3))
+* resolve Serializer interface not being used for CSV ([eccf35e](https://github.com/deviantintegral/terminus-golang/commit/eccf35eb8b48175743236310b41862ac2a592173))
+* symlink goimports to /usr/local/bin ([6f7c456](https://github.com/deviantintegral/terminus-golang/commit/6f7c45603837d45f00bd0fbda1f6f3fd7752994c))
+
 ## [0.4.0](https://github.com/deviantintegral/terminus-golang/compare/v0.3.0...v0.4.0) (2025-11-21)
 
 
