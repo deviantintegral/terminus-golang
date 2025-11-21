@@ -68,7 +68,9 @@ func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site,
 	sites := make([]*models.Site, 0, len(rawResults))
 	for _, raw := range rawResults {
 		var membership struct {
-			Site *models.Site `json:"site"`
+			Site   *models.Site `json:"site"`
+			UserID string       `json:"user_id"`
+			Role   string       `json:"role"`
 		}
 		if err := json.Unmarshal(raw, &membership); err != nil {
 			// Try direct unmarshal in case the API returns sites directly
@@ -78,6 +80,9 @@ func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site,
 			}
 			sites = append(sites, &site)
 		} else if membership.Site != nil {
+			// Populate membership information
+			membership.Site.MembershipUserID = membership.UserID
+			membership.Site.MembershipRole = membership.Role
 			sites = append(sites, membership.Site)
 		}
 	}
@@ -270,11 +275,27 @@ func (s *SitesService) ListByOrganization(ctx context.Context, orgID string) ([]
 	for _, raw := range rawResults {
 		var membership struct {
 			Site *models.Site `json:"site"`
+			User struct {
+				ID string `json:"id"`
+			} `json:"user"`
+			Organization struct {
+				ID string `json:"id"`
+			} `json:"organization"`
+			Role string `json:"role"`
 		}
 		if err := json.Unmarshal(raw, &membership); err != nil {
 			return nil, fmt.Errorf("failed to decode site membership: %w", err)
 		}
 		if membership.Site != nil {
+			// Populate membership information
+			// For org memberships, we might have either user or organization
+			if membership.User.ID != "" {
+				membership.Site.MembershipUserID = membership.User.ID
+				membership.Site.MembershipRole = membership.Role
+			} else if membership.Organization.ID != "" {
+				membership.Site.MembershipUserID = membership.Organization.ID
+				membership.Site.MembershipRole = membership.Role
+			}
 			sites = append(sites, membership.Site)
 		}
 	}

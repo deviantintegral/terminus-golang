@@ -4,6 +4,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/deviantintegral/terminus-golang/pkg/output"
@@ -30,6 +31,9 @@ type Site struct {
 	PreferredZone      string                 `json:"preferred_zone"`
 	PreferredZoneLabel string                 `json:"preferred_zone_label"`
 	Info               map[string]interface{} `json:"info,omitempty"`
+	// Membership information (not from API, populated during listing)
+	MembershipUserID string `json:"-"`
+	MembershipRole   string `json:"-"`
 }
 
 // SiteListItem represents a site in list output (excludes upstream field)
@@ -51,6 +55,9 @@ type SiteListItem struct {
 	PreferredZone      string                 `json:"preferred_zone"`
 	PreferredZoneLabel string                 `json:"preferred_zone_label"`
 	Info               map[string]interface{} `json:"info,omitempty"`
+	// Membership information (not from API, populated during listing)
+	MembershipUserID string `json:"-"`
+	MembershipRole   string `json:"-"`
 }
 
 // ToListItem converts a Site to a SiteListItem (excludes upstream)
@@ -73,6 +80,8 @@ func (s *Site) ToListItem() *SiteListItem {
 		PreferredZone:      s.PreferredZone,
 		PreferredZoneLabel: s.PreferredZoneLabel,
 		Info:               s.Info,
+		MembershipUserID:   s.MembershipUserID,
+		MembershipRole:     s.MembershipRole,
 	}
 }
 
@@ -98,9 +107,12 @@ func (s *SiteListItem) Serialize() []output.SerializedField {
 	// Use PlanName for friendly plan name (e.g., "Sandbox" instead of "free")
 	plan := s.PlanName
 
-	// Memberships field - currently not populated from API
-	// PHP Terminus shows org memberships here
+	// Memberships field - format as "user_id: role" to match PHP Terminus
+	// Example: "9cbc8751-968b-4d4f-9d23-909aea390817: Team"
 	memberships := ""
+	if s.MembershipUserID != "" && s.MembershipRole != "" {
+		memberships = fmt.Sprintf("%s: %s", s.MembershipUserID, formatRole(s.MembershipRole))
+	}
 
 	return []output.SerializedField{
 		{Name: "Name", Value: s.Name},
@@ -557,4 +569,31 @@ type UpstreamUpdateCommit struct {
 type SiteOrganizationMembership struct {
 	OrgID   string `json:"org_id"`
 	OrgName string `json:"org_name"`
+}
+
+// formatRole converts API role names to friendly display names to match PHP Terminus
+// Examples: "team_member" -> "Team", "organization_admin" -> "Organization Admin"
+func formatRole(role string) string {
+	// Handle special cases
+	switch role {
+	case "team_member":
+		return "Team"
+	case "organization_admin":
+		return "Organization Admin"
+	case "org_admin":
+		return "Organization Admin"
+	case "developer":
+		return "Developer"
+	case "admin":
+		return "Admin"
+	default:
+		// For unknown roles, capitalize each word and replace underscores with spaces
+		words := strings.Split(role, "_")
+		for i, word := range words {
+			if word != "" {
+				words[i] = strings.ToUpper(word[:1]) + word[1:]
+			}
+		}
+		return strings.Join(words, " ")
+	}
 }
