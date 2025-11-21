@@ -79,22 +79,24 @@ func TestSiteListItem_MarshalJSON_ExcludesUpstream(t *testing.T) {
 
 func TestSite_ToListItem_CopiesAllFields(t *testing.T) {
 	site := &Site{
-		ID:            "test-id",
-		Name:          "test-name",
-		Label:         "Test Label",
-		Created:       1234567890,
-		Framework:     "drupal",
-		Organization:  "org-123",
-		Service:       "free",
-		Upstream:      "wordpress",
-		PHP:           "8.1",
-		Holder:        "user",
-		HolderID:      "holder-123",
-		Owner:         "owner-123",
-		Frozen:        false,
-		IsFrozen:      false,
-		PreferredZone: "us-east",
-		Info:          map[string]interface{}{"foo": "bar"},
+		ID:                 "test-id",
+		Name:               "test-name",
+		Label:              "Test Label",
+		Created:            1234567890,
+		Framework:          "drupal",
+		Organization:       "org-123",
+		Service:            "free",
+		PlanName:           "Sandbox",
+		Upstream:           "wordpress",
+		PHP:                "8.1",
+		Holder:             "user",
+		HolderID:           "holder-123",
+		Owner:              "owner-123",
+		Frozen:             false,
+		IsFrozen:           false,
+		PreferredZone:      "us-east",
+		PreferredZoneLabel: "US East",
+		Info:               map[string]interface{}{"foo": "bar"},
 	}
 
 	listItem := site.ToListItem()
@@ -121,8 +123,14 @@ func TestSite_ToListItem_CopiesAllFields(t *testing.T) {
 	if listItem.Service != site.Service {
 		t.Errorf("expected Service '%s', got '%s'", site.Service, listItem.Service)
 	}
+	if listItem.PlanName != site.PlanName {
+		t.Errorf("expected PlanName '%s', got '%s'", site.PlanName, listItem.PlanName)
+	}
 	if listItem.PHP != site.PHP {
 		t.Errorf("expected PHP '%s', got '%s'", site.PHP, listItem.PHP)
+	}
+	if listItem.PreferredZoneLabel != site.PreferredZoneLabel {
+		t.Errorf("expected PreferredZoneLabel '%s', got '%s'", site.PreferredZoneLabel, listItem.PreferredZoneLabel)
 	}
 }
 

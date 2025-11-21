@@ -18,6 +18,7 @@ type Site struct {
 	Framework          string                 `json:"framework"`
 	Organization       string                 `json:"organization"`
 	Service            string                 `json:"service_level"`
+	PlanName           string                 `json:"plan_name"`
 	Upstream           interface{}            `json:"upstream"` // Can be string or object
 	UpstreamLabel      string                 `json:"upstream_label,omitempty"`
 	PHP                string                 `json:"php_version"`
@@ -40,6 +41,7 @@ type SiteListItem struct {
 	Framework          string                 `json:"framework"`
 	Organization       string                 `json:"organization"`
 	Service            string                 `json:"service_level"`
+	PlanName           string                 `json:"plan_name"`
 	PHP                string                 `json:"php_version"`
 	Holder             string                 `json:"holder_type"`
 	HolderID           string                 `json:"holder_id"`
@@ -61,6 +63,7 @@ func (s *Site) ToListItem() *SiteListItem {
 		Framework:          s.Framework,
 		Organization:       s.Organization,
 		Service:            s.Service,
+		PlanName:           s.PlanName,
 		PHP:                s.PHP,
 		Holder:             s.Holder,
 		HolderID:           s.HolderID,
@@ -92,6 +95,9 @@ func (s *SiteListItem) Serialize() []output.SerializedField {
 	// Use PreferredZoneLabel for friendly region name (e.g., "United States" instead of "us-central1")
 	region := s.PreferredZoneLabel
 
+	// Use PlanName for friendly plan name (e.g., "Sandbox" instead of "free")
+	plan := s.PlanName
+
 	// Memberships field - currently not populated from API
 	// PHP Terminus shows org memberships here
 	memberships := ""
@@ -99,7 +105,7 @@ func (s *SiteListItem) Serialize() []output.SerializedField {
 	return []output.SerializedField{
 		{Name: "Name", Value: s.Name},
 		{Name: "ID", Value: s.ID},
-		{Name: "Plan", Value: s.Service},
+		{Name: "Plan", Value: plan},
 		{Name: "Framework", Value: s.Framework},
 		{Name: "Region", Value: region},
 		{Name: "Owner", Value: s.Owner},
@@ -179,6 +185,9 @@ func (s *Site) Serialize() []output.SerializedField {
 	// Use PreferredZoneLabel for friendly region name (e.g., "United States" instead of "us-central1")
 	region := s.PreferredZoneLabel
 
+	// Use PlanName for friendly plan name (e.g., "Sandbox" instead of "free")
+	plan := s.PlanName
+
 	return []output.SerializedField{
 		{Name: "ID", Value: s.ID},
 		{Name: "Name", Value: s.Name},
@@ -186,7 +195,7 @@ func (s *Site) Serialize() []output.SerializedField {
 		{Name: "Created", Value: createdStr},
 		{Name: "Framework", Value: s.Framework},
 		{Name: "Organization", Value: s.Organization},
-		{Name: "Plan", Value: s.Service},
+		{Name: "Plan", Value: plan},
 		{Name: "Upstream", Value: upstreamStr},
 		{Name: "Upstream Label", Value: s.UpstreamLabel},
 		{Name: "Holder Type", Value: s.Holder},
