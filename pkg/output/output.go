@@ -305,10 +305,8 @@ func extractTableData(data interface{}, fields []string) (rows [][]string, heade
 		for i := 0; i < v.Len(); i++ {
 			item := v.Index(i)
 
-			// Dereference pointer
-			if item.Kind() == reflect.Ptr {
-				item = item.Elem()
-			}
+			// Don't dereference here - let extractRow handle it
+			// This allows extractRow to check if pointer types implement interfaces
 
 			row, itemHeaders := extractRow(item, fields)
 			if i == 0 {
@@ -357,12 +355,20 @@ func getDefaultFields(data interface{}) []string {
 
 // extractRow extracts a single row from a struct or map
 func extractRow(v reflect.Value, fields []string) (row, headers []string) {
+	// Check if the value (potentially a pointer) implements Serializer interface
+	// Do this BEFORE dereferencing to handle pointer receivers
+	if v.CanInterface() {
+		if serializer, ok := v.Interface().(Serializer); ok {
+			return extractFromSerializer(serializer, fields)
+		}
+	}
+
 	// Dereference pointer
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 
-	// Check if the value implements Serializer interface
+	// Check again after dereferencing in case of value receivers
 	if v.CanInterface() {
 		if serializer, ok := v.Interface().(Serializer); ok {
 			return extractFromSerializer(serializer, fields)
