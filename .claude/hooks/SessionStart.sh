@@ -47,8 +47,20 @@ if ! command -v golangci-lint &> /dev/null; then
   fi
 fi
 
+# Ensure GOPATH/bin is in PATH so installed Go tools are accessible
+export PATH="$(go env GOPATH)/bin:$PATH"
+
 # Install goimports
+echo "Installing goimports..."
 go install golang.org/x/tools/cmd/goimports@latest
+
+# Verify goimports installation
+if command -v goimports &> /dev/null; then
+    echo "goimports installed successfully: $(which goimports)"
+else
+    echo "Warning: goimports installation may have failed"
+    echo "Please ensure $(go env GOPATH)/bin is in your PATH"
+fi
 
 # Install pre-commit hooks if not already installed
 if [ -f ".pre-commit-config.yaml" ] && command -v pre-commit &> /dev/null; then
