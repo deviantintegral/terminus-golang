@@ -13,5 +13,6 @@
   "owner": "9cbc8751-968b-4d4f-9d23-909aea390817",
   "frozen": false,
   "is_frozen": false,
-  "preferred_zone": "us-central1"
+  "preferred_zone": "us-central1",
+  "preferred_zone_label": "United States"
 }
