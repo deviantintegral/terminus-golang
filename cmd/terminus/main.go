@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pantheon-systems/terminus-go/internal/commands"
+	"github.com/deviantintegral/terminus-golang/internal/commands"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/pantheon-systems/terminus-go
+module github.com/deviantintegral/terminus-golang
 
 go 1.24
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api"
-	"github.com/pantheon-systems/terminus-go/pkg/api/models"
+	"github.com/deviantintegral/terminus-golang/pkg/api"
+	"github.com/deviantintegral/terminus-golang/pkg/api/models"
 	"github.com/spf13/cobra"
 )
 

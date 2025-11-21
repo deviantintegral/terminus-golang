@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pantheon-systems/terminus-go/pkg/output"
+	"github.com/deviantintegral/terminus-golang/pkg/output"
 )
 
 // Site represents a Pantheon site

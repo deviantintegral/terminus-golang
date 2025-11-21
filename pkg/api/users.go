@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api/models"
+	"github.com/deviantintegral/terminus-golang/pkg/api/models"
 )
 
 // UsersService handles user-related operations

@@ -3,7 +3,7 @@ package commands
 import (
 	"testing"
 
-	"github.com/pantheon-systems/terminus-go/pkg/session"
+	"github.com/deviantintegral/terminus-golang/pkg/session"
 )
 
 func TestDashboardViewCmdStructure(t *testing.T) {

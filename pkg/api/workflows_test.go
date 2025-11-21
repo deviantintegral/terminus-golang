@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api/models"
+	"github.com/deviantintegral/terminus-golang/pkg/api/models"
 )
 
 func TestNewWorkflowsService(t *testing.T) {

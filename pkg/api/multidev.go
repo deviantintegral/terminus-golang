@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pantheon-systems/terminus-go/pkg/api/models"
+	"github.com/deviantintegral/terminus-golang/pkg/api/models"
 )
 
 // MultidevService handles multidev environment operations
