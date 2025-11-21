@@ -57,6 +57,14 @@ go install golang.org/x/tools/cmd/goimports@latest
 # Verify goimports installation
 if command -v goimports &> /dev/null; then
     echo "goimports installed successfully: $(which goimports)"
+
+    # Create symlink in /usr/local/bin so pre-commit hooks can find it
+    # Pre-commit hooks run in isolated environments and may not have GOPATH/bin in PATH
+    if [ ! -f "/usr/local/bin/goimports" ]; then
+        echo "Creating symlink for goimports in /usr/local/bin..."
+        ln -sf "$(go env GOPATH)/bin/goimports" /usr/local/bin/goimports
+        echo "goimports symlink created: /usr/local/bin/goimports"
+    fi
 else
     echo "Warning: goimports installation may have failed"
     echo "Please ensure $(go env GOPATH)/bin is in your PATH"
