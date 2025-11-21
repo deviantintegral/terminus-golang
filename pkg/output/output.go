@@ -288,6 +288,11 @@ func extractTableData(data interface{}, fields []string) (rows [][]string, heade
 		v = v.Elem()
 	}
 
+	// If no fields specified, check if the data implements DefaultFielder
+	if len(fields) == 0 {
+		fields = getDefaultFields(data)
+	}
+
 	// Handle slice/array
 	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 		if v.Len() == 0 {
@@ -320,11 +325,48 @@ func extractTableData(data interface{}, fields []string) (rows [][]string, heade
 	return [][]string{row}, headers
 }
 
+// getDefaultFields checks if data implements DefaultFielder and returns default fields
+func getDefaultFields(data interface{}) []string {
+	// Check direct interface
+	if df, ok := data.(DefaultFielder); ok {
+		return df.DefaultFields()
+	}
+
+	// For slices, check the first element
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+		if v.Len() > 0 {
+			item := v.Index(0)
+			if item.Kind() == reflect.Ptr {
+				item = item.Elem()
+			}
+			if item.CanInterface() {
+				if df, ok := item.Interface().(DefaultFielder); ok {
+					return df.DefaultFields()
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // extractRow extracts a single row from a struct or map
 func extractRow(v reflect.Value, fields []string) (row, headers []string) {
 	// Dereference pointer
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
+	}
+
+	// Check if the value implements Serializer interface
+	if v.CanInterface() {
+		if serializer, ok := v.Interface().(Serializer); ok {
+			return extractFromSerializer(serializer, fields)
+		}
 	}
 
 	switch v.Kind() {
@@ -429,6 +471,52 @@ func extractFromMap(v reflect.Value, fields []string) (row, headers []string) {
 	}
 
 	return row, headers
+}
+
+// extractFromSerializer extracts data from a type that implements Serializer
+func extractFromSerializer(serializer Serializer, fields []string) (row, headers []string) {
+	serializedFields := serializer.Serialize()
+
+	// If specific fields are requested, filter and reorder
+	if len(fields) > 0 {
+		// Build a map for quick lookup
+		fieldMap := make(map[string]SerializedField)
+		for _, sf := range serializedFields {
+			fieldMap[strings.ToLower(sf.Name)] = sf
+		}
+
+		// Extract only requested fields in the requested order
+		for _, fieldName := range fields {
+			sf, ok := fieldMap[strings.ToLower(fieldName)]
+			if !ok {
+				// Field not found, add empty value
+				headers = append(headers, fieldName)
+				row = append(row, "")
+				continue
+			}
+
+			headers = append(headers, sf.Name)
+			row = append(row, formatSerializedValue(sf.Value))
+		}
+	} else {
+		// Use all fields in the order returned by Serialize()
+		for _, sf := range serializedFields {
+			headers = append(headers, sf.Name)
+			row = append(row, formatSerializedValue(sf.Value))
+		}
+	}
+
+	return row, headers
+}
+
+// formatSerializedValue formats a serialized field value as a string
+func formatSerializedValue(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+
+	v := reflect.ValueOf(val)
+	return formatValue(v)
 }
 
 // getHeaderName gets the display name for a struct field

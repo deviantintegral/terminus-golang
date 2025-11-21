@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/pantheon-systems/terminus-go/pkg/output"
 )
 
 // Site represents a Pantheon site
@@ -68,6 +70,44 @@ func (s *Site) ToListItem() *SiteListItem {
 	}
 }
 
+// Serialize implements the Serializer interface for SiteListItem.
+// This method returns fields in the same order as PHP Terminus for CSV compatibility.
+// Note: SiteListItem excludes upstream fields compared to Site.
+func (s *SiteListItem) Serialize() []output.SerializedField {
+	// Format created timestamp
+	createdStr := ""
+	if s.Created > 0 {
+		createdStr = time.Unix(s.Created, 0).Format("2006-01-02 15:04:05")
+	}
+
+	// Determine frozen status - use Frozen field primarily, fallback to IsFrozen
+	frozen := s.Frozen || s.IsFrozen
+
+	// Extract region label from PreferredZone
+	region := s.PreferredZone
+
+	return []output.SerializedField{
+		{Name: "id", Value: s.ID},
+		{Name: "name", Value: s.Name},
+		{Name: "label", Value: s.Label},
+		{Name: "created", Value: createdStr},
+		{Name: "framework", Value: s.Framework},
+		{Name: "organization", Value: s.Organization},
+		{Name: "plan_name", Value: s.Service}, // Service maps to plan_name in PHP
+		{Name: "holder_type", Value: s.Holder},
+		{Name: "holder_id", Value: s.HolderID},
+		{Name: "owner", Value: s.Owner},
+		{Name: "region", Value: region},
+		{Name: "frozen", Value: frozen},
+	}
+}
+
+// DefaultFields implements the DefaultFielder interface for SiteListItem.
+// These are the fields that should be displayed by default, matching PHP Terminus.
+func (s *SiteListItem) DefaultFields() []string {
+	return []string{"name", "id", "plan_name", "framework", "region", "owner", "created", "frozen"}
+}
+
 // UnmarshalJSON implements custom unmarshaling to extract upstream label
 func (s *Site) UnmarshalJSON(data []byte) error {
 	// Define a temporary struct to unmarshal the raw data
@@ -106,6 +146,51 @@ func (s *Site) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// Serialize implements the Serializer interface for Site.
+// This method returns fields in the same order as PHP Terminus for CSV compatibility.
+func (s *Site) Serialize() []output.SerializedField {
+	// Format created timestamp
+	createdStr := ""
+	if s.Created > 0 {
+		createdStr = time.Unix(s.Created, 0).Format("2006-01-02 15:04:05")
+	}
+
+	// Format upstream as string
+	upstreamStr := ""
+	if s.Upstream != nil {
+		upstreamStr = fmt.Sprintf("%v", s.Upstream)
+	}
+
+	// Determine frozen status - use Frozen field primarily, fallback to IsFrozen
+	frozen := s.Frozen || s.IsFrozen
+
+	// Extract region label from PreferredZone
+	region := s.PreferredZone
+
+	return []output.SerializedField{
+		{Name: "id", Value: s.ID},
+		{Name: "name", Value: s.Name},
+		{Name: "label", Value: s.Label},
+		{Name: "created", Value: createdStr},
+		{Name: "framework", Value: s.Framework},
+		{Name: "organization", Value: s.Organization},
+		{Name: "plan_name", Value: s.Service}, // Service maps to plan_name in PHP
+		{Name: "upstream", Value: upstreamStr},
+		{Name: "upstream_label", Value: s.UpstreamLabel},
+		{Name: "holder_type", Value: s.Holder},
+		{Name: "holder_id", Value: s.HolderID},
+		{Name: "owner", Value: s.Owner},
+		{Name: "region", Value: region},
+		{Name: "frozen", Value: frozen},
+	}
+}
+
+// DefaultFields implements the DefaultFielder interface for Site.
+// These are the fields that should be displayed by default, matching PHP Terminus.
+func (s *Site) DefaultFields() []string {
+	return []string{"name", "id", "plan_name", "framework", "region", "owner", "created", "frozen"}
 }
 
 // Environment represents a site environment
