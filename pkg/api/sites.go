@@ -93,7 +93,8 @@ func (s *SitesService) Get(ctx context.Context, siteIdentifier string) (*models.
 		return nil, fmt.Errorf("failed to resolve site identifier: %w", err)
 	}
 
-	path := fmt.Sprintf("/sites/%s", siteID)
+	// Use site_state=true to get full site state including upstream information
+	path := fmt.Sprintf("/sites/%s?site_state=true", siteID)
 	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
 	if err != nil {
 		return nil, fmt.Errorf("failed to get site: %w", err)
