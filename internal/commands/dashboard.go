@@ -125,6 +125,11 @@ func getEnvironmentDashboardURL(siteEnv string) (string, error) {
 	return fmt.Sprintf("https://dashboard.pantheon.io/sites/%s#%s", site.ID, envID), nil
 }
 
+// browserOpener is a variable that can be mocked in tests
+var browserOpener = func(cmd string, args []string) error {
+	return exec.Command(cmd, args...).Start()
+}
+
 func openBrowser(url string) error {
 	var cmd string
 	var args []string
@@ -141,5 +146,5 @@ func openBrowser(url string) error {
 		args = []string{url}
 	}
 
-	return exec.Command(cmd, args...).Start() //nolint:gosec // User-controlled URL is intentional
+	return browserOpener(cmd, args)
 }
