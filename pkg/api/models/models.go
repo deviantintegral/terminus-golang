@@ -81,31 +81,35 @@ func (s *SiteListItem) Serialize() []output.SerializedField {
 	}
 
 	// Determine frozen status - use Frozen field primarily, fallback to IsFrozen
-	frozen := s.Frozen || s.IsFrozen
+	frozenStr := "false"
+	if s.Frozen || s.IsFrozen {
+		frozenStr = "true"
+	}
 
 	// Extract region label from PreferredZone
 	region := s.PreferredZone
 
+	// Memberships field - currently not populated from API
+	// PHP Terminus shows org memberships here
+	memberships := ""
+
 	return []output.SerializedField{
-		{Name: "id", Value: s.ID},
-		{Name: "name", Value: s.Name},
-		{Name: "label", Value: s.Label},
-		{Name: "created", Value: createdStr},
-		{Name: "framework", Value: s.Framework},
-		{Name: "organization", Value: s.Organization},
-		{Name: "plan_name", Value: s.Service}, // Service maps to plan_name in PHP
-		{Name: "holder_type", Value: s.Holder},
-		{Name: "holder_id", Value: s.HolderID},
-		{Name: "owner", Value: s.Owner},
-		{Name: "region", Value: region},
-		{Name: "frozen", Value: frozen},
+		{Name: "Name", Value: s.Name},
+		{Name: "ID", Value: s.ID},
+		{Name: "Plan", Value: s.Service},
+		{Name: "Framework", Value: s.Framework},
+		{Name: "Region", Value: region},
+		{Name: "Owner", Value: s.Owner},
+		{Name: "Created", Value: createdStr},
+		{Name: "Memberships", Value: memberships},
+		{Name: "Is Frozen?", Value: frozenStr},
 	}
 }
 
 // DefaultFields implements the DefaultFielder interface for SiteListItem.
 // These are the fields that should be displayed by default, matching PHP Terminus.
 func (s *SiteListItem) DefaultFields() []string {
-	return []string{"name", "id", "plan_name", "framework", "region", "owner", "created", "frozen"}
+	return []string{"Name", "ID", "Plan", "Framework", "Region", "Owner", "Created", "Memberships", "Is Frozen?"}
 }
 
 // UnmarshalJSON implements custom unmarshaling to extract upstream label
@@ -164,33 +168,36 @@ func (s *Site) Serialize() []output.SerializedField {
 	}
 
 	// Determine frozen status - use Frozen field primarily, fallback to IsFrozen
-	frozen := s.Frozen || s.IsFrozen
+	frozenStr := "false"
+	if s.Frozen || s.IsFrozen {
+		frozenStr = "true"
+	}
 
 	// Extract region label from PreferredZone
 	region := s.PreferredZone
 
 	return []output.SerializedField{
-		{Name: "id", Value: s.ID},
-		{Name: "name", Value: s.Name},
-		{Name: "label", Value: s.Label},
-		{Name: "created", Value: createdStr},
-		{Name: "framework", Value: s.Framework},
-		{Name: "organization", Value: s.Organization},
-		{Name: "plan_name", Value: s.Service}, // Service maps to plan_name in PHP
-		{Name: "upstream", Value: upstreamStr},
-		{Name: "upstream_label", Value: s.UpstreamLabel},
-		{Name: "holder_type", Value: s.Holder},
-		{Name: "holder_id", Value: s.HolderID},
-		{Name: "owner", Value: s.Owner},
-		{Name: "region", Value: region},
-		{Name: "frozen", Value: frozen},
+		{Name: "ID", Value: s.ID},
+		{Name: "Name", Value: s.Name},
+		{Name: "Label", Value: s.Label},
+		{Name: "Created", Value: createdStr},
+		{Name: "Framework", Value: s.Framework},
+		{Name: "Organization", Value: s.Organization},
+		{Name: "Plan", Value: s.Service},
+		{Name: "Upstream", Value: upstreamStr},
+		{Name: "Upstream Label", Value: s.UpstreamLabel},
+		{Name: "Holder Type", Value: s.Holder},
+		{Name: "Holder ID", Value: s.HolderID},
+		{Name: "Owner", Value: s.Owner},
+		{Name: "Region", Value: region},
+		{Name: "Is Frozen?", Value: frozenStr},
 	}
 }
 
 // DefaultFields implements the DefaultFielder interface for Site.
 // These are the fields that should be displayed by default, matching PHP Terminus.
 func (s *Site) DefaultFields() []string {
-	return []string{"name", "id", "plan_name", "framework", "region", "owner", "created", "frozen"}
+	return []string{"Name", "ID", "Plan", "Framework", "Region", "Owner", "Created", "Is Frozen?"}
 }
 
 // Environment represents a site environment
