@@ -406,8 +406,8 @@ This section tracks the implementation status of all PHP Terminus commands in th
 
 | Command | Description | Implemented | Human Tested |
 |---------|-------------|:-----------:|:------------:|
-| `art` | Display Pantheon ASCII art | ✅ | ❌ |
-| `art:list` | List available ASCII art | ✅ | ❌ |
+| `art` | Display Pantheon ASCII art | ✅ | ✅ |
+| `art:list` | List available ASCII art | ✅ | ✅ |
 
 ### auth
 
