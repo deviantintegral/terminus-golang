@@ -117,13 +117,17 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 	var sites []*models.Site
 
 	if siteOrgFlag != "" {
+		// If org flag is specified, only list sites for that specific organization
 		sites, err = sitesService.ListByOrganization(getContext(), siteOrgFlag)
+		if err != nil {
+			return fmt.Errorf("failed to list sites: %w", err)
+		}
 	} else {
-		sites, err = sitesService.List(getContext(), sess.UserID)
-	}
-
-	if err != nil {
-		return fmt.Errorf("failed to list sites: %w", err)
+		// Otherwise, list all sites from user memberships and organization memberships
+		sites, err = getAllUserSites(sess.UserID)
+		if err != nil {
+			return fmt.Errorf("failed to list sites: %w", err)
+		}
 	}
 
 	// Convert to SiteListItem to exclude upstream field from output
@@ -133,6 +137,56 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 	}
 
 	return printOutput(listItems)
+}
+
+// getAllUserSites fetches all sites accessible to the user, including:
+// 1. Sites from direct user memberships
+// 2. Sites from all organizations the user is a member of
+func getAllUserSites(userID string) ([]*models.Site, error) {
+	sitesService := api.NewSitesService(cliContext.APIClient)
+	orgsService := api.NewOrganizationsService(cliContext.APIClient)
+
+	// Track unique sites by ID to avoid duplicates
+	siteMap := make(map[string]*models.Site)
+
+	// 1. Get sites from direct user memberships
+	userSites, err := sitesService.List(getContext(), userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list user sites: %w", err)
+	}
+	for _, site := range userSites {
+		siteMap[site.ID] = site
+	}
+
+	// 2. Get user's organization memberships
+	orgs, err := orgsService.List(getContext(), userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list user organizations: %w", err)
+	}
+
+	// 3. For each organization, get all sites
+	for _, org := range orgs {
+		orgSites, err := sitesService.ListByOrganization(getContext(), org.ID)
+		if err != nil {
+			// Continue on error to get sites from other orgs
+			// Log the error but don't fail completely
+			printMessage("Warning: failed to list sites for organization %s: %v", org.Name, err)
+			continue
+		}
+
+		// Add org sites to the map (deduplicating by ID)
+		for _, site := range orgSites {
+			siteMap[site.ID] = site
+		}
+	}
+
+	// Convert map to slice
+	sites := make([]*models.Site, 0, len(siteMap))
+	for _, site := range siteMap {
+		sites = append(sites, site)
+	}
+
+	return sites, nil
 }
 
 func runSiteInfo(_ *cobra.Command, args []string) error {
