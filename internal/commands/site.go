@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/deviantintegral/terminus-golang/pkg/api"
 	"github.com/deviantintegral/terminus-golang/pkg/api/models"
@@ -57,8 +58,11 @@ var siteOrgListCmd = &cobra.Command{
 }
 
 var (
-	siteOrgFlag    string
-	siteRegionFlag string
+	siteOrgFlag      string
+	siteRegionFlag   string
+	siteOwnerFlag    string
+	siteTeamFlag     bool
+	siteUpstreamFlag string
 )
 
 func init() {
@@ -72,6 +76,9 @@ func init() {
 
 	// Flags
 	siteListCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Filter by organization")
+	siteListCmd.Flags().StringVar(&siteOwnerFlag, "owner", "", "Owner filter; \"me\" or user UUID")
+	siteListCmd.Flags().BoolVar(&siteTeamFlag, "team", false, "Team-only filter")
+	siteListCmd.Flags().StringVar(&siteUpstreamFlag, "upstream", "", "Upstream name to filter")
 
 	siteCreateCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Organization ID")
 	siteCreateCmd.Flags().StringVar(&siteRegionFlag, "region", "", "Preferred region")
@@ -129,6 +136,9 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("failed to list sites: %w", err)
 		}
 	}
+
+	// Apply filters
+	sites = filterSites(sites, sess.UserID)
 
 	// Convert to SiteListItem to exclude upstream field from output
 	listItems := make([]*models.SiteListItem, len(sites))
@@ -191,6 +201,62 @@ func getAllUserSites(userID string) ([]*models.Site, error) {
 	}
 
 	return sites, nil
+}
+
+// filterSites applies command-line filters to the sites list
+func filterSites(sites []*models.Site, currentUserID string) []*models.Site {
+	filtered := make([]*models.Site, 0, len(sites))
+
+	for _, site := range sites {
+		// Apply --owner filter
+		if siteOwnerFlag != "" {
+			ownerToMatch := siteOwnerFlag
+			if siteOwnerFlag == "me" {
+				ownerToMatch = currentUserID
+			}
+			if site.Owner != ownerToMatch {
+				continue
+			}
+		}
+
+		// Apply --team filter
+		if siteTeamFlag {
+			if site.Holder != "team" {
+				continue
+			}
+		}
+
+		// Apply --upstream filter
+		if siteUpstreamFlag != "" {
+			upstreamMatch := false
+
+			// Check if upstream is a string (formatted as "id: url")
+			if upstreamStr, ok := site.Upstream.(string); ok && upstreamStr != "" {
+				// The upstream is formatted as "id: url" by UnmarshalJSON
+				// Extract the ID (part before the colon)
+				parts := strings.SplitN(upstreamStr, ":", 2)
+				if len(parts) > 0 {
+					upstreamID := strings.TrimSpace(parts[0])
+					if upstreamID == siteUpstreamFlag {
+						upstreamMatch = true
+					}
+				}
+			}
+
+			// Also check against the upstream label
+			if site.UpstreamLabel == siteUpstreamFlag {
+				upstreamMatch = true
+			}
+
+			if !upstreamMatch {
+				continue
+			}
+		}
+
+		filtered = append(filtered, site)
+	}
+
+	return filtered
 }
 
 func runSiteInfo(_ *cobra.Command, args []string) error {
