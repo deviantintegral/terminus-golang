@@ -124,10 +124,34 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 	var sites []*models.Site
 
 	if siteOrgFlag != "" {
+		// Resolve organization name to ID if needed
+		orgID := siteOrgFlag
+		if !api.IsUUID(siteOrgFlag) {
+			// Get user's organizations to resolve the name
+			orgsService := api.NewOrganizationsService(cliContext.APIClient)
+			orgs, err := orgsService.List(getContext(), sess.UserID)
+			if err != nil {
+				return fmt.Errorf("failed to list organizations: %w", err)
+			}
+
+			// Find organization by name or label
+			var found bool
+			for _, org := range orgs {
+				if org.Name == siteOrgFlag || org.Label == siteOrgFlag {
+					orgID = org.ID
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("organization not found: %s", siteOrgFlag)
+			}
+		}
+
 		// If org flag is specified, only list sites for that specific organization
-		sites, err = sitesService.ListByOrganization(getContext(), siteOrgFlag)
+		sites, err = sitesService.ListByOrganization(getContext(), orgID)
 		if err != nil {
-			return fmt.Errorf("failed to list sites: %w", err)
+			return fmt.Errorf("failed to list organization sites: %w", err)
 		}
 	} else {
 		// Otherwise, list all sites from user memberships and organization memberships
