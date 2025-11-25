@@ -125,27 +125,9 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 
 	if siteOrgFlag != "" {
 		// Resolve organization name to ID if needed
-		orgID := siteOrgFlag
-		if !api.IsUUID(siteOrgFlag) {
-			// Get user's organizations to resolve the name
-			orgsService := api.NewOrganizationsService(cliContext.APIClient)
-			orgs, err := orgsService.List(getContext(), sess.UserID)
-			if err != nil {
-				return fmt.Errorf("failed to list organizations: %w", err)
-			}
-
-			// Find organization by name or label
-			var found bool
-			for _, org := range orgs {
-				if org.Name == siteOrgFlag || org.Label == siteOrgFlag {
-					orgID = org.ID
-					found = true
-					break
-				}
-			}
-			if !found {
-				return fmt.Errorf("organization not found: %s", siteOrgFlag)
-			}
+		orgID, err := resolveOrgID(siteOrgFlag, sess.UserID)
+		if err != nil {
+			return err
 		}
 
 		// If org flag is specified, only list sites for that specific organization
@@ -225,6 +207,43 @@ func getAllUserSites(userID string) ([]*models.Site, error) {
 	}
 
 	return sites, nil
+}
+
+// resolveOrgID resolves an organization name or label to its UUID
+// If the input is already a UUID, it returns it unchanged
+func resolveOrgID(orgIdentifier, userID string) (string, error) {
+	// If already a UUID, return as-is
+	if api.IsUUID(orgIdentifier) {
+		return orgIdentifier, nil
+	}
+
+	// Get user's organizations to resolve the name
+	orgsService := api.NewOrganizationsService(cliContext.APIClient)
+	orgs, err := orgsService.List(getContext(), userID)
+	if err != nil {
+		return "", fmt.Errorf("failed to list organizations: %w", err)
+	}
+
+	// Find organization by name or label (case-insensitive)
+	for _, org := range orgs {
+		if strings.EqualFold(org.Name, orgIdentifier) || strings.EqualFold(org.Label, orgIdentifier) {
+			return org.ID, nil
+		}
+	}
+
+	// Build helpful error message with available organizations
+	var availableOrgs []string
+	for _, org := range orgs {
+		if org.Name != "" {
+			availableOrgs = append(availableOrgs, org.Name)
+		} else if org.Label != "" {
+			availableOrgs = append(availableOrgs, org.Label)
+		}
+	}
+	if len(availableOrgs) > 0 {
+		return "", fmt.Errorf("organization not found: %s (available: %s)", orgIdentifier, strings.Join(availableOrgs, ", "))
+	}
+	return "", fmt.Errorf("organization not found: %s", orgIdentifier)
 }
 
 // filterSites applies command-line filters to the sites list
