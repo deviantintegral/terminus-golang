@@ -120,14 +120,18 @@ func TestSitesService_ListOrganizations(t *testing.T) {
 		memberships := []map[string]interface{}{
 			{
 				"organization": map[string]interface{}{
-					"id":   "org1",
-					"name": "Organization 1",
+					"id": "org1",
+					"profile": map[string]interface{}{
+						"name": "Organization 1",
+					},
 				},
 			},
 			{
 				"organization": map[string]interface{}{
-					"id":   "org2",
-					"name": "Organization 2",
+					"id": "org2",
+					"profile": map[string]interface{}{
+						"name": "Organization 2",
+					},
 				},
 			},
 		}
