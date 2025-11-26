@@ -352,6 +352,28 @@ type Organization struct {
 	Profile *OrgProfile `json:"profile,omitempty"`
 }
 
+// Serialize implements the Serializer interface for Organization.
+func (o *Organization) Serialize() []output.SerializedField {
+	name := ""
+	label := ""
+
+	if o.Profile != nil {
+		name = o.Profile.MachineName
+		label = o.Profile.Name
+	}
+
+	return []output.SerializedField{
+		{Name: "ID", Value: o.ID},
+		{Name: "Name", Value: name},
+		{Name: "Label", Value: label},
+	}
+}
+
+// DefaultFields implements the DefaultFielder interface for Organization.
+func (o *Organization) DefaultFields() []string {
+	return []string{"ID", "Name", "Label"}
+}
+
 // OrgProfile represents an organization's profile
 type OrgProfile struct {
 	MachineName      string  `json:"machine_name"`
