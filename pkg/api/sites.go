@@ -538,9 +538,13 @@ func (s *SitesService) ListOrganizations(ctx context.Context, siteIdentifier str
 			return nil, fmt.Errorf("failed to decode organization membership: %w", err)
 		}
 		if membership.Organization != nil {
+			orgName := ""
+			if membership.Organization.Profile != nil {
+				orgName = membership.Organization.Profile.Name
+			}
 			memberships = append(memberships, &models.SiteOrganizationMembership{
 				OrgID:   membership.Organization.ID,
-				OrgName: membership.Organization.Name,
+				OrgName: orgName,
 			})
 		}
 	}

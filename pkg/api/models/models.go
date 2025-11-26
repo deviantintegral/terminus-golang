@@ -349,15 +349,21 @@ func (b *Backup) GetDate() time.Time {
 // Organization represents an organization
 type Organization struct {
 	ID      string      `json:"id"`
-	Name    string      `json:"name"`
-	Label   string      `json:"label"`
 	Profile *OrgProfile `json:"profile,omitempty"`
 }
 
 // OrgProfile represents an organization's profile
 type OrgProfile struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	MachineName      string  `json:"machine_name"`
+	ChangeServiceURL string  `json:"change_service_url"`
+	Name             string  `json:"name"`
+	EmailDomain      *string `json:"email_domain"`
+	OrgLogoWidth     int     `json:"org_logo_width"`
+	OrgLogoHeight    int     `json:"org_logo_height"`
+	BaseDomain       *string `json:"base_domain"`
+	BillingURL       string  `json:"billing_url"`
+	TermsOfService   string  `json:"terms_of_service"`
+	OrgLogo          string  `json:"org_logo"`
 }
 
 // User represents a user
