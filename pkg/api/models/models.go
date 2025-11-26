@@ -349,24 +349,41 @@ func (b *Backup) GetDate() time.Time {
 
 // Organization represents an organization
 type Organization struct {
-	ID      string      `json:"id"`
-	Profile *OrgProfile `json:"profile,omitempty"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`  // Corresponds to machine_name in API
+	Label string `json:"label"` // Corresponds to name in API
+}
+
+// UnmarshalJSON implements custom unmarshaling to extract name and label from profile
+func (o *Organization) UnmarshalJSON(data []byte) error {
+	// Define a temporary struct to unmarshal the raw data
+	type OrganizationAlias Organization
+	aux := &struct {
+		Profile *orgProfile `json:"profile,omitempty"`
+		*OrganizationAlias
+	}{
+		OrganizationAlias: (*OrganizationAlias)(o),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Extract name and label from profile if present
+	if aux.Profile != nil {
+		o.Name = aux.Profile.MachineName
+		o.Label = aux.Profile.Name
+	}
+
+	return nil
 }
 
 // Serialize implements the Serializer interface for Organization.
 func (o *Organization) Serialize() []output.SerializedField {
-	name := ""
-	label := ""
-
-	if o.Profile != nil {
-		name = o.Profile.MachineName
-		label = o.Profile.Name
-	}
-
 	return []output.SerializedField{
 		{Name: "ID", Value: o.ID},
-		{Name: "Name", Value: name},
-		{Name: "Label", Value: label},
+		{Name: "Name", Value: o.Name},
+		{Name: "Label", Value: o.Label},
 	}
 }
 
@@ -375,8 +392,8 @@ func (o *Organization) DefaultFields() []string {
 	return []string{"ID", "Name", "Label"}
 }
 
-// OrgProfile represents an organization's profile
-type OrgProfile struct {
+// orgProfile represents an organization's profile (internal use only for unmarshaling)
+type orgProfile struct {
 	MachineName      string  `json:"machine_name"`
 	ChangeServiceURL string  `json:"change_service_url"`
 	Name             string  `json:"name"`
@@ -389,9 +406,9 @@ type OrgProfile struct {
 	OrgLogo          string  `json:"org_logo"`
 }
 
-// UnmarshalJSON implements custom unmarshaling for OrgProfile to handle string or int values for OrgLogoWidth and Height
-func (p *OrgProfile) UnmarshalJSON(data []byte) error {
-	type Alias OrgProfile
+// UnmarshalJSON implements custom unmarshaling for orgProfile to handle string or int values for OrgLogoWidth and Height
+func (p *orgProfile) UnmarshalJSON(data []byte) error {
+	type Alias orgProfile
 	aux := &struct {
 		OrgLogoWidth  interface{} `json:"org_logo_width"`
 		OrgLogoHeight interface{} `json:"org_logo_height"`
