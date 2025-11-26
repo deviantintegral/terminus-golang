@@ -33,12 +33,7 @@ func (s *OrganizationsService) List(ctx context.Context, userID string) ([]*mode
 			Organization *models.Organization `json:"organization"`
 		}
 		if err := json.Unmarshal(raw, &membership); err != nil {
-			// Try direct unmarshal in case the API returns orgs directly
-			var org models.Organization
-			if err := json.Unmarshal(raw, &org); err != nil {
-				return nil, fmt.Errorf("failed to decode organization: %w", err)
-			}
-			orgs = append(orgs, &org)
+			return nil, err
 		} else if membership.Organization != nil {
 			orgs = append(orgs, membership.Organization)
 		}
