@@ -4,6 +4,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -386,6 +387,50 @@ type OrgProfile struct {
 	BillingURL       string  `json:"billing_url"`
 	TermsOfService   string  `json:"terms_of_service"`
 	OrgLogo          string  `json:"org_logo"`
+}
+
+// UnmarshalJSON implements custom unmarshaling for OrgProfile to handle string or int values for OrgLogoWidth and Height
+func (p *OrgProfile) UnmarshalJSON(data []byte) error {
+	type Alias OrgProfile
+	aux := &struct {
+		OrgLogoWidth  interface{} `json:"org_logo_width"`
+		OrgLogoHeight interface{} `json:"org_logo_height"`
+		*Alias
+	}{
+		Alias: (*Alias)(p),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	switch v := aux.OrgLogoWidth.(type) {
+	case float64:
+		p.OrgLogoWidth = int(v)
+	case string:
+		if v != "" {
+			val, err := strconv.Atoi(v)
+			if err != nil {
+				return err
+			}
+			p.OrgLogoWidth = val
+		}
+	}
+
+	switch v := aux.OrgLogoHeight.(type) {
+	case float64:
+		p.OrgLogoHeight = int(v)
+	case string:
+		if v != "" {
+			val, err := strconv.Atoi(v)
+			if err != nil {
+				return err
+			}
+			p.OrgLogoHeight = val
+		}
+	}
+
+	return nil
 }
 
 // User represents a user
