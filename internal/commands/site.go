@@ -171,8 +171,8 @@ func getAllUserSites(userID string) ([]*models.Site, error) {
 			// Continue on error to get sites from other orgs
 			// Log the error but don't fail completely
 			orgName := org.ID
-			if org.Profile != nil && org.Profile.Name != "" {
-				orgName = org.Profile.Name
+			if org.Label != "" {
+				orgName = org.Label
 			}
 			printMessage("Warning: failed to list sites for organization %s: %v", orgName, err)
 			continue

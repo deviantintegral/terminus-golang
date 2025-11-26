@@ -349,11 +349,7 @@ func TestOrgList(t *testing.T) {
 	t.Logf("Found %d organizations", len(orgs))
 	for i, org := range orgs {
 		if org != nil {
-			orgName := ""
-			if org.Profile != nil {
-				orgName = org.Profile.Name
-			}
-			t.Logf("  [%d] %s (ID: %s)", i+1, orgName, org.ID)
+			t.Logf("  [%d] %s (ID: %s)", i+1, org.Label, org.ID)
 		}
 	}
 }
@@ -409,18 +405,14 @@ func TestOrgInfo(t *testing.T) {
 	if org.ID == "" {
 		t.Error("Expected org ID to be set")
 	}
-	if org.Profile == nil || org.Profile.Name == "" {
-		t.Error("Expected org name to be set")
+	if org.Label == "" {
+		t.Error("Expected org label to be set")
 	}
 
 	// Record fixture
 	recorder.record("org_info", org)
 
-	orgName := ""
-	if org.Profile != nil {
-		orgName = org.Profile.Name
-	}
-	t.Logf("Organization info: %s (ID: %s)", orgName, org.ID)
+	t.Logf("Organization info: %s (ID: %s)", org.Label, org.ID)
 }
 
 // TestSiteList tests the site:list command
@@ -641,11 +633,7 @@ func setupSiteLifecycleTest(t *testing.T) *siteLifecycleTestData {
 		t.Skip("No organizations available")
 	}
 	data.orgID = orgs[0].ID
-	orgName := ""
-	if orgs[0].Profile != nil {
-		orgName = orgs[0].Profile.Name
-	}
-	t.Logf("Using organization: %s (ID: %s)", orgName, data.orgID)
+	t.Logf("Using organization: %s (ID: %s)", orgs[0].Label, data.orgID)
 
 	// Get upstream
 	upstreams, err := data.orgService.ListUpstreams(data.ctx, data.orgID)
