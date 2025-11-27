@@ -17,6 +17,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      upload_url: ${{ steps.release.outputs.upload_url }}
     steps:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         id: release
@@ -24,3 +25,55 @@ jobs:
           # This should match the configuration of your conventional commits
           release-type: go
           token: ${{ secrets.RELEASE_PLEASE_TOKEN}}
+
+  build-and-upload:
+    name: Build and Upload Binaries
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            output: terminus-linux-amd64
+          - goos: linux
+            goarch: arm64
+            output: terminus-linux-arm64
+          - goos: darwin
+            goarch: amd64
+            output: terminus-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            output: terminus-darwin-arm64
+          - goos: windows
+            goarch: amd64
+            output: terminus-windows-amd64.exe
+          - goos: windows
+            goarch: arm64
+            output: terminus-windows-arm64.exe
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
+        with:
+          go-version: '1.24.7'
+          cache: true
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -o bin/${{ matrix.output }} ./cmd/terminus
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./bin/${{ matrix.output }}
+          asset_name: ${{ matrix.output }}
+          asset_content_type: application/octet-stream
