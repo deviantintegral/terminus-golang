@@ -62,8 +62,7 @@ if command -v goimports &> /dev/null; then
     # Pre-commit hooks run in isolated environments and may not have GOPATH/bin in PATH
     if [ ! -f "/usr/local/bin/goimports" ]; then
         echo "Creating symlink for goimports in /usr/local/bin..."
-        ln -sf "$(go env GOPATH)/bin/goimports" /usr/local/bin/goimports
-        echo "goimports symlink created: /usr/local/bin/goimports"
+        ln -sf "$(go env GOPATH)/bin/goimports" /usr/local/bin/goimports && echo "goimports symlink created: /usr/local/bin/goimports"
     fi
 else
     echo "Warning: goimports installation may have failed"
