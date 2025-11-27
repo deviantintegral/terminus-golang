@@ -37,21 +37,33 @@ jobs:
           - goos: linux
             goarch: amd64
             output: terminus-linux-amd64
+            archive: terminus-linux-amd64.tar.gz
+            compress_cmd: tar -czf terminus-linux-amd64.tar.gz -C bin terminus-linux-amd64
           - goos: linux
             goarch: arm64
             output: terminus-linux-arm64
+            archive: terminus-linux-arm64.tar.gz
+            compress_cmd: tar -czf terminus-linux-arm64.tar.gz -C bin terminus-linux-arm64
           - goos: darwin
             goarch: amd64
             output: terminus-darwin-amd64
+            archive: terminus-darwin-amd64.tar.gz
+            compress_cmd: tar -czf terminus-darwin-amd64.tar.gz -C bin terminus-darwin-amd64
           - goos: darwin
             goarch: arm64
             output: terminus-darwin-arm64
+            archive: terminus-darwin-arm64.tar.gz
+            compress_cmd: tar -czf terminus-darwin-arm64.tar.gz -C bin terminus-darwin-arm64
           - goos: windows
             goarch: amd64
             output: terminus-windows-amd64.exe
+            archive: terminus-windows-amd64.zip
+            compress_cmd: cd bin && zip ../terminus-windows-amd64.zip terminus-windows-amd64.exe
           - goos: windows
             goarch: arm64
             output: terminus-windows-arm64.exe
+            archive: terminus-windows-arm64.zip
+            compress_cmd: cd bin && zip ../terminus-windows-arm64.zip terminus-windows-arm64.exe
     steps:
       - name: Checkout code
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
@@ -68,12 +80,15 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: go build -o bin/${{ matrix.output }} ./cmd/terminus
 
+      - name: Compress binary
+        run: ${{ matrix.compress_cmd }}
+
       - name: Upload release asset
         uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release-please.outputs.upload_url }}
-          asset_path: ./bin/${{ matrix.output }}
-          asset_name: ${{ matrix.output }}
+          asset_path: ./${{ matrix.archive }}
+          asset_name: ${{ matrix.archive }}
           asset_content_type: application/octet-stream
