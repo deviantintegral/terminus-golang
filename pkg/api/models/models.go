@@ -35,6 +35,7 @@ type Site struct {
 	// Membership information (not from API, populated during listing)
 	MembershipUserID string `json:"-"`
 	MembershipRole   string `json:"-"`
+	MembershipIsTeam bool   `json:"-"` // True if from direct user membership, false if from org
 }
 
 // SiteListItem represents a site in list output (excludes upstream field)
@@ -59,6 +60,7 @@ type SiteListItem struct {
 	// Membership information (not from API, populated during listing)
 	MembershipUserID string `json:"-"`
 	MembershipRole   string `json:"-"`
+	MembershipIsTeam bool   `json:"-"` // True if from direct user membership, false if from org
 }
 
 // ToListItem converts a Site to a SiteListItem (excludes upstream)
@@ -83,6 +85,7 @@ func (s *Site) ToListItem() *SiteListItem {
 		Info:               s.Info,
 		MembershipUserID:   s.MembershipUserID,
 		MembershipRole:     s.MembershipRole,
+		MembershipIsTeam:   s.MembershipIsTeam,
 	}
 }
 
