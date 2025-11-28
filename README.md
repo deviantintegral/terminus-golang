@@ -617,7 +617,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | `site:delete` | Delete a site | ✅ | ❌ |
 | `site:info` | Show site information | ✅ | ❌ |
 | `site:label` | Set site label | ❌ | ❌ |
-| `site:list` | List sites | ✅ | ❌ |
+| `site:list` | List sites | ✅ | ✅ |
 | `site:lookup` | Look up a site by UUID | ❌ | ❌ |
 | `site:org:add` | Add site to an organization | ❌ | ❌ |
 | `site:org:list` | List organizations a site belongs to | ✅ | ❌ |
