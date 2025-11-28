@@ -77,7 +77,7 @@ func init() {
 	// Flags
 	siteListCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Filter by organization")
 	siteListCmd.Flags().StringVar(&siteOwnerFlag, "owner", "", "Owner filter; \"me\" or user UUID")
-	siteListCmd.Flags().BoolVar(&siteTeamFlag, "team", false, "Team-only filter")
+	siteListCmd.Flags().BoolVar(&siteTeamFlag, "team", false, "Filter sites of which the user is a team member")
 	siteListCmd.Flags().StringVar(&siteUpstreamFlag, "upstream", "", "Upstream name to filter")
 
 	siteCreateCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Organization ID")
@@ -123,11 +123,12 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 
 	var sites []*models.Site
 
-	if siteOrgFlag != "" {
+	switch {
+	case siteOrgFlag != "":
 		// Resolve organization name to ID if needed
-		orgID, err := resolveOrgID(siteOrgFlag, sess.UserID)
-		if err != nil {
-			return err
+		orgID, resolveErr := resolveOrgID(siteOrgFlag, sess.UserID)
+		if resolveErr != nil {
+			return resolveErr
 		}
 
 		// If org flag is specified, only list sites for that specific organization
@@ -135,15 +136,23 @@ func runSiteList(_ *cobra.Command, _ []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to list organization sites: %w", err)
 		}
-	} else {
-		// Otherwise, list all sites from user memberships and organization memberships
-		sites, err = getAllUserSites(sess.UserID)
+	case siteTeamFlag:
+		// If --team flag is specified, only fetch direct user memberships
+		// This matches PHP Terminus behavior: single API call to /users/{id}/memberships/sites
+		sites, err = sitesService.List(getContext(), sess.UserID)
 		if err != nil {
-			return fmt.Errorf("failed to list sites: %w", err)
+			return fmt.Errorf("failed to list team sites: %w", err)
+		}
+	default:
+		// Otherwise, list all sites from user memberships and organization memberships
+		var getAllErr error
+		sites, getAllErr = getAllUserSites(sess.UserID)
+		if getAllErr != nil {
+			return fmt.Errorf("failed to list sites: %w", getAllErr)
 		}
 	}
 
-	// Apply filters
+	// Apply filters (skip team filter if --team was used, as sites are already filtered)
 	sites = filterSites(sites, sess.UserID)
 
 	// Convert to SiteListItem to exclude upstream field from output
@@ -195,8 +204,11 @@ func getAllUserSites(userID string) ([]*models.Site, error) {
 		}
 
 		// Add org sites to the map (deduplicating by ID)
+		// Don't overwrite if site already exists (to preserve direct team membership info)
 		for _, site := range orgSites {
-			siteMap[site.ID] = site
+			if _, exists := siteMap[site.ID]; !exists {
+				siteMap[site.ID] = site
+			}
 		}
 	}
 
@@ -263,8 +275,9 @@ func filterSites(sites []*models.Site, currentUserID string) []*models.Site {
 		}
 
 		// Apply --team filter
+		// Show only sites where the user is a direct team member (not org member)
 		if siteTeamFlag {
-			if site.Holder != "team" {
+			if !site.MembershipIsTeam {
 				continue
 			}
 		}

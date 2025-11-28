@@ -83,6 +83,7 @@ func (s *SitesService) List(ctx context.Context, userID string) ([]*models.Site,
 			// Populate membership information
 			membership.Site.MembershipUserID = membership.UserID
 			membership.Site.MembershipRole = membership.Role
+			membership.Site.MembershipIsTeam = true // Direct user membership
 			sites = append(sites, membership.Site)
 		}
 	}
@@ -289,12 +290,16 @@ func (s *SitesService) ListByOrganization(ctx context.Context, orgID string) ([]
 		if membership.Site != nil {
 			// Populate membership information
 			// For org memberships, we might have either user or organization
+			// If user.id is present, this is a direct site-level team membership (even within an org)
+			// If only organization.id is present, this is an org-wide membership
 			if membership.User.ID != "" {
 				membership.Site.MembershipUserID = membership.User.ID
 				membership.Site.MembershipRole = membership.Role
+				membership.Site.MembershipIsTeam = true // Direct site-level team membership
 			} else if membership.Organization.ID != "" {
 				membership.Site.MembershipUserID = membership.Organization.ID
 				membership.Site.MembershipRole = membership.Role
+				membership.Site.MembershipIsTeam = false // Organization-wide membership
 			}
 			sites = append(sites, membership.Site)
 		}
