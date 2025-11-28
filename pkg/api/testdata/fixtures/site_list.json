@@ -8,11 +8,7 @@
     "organization": "",
     "service_level": "free",
     "plan_name": "Sandbox",
-    "upstream": {
-      "branch": "main",
-      "product_id": "bde48795-b16d-443f-af01-8b1790caa1af",
-      "url": "https://github.com/pantheon-upstreams/drupal-composer-managed.git"
-    },
+    "upstream": "bde48795-b16d-443f-af01-8b1790caa1af: https://github.com/pantheon-upstreams/drupal-composer-managed.git",
     "php_version": "72",
     "holder_type": "user",
     "holder_id": "9cbc8751-968b-4d4f-9d23-909aea390817",

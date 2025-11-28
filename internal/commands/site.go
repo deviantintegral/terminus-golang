@@ -78,7 +78,7 @@ func init() {
 	siteListCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Filter by organization")
 	siteListCmd.Flags().StringVar(&siteOwnerFlag, "owner", "", "Owner filter; \"me\" or user UUID")
 	siteListCmd.Flags().BoolVar(&siteTeamFlag, "team", false, "Filter sites of which the user is a team member")
-	siteListCmd.Flags().StringVar(&siteUpstreamFlag, "upstream", "", "Upstream name to filter")
+	siteListCmd.Flags().StringVar(&siteUpstreamFlag, "upstream", "", "Upstream UUID to filter")
 
 	siteCreateCmd.Flags().StringVar(&siteOrgFlag, "org", "", "Organization ID")
 	siteCreateCmd.Flags().StringVar(&siteRegionFlag, "region", "", "Preferred region")
@@ -282,7 +282,7 @@ func filterSites(sites []*models.Site, currentUserID string) []*models.Site {
 			}
 		}
 
-		// Apply --upstream filter
+		// Apply --upstream filter (UUID only)
 		if siteUpstreamFlag != "" {
 			upstreamMatch := false
 
@@ -297,11 +297,6 @@ func filterSites(sites []*models.Site, currentUserID string) []*models.Site {
 						upstreamMatch = true
 					}
 				}
-			}
-
-			// Also check against the upstream label
-			if site.UpstreamLabel == siteUpstreamFlag {
-				upstreamMatch = true
 			}
 
 			if !upstreamMatch {

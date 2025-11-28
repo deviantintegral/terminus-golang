@@ -161,7 +161,8 @@ func (s *Site) UnmarshalJSON(data []byte) error {
 
 			// Format upstream as "id: url" to match PHP terminus
 			var upstreamID, upstreamURL string
-			if id, ok := upstreamMap["id"].(string); ok {
+			// The API returns product_id, not id
+			if id, ok := upstreamMap["product_id"].(string); ok {
 				upstreamID = id
 			}
 			if url, ok := upstreamMap["url"].(string); ok {
