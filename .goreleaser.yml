@@ -7,7 +7,7 @@ before:
 builds:
   - id: terminus
     main: ./cmd/terminus
-    binary: terminus
+    binary: terminus-golang
     env:
       - CGO_ENABLED=0
     goos:
