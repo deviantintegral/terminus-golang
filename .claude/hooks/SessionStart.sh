@@ -5,6 +5,11 @@
 
 set -e
 
+echo 'export PATH="$PATH:"'$(go env GOPATH)/bin >> "$CLAUDE_ENV_FILE"
+echo 'export GOMODCACHE=/tmp/claude/go-mod-cache' >> "$CLAUDE_ENV_FILE"
+echo 'export GOCACHE=/tmp/claude/go-build-cache' >> "$CLAUDE_ENV_FILE"
+echo 'export XDG_CACHE_HOME=/tmp/claude/cache' >> "$CLAUDE_ENV_FILE"
+
 echo "=== SessionStart Hook: Installing development tools ==="
 
 # Install pre-commit if not already installed
