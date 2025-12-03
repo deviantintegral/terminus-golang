@@ -223,6 +223,7 @@ func generateDrush9Alias(site *models.Site) string {
 	sb.WriteString("  ssh:\n")
 	sb.WriteString("    options: '-p 2222 -o \"AddressFamily inet\"'\n")
 	sb.WriteString("    tty: false\n")
+	sb.WriteString("\n") // Extra newline at end to match PHP terminus
 
 	return sb.String()
 }
