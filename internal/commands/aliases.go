@@ -186,26 +186,26 @@ func generateDrush8Aliases(sites []*models.Site) string {
 
 	// Write header
 	sb.WriteString("<?php\n")
-	sb.WriteString("/**\n")
-	sb.WriteString(" * Pantheon drush alias file.\n")
-	sb.WriteString(" * This file should be placed in ~/.drush or the aliases folder\n")
-	sb.WriteString(" * of your local Drush installation.\n")
-	sb.WriteString(" *\n")
-	sb.WriteString(" * Run 'drush cc drush' to clear your drush cache.\n")
-	sb.WriteString(" * Run 'drush sa' to see all aliases.\n")
-	sb.WriteString(" */\n\n")
+	sb.WriteString("  /**\n")
+	sb.WriteString("   * Pantheon drush alias file.\n")
+	sb.WriteString("   * This file should be placed in ~/.drush or the aliases folder\n")
+	sb.WriteString("   * of your local Drush installation.\n")
+	sb.WriteString("   *\n")
+	sb.WriteString("   * Run 'drush cc drush' to clear your drush cache.\n")
+	sb.WriteString("   * Run 'drush sa' to see all aliases.\n")
+	sb.WriteString("   */\n\n")
 
 	// Write alias for each site
 	for _, site := range sites {
-		sb.WriteString(fmt.Sprintf("$aliases['%s.*'] = array(\n", site.Name))
-		sb.WriteString(fmt.Sprintf("  'uri' => '${env-name}-%s.pantheonsite.io',\n", site.Name))
-		sb.WriteString(fmt.Sprintf("  'remote-host' => 'appserver.${env-name}.%s.drush.in',\n", site.ID))
-		sb.WriteString(fmt.Sprintf("  'remote-user' => '${env-name}.%s',\n", site.ID))
-		sb.WriteString("  'ssh-options' => '-p 2222 -o \"AddressFamily inet\"',\n")
-		sb.WriteString("  'path-aliases' => array(\n")
-		sb.WriteString("    '%files' => 'files',\n")
-		sb.WriteString("  ),\n")
-		sb.WriteString(");\n\n")
+		sb.WriteString(fmt.Sprintf("  $aliases['%s.*'] = array(\n", site.Name))
+		sb.WriteString(fmt.Sprintf("    'uri' => '${env-name}-%s.pantheonsite.io',\n", site.Name))
+		sb.WriteString(fmt.Sprintf("    'remote-host' => 'appserver.${env-name}.%s.drush.in',\n", site.ID))
+		sb.WriteString(fmt.Sprintf("    'remote-user' => '${env-name}.%s',\n", site.ID))
+		sb.WriteString("    'ssh-options' => '-p 2222 -o \"AddressFamily inet\"',\n")
+		sb.WriteString("    'path-aliases' => array(\n")
+		sb.WriteString("      '%files' => 'files',\n")
+		sb.WriteString("    ),\n")
+		sb.WriteString("  );\n\n")
 	}
 
 	return sb.String()
