@@ -5,6 +5,8 @@
 
 A command-line interface for managing Pantheon sites, written in Go. This is a complete rewrite of the [Pantheon Terminus](https://github.com/pantheon-systems/terminus) CLI tool.
 
+Until a 1.0.0 release, this package may contain code that is both AI generated and not fully tested. See [Implementation Status](https://github.com/deviantintegral/terminus-golang?tab=readme-ov-file#implementation-status) to see what commands have been implemented and which ones have been fully tested by a human. In this project, "Human Tested" means that the code has been evaluated line-by-line with a step debugger and we feel confident in running that command against production Pantheon accounts.
+
 ## Features
 
 - **Command-line Interface**: Full-featured CLI for managing Pantheon sites, environments, workflows, and more
