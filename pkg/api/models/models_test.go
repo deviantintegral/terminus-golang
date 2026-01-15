@@ -166,3 +166,170 @@ func TestSiteListItem_JSONOutput_Structure(t *testing.T) {
 		t.Errorf("upstream field should not be present in SiteListItem JSON output")
 	}
 }
+
+func TestMetrics_Serialize(t *testing.T) {
+	tests := []struct {
+		name           string
+		metrics        *Metrics
+		expectedPeriod string
+		expectedRatio  string
+	}{
+		{
+			name: "full datetime format",
+			metrics: &Metrics{
+				Datetime:      "2025-12-18T00:00:00",
+				Visits:        100,
+				PagesServed:   500,
+				CacheHits:     400,
+				CacheMisses:   100,
+				CacheHitRatio: "80%",
+			},
+			expectedPeriod: "2025-12-18",
+			expectedRatio:  "80%",
+		},
+		{
+			name: "zero values with dash ratio",
+			metrics: &Metrics{
+				Datetime:      "2025-01-01T00:00:00",
+				Visits:        0,
+				PagesServed:   0,
+				CacheHits:     0,
+				CacheMisses:   0,
+				CacheHitRatio: "--",
+			},
+			expectedPeriod: "2025-01-01",
+			expectedRatio:  "--",
+		},
+		{
+			name: "date only format",
+			metrics: &Metrics{
+				Datetime:      "2025-06-15",
+				Visits:        50,
+				PagesServed:   200,
+				CacheHits:     180,
+				CacheMisses:   20,
+				CacheHitRatio: "90%",
+			},
+			expectedPeriod: "2025-06-15",
+			expectedRatio:  "90%",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fields := tt.metrics.Serialize()
+
+			// Check we have the right number of fields
+			if len(fields) != 6 {
+				t.Errorf("expected 6 fields, got %d", len(fields))
+			}
+
+			// Check field names and values
+			expectedNames := []string{"Period", "Visits", "Pages Served", "Cache Hits", "Cache Misses", "Cache Hit Ratio"}
+			for i, expectedName := range expectedNames {
+				if fields[i].Name != expectedName {
+					t.Errorf("expected field %d name to be '%s', got '%s'", i, expectedName, fields[i].Name)
+				}
+			}
+
+			// Check Period is date-only
+			if fields[0].Value != tt.expectedPeriod {
+				t.Errorf("expected Period '%s', got '%s'", tt.expectedPeriod, fields[0].Value)
+			}
+
+			// Check Cache Hit Ratio
+			if fields[5].Value != tt.expectedRatio {
+				t.Errorf("expected Cache Hit Ratio '%s', got '%s'", tt.expectedRatio, fields[5].Value)
+			}
+		})
+	}
+}
+
+func TestMetrics_DefaultFields(t *testing.T) {
+	metrics := &Metrics{}
+	fields := metrics.DefaultFields()
+
+	expectedFields := []string{"Period", "Visits", "Pages Served", "Cache Hits", "Cache Misses", "Cache Hit Ratio"}
+
+	if len(fields) != len(expectedFields) {
+		t.Errorf("expected %d default fields, got %d", len(expectedFields), len(fields))
+	}
+
+	for i, expected := range expectedFields {
+		if fields[i] != expected {
+			t.Errorf("expected default field %d to be '%s', got '%s'", i, expected, fields[i])
+		}
+	}
+}
+
+func TestMetrics_MarshalJSON(t *testing.T) {
+	metrics := &Metrics{
+		Datetime:      "2025-12-18T00:00:00",
+		Visits:        100,
+		PagesServed:   500,
+		CacheHits:     400,
+		CacheMisses:   100,
+		CacheHitRatio: "80%",
+	}
+
+	jsonData, err := json.Marshal(metrics)
+	if err != nil {
+		t.Fatalf("failed to marshal metrics: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Fatalf("failed to unmarshal JSON: %v", err)
+	}
+
+	// Verify JSON field names match PHP terminus (snake_case)
+	expectedFields := []string{"datetime", "visits", "pages_served", "cache_hits", "cache_misses", "cache_hit_ratio"}
+	for _, field := range expectedFields {
+		if _, exists := result[field]; !exists {
+			t.Errorf("expected field '%s' to be present in JSON", field)
+		}
+	}
+
+	// Verify values
+	if result["datetime"] != "2025-12-18T00:00:00" {
+		t.Errorf("expected datetime '2025-12-18T00:00:00', got '%v'", result["datetime"])
+	}
+	if result["cache_hit_ratio"] != "80%" {
+		t.Errorf("expected cache_hit_ratio '80%%', got '%v'", result["cache_hit_ratio"])
+	}
+}
+
+func TestMetrics_UnmarshalJSON(t *testing.T) {
+	jsonData := `{
+		"datetime": "2025-12-18T00:00:00",
+		"visits": 100,
+		"pages_served": 500,
+		"cache_hits": 400,
+		"cache_misses": 100,
+		"cache_hit_ratio": "--"
+	}`
+
+	var metrics Metrics
+	if err := json.Unmarshal([]byte(jsonData), &metrics); err != nil {
+		t.Fatalf("failed to unmarshal metrics: %v", err)
+	}
+
+	if metrics.Datetime != "2025-12-18T00:00:00" {
+		t.Errorf("expected datetime '2025-12-18T00:00:00', got '%s'", metrics.Datetime)
+	}
+	if metrics.Visits != 100 {
+		t.Errorf("expected visits 100, got %d", metrics.Visits)
+	}
+	if metrics.PagesServed != 500 {
+		t.Errorf("expected pages_served 500, got %d", metrics.PagesServed)
+	}
+	if metrics.CacheHits != 400 {
+		t.Errorf("expected cache_hits 400, got %d", metrics.CacheHits)
+	}
+	if metrics.CacheMisses != 100 {
+		t.Errorf("expected cache_misses 100, got %d", metrics.CacheMisses)
+	}
+	if metrics.CacheHitRatio != "--" {
+		t.Errorf("expected cache_hit_ratio '--', got '%s'", metrics.CacheHitRatio)
+	}
+}
