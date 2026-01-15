@@ -20,6 +20,15 @@ repos:
       - id: go-unit-tests
         args: ['-v', '-race', '-coverprofile=coverage.out', './...']
 
+  - repo: local
+    hooks:
+      - id: go-coverage-threshold
+        name: Check coverage threshold
+        entry: go run scripts/check-coverage-threshold.go coverage.out
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.0.0
     hooks:
