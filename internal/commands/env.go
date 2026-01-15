@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/deviantintegral/terminus-golang/pkg/api"
+	"github.com/deviantintegral/terminus-golang/pkg/api/models"
+	"github.com/deviantintegral/terminus-golang/pkg/output"
 	"github.com/spf13/cobra"
 )
 
@@ -377,6 +379,11 @@ func runEnvMetrics(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get metrics: %w", err)
 	}
 
+	// Use MetricsTimeseries wrapper for JSON/YAML to match PHP terminus format
+	// Use raw slice for table/CSV/list output
+	if cliContext.Output.Format == output.FormatJSON || cliContext.Output.Format == output.FormatYAML {
+		return printOutput(&models.MetricsTimeseries{Metrics: metrics})
+	}
 	return printOutput(metrics)
 }
 

@@ -667,12 +667,41 @@ type SiteOrganizationMembership struct {
 
 // Metrics represents traffic metrics for an environment
 type Metrics struct {
+	Timestamp     int64  `json:"-"` // Unix timestamp, used as key in JSON output
 	Datetime      string `json:"datetime"`
 	Visits        int64  `json:"visits"`
 	PagesServed   int64  `json:"pages_served"`
 	CacheHits     int64  `json:"cache_hits"`
 	CacheMisses   int64  `json:"cache_misses"`
 	CacheHitRatio string `json:"cache_hit_ratio"`
+}
+
+// MetricsTimeseries wraps a slice of Metrics for JSON output matching PHP terminus format
+type MetricsTimeseries struct {
+	Metrics []*Metrics
+}
+
+// MarshalJSON implements json.Marshaler for MetricsTimeseries
+// Output format: {"timeseries": {"timestamp": {...}, ...}}
+func (mt *MetricsTimeseries) MarshalJSON() ([]byte, error) {
+	timeseries := make(map[string]*Metrics)
+	for _, m := range mt.Metrics {
+		key := strconv.FormatInt(m.Timestamp, 10)
+		timeseries[key] = m
+	}
+
+	wrapper := struct {
+		Timeseries map[string]*Metrics `json:"timeseries"`
+	}{
+		Timeseries: timeseries,
+	}
+
+	return json.Marshal(wrapper)
+}
+
+// GetItems returns the metrics slice for table output
+func (mt *MetricsTimeseries) GetItems() []*Metrics {
+	return mt.Metrics
 }
 
 // Serialize implements the Serializer interface for Metrics.
@@ -685,12 +714,43 @@ func (m *Metrics) Serialize() []output.SerializedField {
 
 	return []output.SerializedField{
 		{Name: "Period", Value: period},
-		{Name: "Visits", Value: strconv.FormatInt(m.Visits, 10)},
-		{Name: "Pages Served", Value: strconv.FormatInt(m.PagesServed, 10)},
-		{Name: "Cache Hits", Value: strconv.FormatInt(m.CacheHits, 10)},
-		{Name: "Cache Misses", Value: strconv.FormatInt(m.CacheMisses, 10)},
+		{Name: "Visits", Value: formatNumberWithCommas(m.Visits)},
+		{Name: "Pages Served", Value: formatNumberWithCommas(m.PagesServed)},
+		{Name: "Cache Hits", Value: formatNumberWithCommas(m.CacheHits)},
+		{Name: "Cache Misses", Value: formatNumberWithCommas(m.CacheMisses)},
 		{Name: "Cache Hit Ratio", Value: m.CacheHitRatio},
 	}
+}
+
+// formatNumberWithCommas formats an int64 with comma separators (e.g., 16489 -> "16,489")
+func formatNumberWithCommas(n int64) string {
+	str := strconv.FormatInt(n, 10)
+	if len(str) <= 3 {
+		return str
+	}
+
+	// Handle negative numbers
+	negative := false
+	if str[0] == '-' {
+		negative = true
+		str = str[1:]
+	}
+
+	// Insert commas from right to left
+	// Pre-allocate capacity: original length + number of commas ((len-1)/3)
+	numCommas := (len(str) - 1) / 3
+	result := make([]byte, 0, len(str)+numCommas)
+	for i, c := range str {
+		if i > 0 && (len(str)-i)%3 == 0 {
+			result = append(result, ',')
+		}
+		result = append(result, byte(c))
+	}
+
+	if negative {
+		return "-" + string(result)
+	}
+	return string(result)
 }
 
 // DefaultFields implements the DefaultFielder interface for Metrics.

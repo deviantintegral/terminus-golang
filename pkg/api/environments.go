@@ -382,17 +382,18 @@ func (s *EnvironmentsService) GetMetrics(ctx context.Context, siteIdentifier, en
 		// Convert timestamp to ISO 8601 datetime format (matching PHP terminus)
 		datetime := formatTimestampISO8601(dp.Timestamp)
 
-		// Calculate cache hit ratio as string
-		// PHP terminus shows "--" when pages_served is 0
+		// Calculate cache hit ratio as string with 2 decimal places
+		// Show "--" when pages_served is 0
 		var cacheHitRatio string
 		if dp.PagesServed > 0 {
 			ratio := float64(dp.CacheHits) / float64(dp.PagesServed)
-			cacheHitRatio = fmt.Sprintf("%.0f%%", ratio*100)
+			cacheHitRatio = fmt.Sprintf("%.2f%%", ratio*100)
 		} else {
 			cacheHitRatio = "--"
 		}
 
 		metrics = append(metrics, &models.Metrics{
+			Timestamp:     dp.Timestamp,
 			Datetime:      datetime,
 			Visits:        dp.Visits,
 			PagesServed:   dp.PagesServed,
