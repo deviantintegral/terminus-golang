@@ -173,19 +173,21 @@ func TestMetrics_Serialize(t *testing.T) {
 		metrics        *Metrics
 		expectedPeriod string
 		expectedRatio  string
+		expectedVisits string
 	}{
 		{
-			name: "full datetime format",
+			name: "full datetime format with large numbers",
 			metrics: &Metrics{
 				Datetime:      "2025-12-18T00:00:00",
-				Visits:        100,
-				PagesServed:   500,
-				CacheHits:     400,
-				CacheMisses:   100,
-				CacheHitRatio: "80%",
+				Visits:        16489,
+				PagesServed:   50000,
+				CacheHits:     40000,
+				CacheMisses:   10000,
+				CacheHitRatio: "80.00%",
 			},
 			expectedPeriod: "2025-12-18",
-			expectedRatio:  "80%",
+			expectedRatio:  "80.00%",
+			expectedVisits: "16,489",
 		},
 		{
 			name: "zero values with dash ratio",
@@ -199,19 +201,35 @@ func TestMetrics_Serialize(t *testing.T) {
 			},
 			expectedPeriod: "2025-01-01",
 			expectedRatio:  "--",
+			expectedVisits: "0",
 		},
 		{
-			name: "date only format",
+			name: "date only format with small numbers",
 			metrics: &Metrics{
 				Datetime:      "2025-06-15",
 				Visits:        50,
 				PagesServed:   200,
 				CacheHits:     180,
 				CacheMisses:   20,
-				CacheHitRatio: "90%",
+				CacheHitRatio: "90.00%",
 			},
 			expectedPeriod: "2025-06-15",
-			expectedRatio:  "90%",
+			expectedRatio:  "90.00%",
+			expectedVisits: "50",
+		},
+		{
+			name: "millions with commas",
+			metrics: &Metrics{
+				Datetime:      "2025-06-15T00:00:00",
+				Visits:        1234567,
+				PagesServed:   9876543,
+				CacheHits:     8000000,
+				CacheMisses:   1876543,
+				CacheHitRatio: "81.00%",
+			},
+			expectedPeriod: "2025-06-15",
+			expectedRatio:  "81.00%",
+			expectedVisits: "1,234,567",
 		},
 	}
 
@@ -237,9 +255,82 @@ func TestMetrics_Serialize(t *testing.T) {
 				t.Errorf("expected Period '%s', got '%s'", tt.expectedPeriod, fields[0].Value)
 			}
 
+			// Check Visits is formatted with commas
+			if fields[1].Value != tt.expectedVisits {
+				t.Errorf("expected Visits '%s', got '%s'", tt.expectedVisits, fields[1].Value)
+			}
+
 			// Check Cache Hit Ratio
 			if fields[5].Value != tt.expectedRatio {
 				t.Errorf("expected Cache Hit Ratio '%s', got '%s'", tt.expectedRatio, fields[5].Value)
+			}
+		})
+	}
+}
+
+func TestFormatNumberWithCommas(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    int64
+		expected string
+	}{
+		{
+			name:     "zero",
+			input:    0,
+			expected: "0",
+		},
+		{
+			name:     "single digit",
+			input:    5,
+			expected: "5",
+		},
+		{
+			name:     "three digits",
+			input:    999,
+			expected: "999",
+		},
+		{
+			name:     "four digits",
+			input:    1000,
+			expected: "1,000",
+		},
+		{
+			name:     "five digits",
+			input:    16489,
+			expected: "16,489",
+		},
+		{
+			name:     "six digits",
+			input:    123456,
+			expected: "123,456",
+		},
+		{
+			name:     "seven digits",
+			input:    1234567,
+			expected: "1,234,567",
+		},
+		{
+			name:     "large number",
+			input:    1234567890,
+			expected: "1,234,567,890",
+		},
+		{
+			name:     "negative number",
+			input:    -1234,
+			expected: "-1,234",
+		},
+		{
+			name:     "negative large number",
+			input:    -1234567,
+			expected: "-1,234,567",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatNumberWithCommas(tt.input)
+			if result != tt.expected {
+				t.Errorf("formatNumberWithCommas(%d) = '%s', want '%s'", tt.input, result, tt.expected)
 			}
 		})
 	}

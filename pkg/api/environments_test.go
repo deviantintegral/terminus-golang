@@ -78,8 +78,8 @@ func TestEnvironmentsService_GetMetrics_WithEnvironment(t *testing.T) {
 	if metrics[0].CacheHits != 400 {
 		t.Errorf("expected cache_hits 400, got %d", metrics[0].CacheHits)
 	}
-	if metrics[0].CacheHitRatio != "80%" {
-		t.Errorf("expected cache_hit_ratio '80%%', got '%s'", metrics[0].CacheHitRatio)
+	if metrics[0].CacheHitRatio != "80.00%" {
+		t.Errorf("expected cache_hit_ratio '80.00%%', got '%s'", metrics[0].CacheHitRatio)
 	}
 
 	// Check second metric (zero traffic - should show "--")
@@ -137,8 +137,8 @@ func TestEnvironmentsService_GetMetrics_SiteLevel(t *testing.T) {
 	if metrics[0].Visits != 200 {
 		t.Errorf("expected visits 200, got %d", metrics[0].Visits)
 	}
-	if metrics[0].CacheHitRatio != "90%" {
-		t.Errorf("expected cache_hit_ratio '90%%', got '%s'", metrics[0].CacheHitRatio)
+	if metrics[0].CacheHitRatio != "90.00%" {
+		t.Errorf("expected cache_hit_ratio '90.00%%', got '%s'", metrics[0].CacheHitRatio)
 	}
 }
 
@@ -271,25 +271,25 @@ func TestEnvironmentsService_GetMetrics_CacheHitRatioCalculation(t *testing.T) {
 			name:          "100% cache hit",
 			pagesServed:   100,
 			cacheHits:     100,
-			expectedRatio: "100%",
+			expectedRatio: "100.00%",
 		},
 		{
 			name:          "80% cache hit",
 			pagesServed:   500,
 			cacheHits:     400,
-			expectedRatio: "80%",
+			expectedRatio: "80.00%",
 		},
 		{
 			name:          "0% cache hit",
 			pagesServed:   100,
 			cacheHits:     0,
-			expectedRatio: "0%",
+			expectedRatio: "0.00%",
 		},
 		{
-			name:          "fractional rounds down",
-			pagesServed:   3,
-			cacheHits:     1,
-			expectedRatio: "33%",
+			name:          "fractional percentage",
+			pagesServed:   16489,
+			cacheHits:     8388,
+			expectedRatio: "50.87%",
 		},
 	}
 
