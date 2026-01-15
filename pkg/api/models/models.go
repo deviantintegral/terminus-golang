@@ -665,6 +665,36 @@ type SiteOrganizationMembership struct {
 	OrgName string `json:"org_name"`
 }
 
+// Metrics represents traffic metrics for an environment
+type Metrics struct {
+	Datetime      string  `json:"datetime"`
+	Visits        int64   `json:"visits"`
+	PagesServed   int64   `json:"pages_served"`
+	CacheHits     int64   `json:"cache_hits"`
+	CacheMisses   int64   `json:"cache_misses"`
+	CacheHitRatio float64 `json:"cache_hit_ratio"`
+}
+
+// Serialize implements the Serializer interface for Metrics.
+func (m *Metrics) Serialize() []output.SerializedField {
+	// Format cache hit ratio as percentage
+	cacheHitRatioStr := fmt.Sprintf("%.2f%%", m.CacheHitRatio*100)
+
+	return []output.SerializedField{
+		{Name: "Datetime", Value: m.Datetime},
+		{Name: "Visits", Value: strconv.FormatInt(m.Visits, 10)},
+		{Name: "Pages Served", Value: strconv.FormatInt(m.PagesServed, 10)},
+		{Name: "Cache Hits", Value: strconv.FormatInt(m.CacheHits, 10)},
+		{Name: "Cache Misses", Value: strconv.FormatInt(m.CacheMisses, 10)},
+		{Name: "Cache Hit Ratio", Value: cacheHitRatioStr},
+	}
+}
+
+// DefaultFields implements the DefaultFielder interface for Metrics.
+func (m *Metrics) DefaultFields() []string {
+	return []string{"Datetime", "Visits", "Pages Served", "Cache Hits", "Cache Misses", "Cache Hit Ratio"}
+}
+
 // formatRole converts API role names to friendly display names to match PHP Terminus
 // Examples: "team_member" -> "Team", "organization_admin" -> "Organization Admin"
 func formatRole(role string) string {

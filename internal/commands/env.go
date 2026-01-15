@@ -72,6 +72,14 @@ var envConnectionSetCmd = &cobra.Command{
 	RunE:  runEnvConnectionSet,
 }
 
+var envMetricsCmd = &cobra.Command{
+	Use:   "env:metrics <site>[.<env>]",
+	Short: "Display environment metrics",
+	Long:  "Display pages served and unique visit metrics for a site environment. Use <site>.<env> for environment-specific metrics, or <site> for aggregated site metrics.",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runEnvMetrics,
+}
+
 var (
 	envUpdateDBFlag   bool
 	envNoteFlag       string
@@ -80,6 +88,8 @@ var (
 	envDatabaseFlag   bool
 	envFilesFlag      bool
 	envCommitMsgFlag  string
+	envMetricsPeriod  string
+	envMetricsDatapts string
 )
 
 func init() {
@@ -107,6 +117,13 @@ func init() {
 	// Commit flags
 	envCommitCmd.Flags().StringVarP(&envCommitMsgFlag, "message", "m", "", "Commit message")
 	_ = envCommitCmd.MarkFlagRequired("message")
+
+	// Metrics command
+	rootCmd.AddCommand(envMetricsCmd)
+
+	// Metrics flags
+	envMetricsCmd.Flags().StringVar(&envMetricsPeriod, "period", "day", "Time period for metrics: day, week, or month")
+	envMetricsCmd.Flags().StringVar(&envMetricsDatapts, "datapoints", "auto", "Number of data points to return, or 'auto' for intelligent default")
 }
 
 func runEnvList(_ *cobra.Command, args []string) error {
@@ -324,4 +341,86 @@ func runEnvConnectionSet(_ *cobra.Command, args []string) error {
 	}
 
 	return waitForWorkflow(siteID, workflow.ID, "Changing connection mode")
+}
+
+func runEnvMetrics(_ *cobra.Command, args []string) error {
+	if err := requireAuth(); err != nil {
+		return err
+	}
+
+	// Determine duration string from period and datapoints
+	duration, err := buildMetricsDuration(envMetricsPeriod, envMetricsDatapts)
+	if err != nil {
+		return err
+	}
+
+	// Parse the input - could be "site" or "site.env"
+	input := args[0]
+	var siteID, envID string
+
+	// Check if input contains a period (site.env format)
+	if idx := findEnvSeparator(input); idx != -1 {
+		siteID, envID, err = parseSiteEnv(input)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Site-only format - get aggregated metrics
+		siteID = input
+		envID = ""
+	}
+
+	envsService := api.NewEnvironmentsService(cliContext.APIClient)
+
+	metrics, err := envsService.GetMetrics(getContext(), siteID, envID, duration)
+	if err != nil {
+		return fmt.Errorf("failed to get metrics: %w", err)
+	}
+
+	return printOutput(metrics)
+}
+
+// buildMetricsDuration builds the duration string for the metrics API
+func buildMetricsDuration(period, datapoints string) (string, error) {
+	// Map period to short form and default datapoints
+	var shortForm string
+	var defaultDatapoints int
+
+	switch period {
+	case "day":
+		shortForm = "d"
+		defaultDatapoints = 28
+	case "week":
+		shortForm = "w"
+		defaultDatapoints = 12
+	case "month":
+		shortForm = "m"
+		defaultDatapoints = 12
+	default:
+		return "", fmt.Errorf("invalid period: %s (must be 'day', 'week', or 'month')", period)
+	}
+
+	// Determine number of datapoints
+	var numDatapoints int
+	if datapoints == "auto" {
+		numDatapoints = defaultDatapoints
+	} else {
+		n, err := fmt.Sscanf(datapoints, "%d", &numDatapoints)
+		if err != nil || n != 1 || numDatapoints < 1 {
+			return "", fmt.Errorf("invalid datapoints: %s (must be a positive number or 'auto')", datapoints)
+		}
+	}
+
+	return fmt.Sprintf("%d%s", numDatapoints, shortForm), nil
+}
+
+// findEnvSeparator finds the position of the environment separator (period)
+// Returns -1 if no separator is found
+func findEnvSeparator(input string) int {
+	for i, c := range input {
+		if c == '.' {
+			return i
+		}
+	}
+	return -1
 }

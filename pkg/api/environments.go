@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/deviantintegral/terminus-golang/pkg/api/models"
 )
@@ -333,4 +334,70 @@ func (s *EnvironmentsService) RemoveLock(ctx context.Context, siteID, envID stri
 	}
 
 	return nil
+}
+
+// metricsResponse represents the API response for traffic metrics
+type metricsResponse struct {
+	Timeseries []metricsDatapoint `json:"timeseries"`
+}
+
+// metricsDatapoint represents a single data point from the API
+type metricsDatapoint struct {
+	Timestamp   int64 `json:"timestamp"`
+	Visits      int64 `json:"visits"`
+	PagesServed int64 `json:"pages_served"`
+	CacheHits   int64 `json:"cache_hits"`
+	CacheMisses int64 `json:"cache_misses"`
+}
+
+// GetMetrics returns traffic metrics for an environment
+func (s *EnvironmentsService) GetMetrics(ctx context.Context, siteID, envID, duration string) ([]*models.Metrics, error) {
+	var path string
+	if envID == "" {
+		// Site-level metrics (all environments combined)
+		path = fmt.Sprintf("/sites/%s/traffic?duration=%s", siteID, duration)
+	} else {
+		// Environment-level metrics
+		path = fmt.Sprintf("/sites/%s/environments/%s/traffic?duration=%s", siteID, envID, duration)
+	}
+
+	resp, err := s.client.Get(ctx, path) //nolint:bodyclose // DecodeResponse closes body
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metrics: %w", err)
+	}
+
+	var metricsResp metricsResponse
+	if err := DecodeResponse(resp, &metricsResp); err != nil {
+		return nil, err
+	}
+
+	// Convert API response to Metrics model
+	metrics := make([]*models.Metrics, 0, len(metricsResp.Timeseries))
+	for _, dp := range metricsResp.Timeseries {
+		// Convert timestamp to ISO 8601 date format
+		datetime := formatTimestamp(dp.Timestamp)
+
+		// Calculate cache hit ratio
+		var cacheHitRatio float64
+		if dp.PagesServed > 0 {
+			cacheHitRatio = float64(dp.CacheHits) / float64(dp.PagesServed)
+		}
+
+		metrics = append(metrics, &models.Metrics{
+			Datetime:      datetime,
+			Visits:        dp.Visits,
+			PagesServed:   dp.PagesServed,
+			CacheHits:     dp.CacheHits,
+			CacheMisses:   dp.CacheMisses,
+			CacheHitRatio: cacheHitRatio,
+		})
+	}
+
+	return metrics, nil
+}
+
+// formatTimestamp converts a Unix timestamp to ISO 8601 date format
+func formatTimestamp(ts int64) string {
+	t := time.Unix(ts, 0).UTC()
+	return t.Format("2006-01-02")
 }
