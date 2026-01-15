@@ -667,32 +667,35 @@ type SiteOrganizationMembership struct {
 
 // Metrics represents traffic metrics for an environment
 type Metrics struct {
-	Datetime      string  `json:"datetime"`
-	Visits        int64   `json:"visits"`
-	PagesServed   int64   `json:"pages_served"`
-	CacheHits     int64   `json:"cache_hits"`
-	CacheMisses   int64   `json:"cache_misses"`
-	CacheHitRatio float64 `json:"cache_hit_ratio"`
+	Datetime      string `json:"datetime"`
+	Visits        int64  `json:"visits"`
+	PagesServed   int64  `json:"pages_served"`
+	CacheHits     int64  `json:"cache_hits"`
+	CacheMisses   int64  `json:"cache_misses"`
+	CacheHitRatio string `json:"cache_hit_ratio"`
 }
 
 // Serialize implements the Serializer interface for Metrics.
 func (m *Metrics) Serialize() []output.SerializedField {
-	// Format cache hit ratio as percentage
-	cacheHitRatioStr := fmt.Sprintf("%.2f%%", m.CacheHitRatio*100)
+	// For table output, show date-only format (matching PHP terminus)
+	period := m.Datetime
+	if len(period) > 10 {
+		period = period[:10] // Extract just the date part (2025-12-18)
+	}
 
 	return []output.SerializedField{
-		{Name: "Datetime", Value: m.Datetime},
+		{Name: "Period", Value: period},
 		{Name: "Visits", Value: strconv.FormatInt(m.Visits, 10)},
 		{Name: "Pages Served", Value: strconv.FormatInt(m.PagesServed, 10)},
 		{Name: "Cache Hits", Value: strconv.FormatInt(m.CacheHits, 10)},
 		{Name: "Cache Misses", Value: strconv.FormatInt(m.CacheMisses, 10)},
-		{Name: "Cache Hit Ratio", Value: cacheHitRatioStr},
+		{Name: "Cache Hit Ratio", Value: m.CacheHitRatio},
 	}
 }
 
 // DefaultFields implements the DefaultFielder interface for Metrics.
 func (m *Metrics) DefaultFields() []string {
-	return []string{"Datetime", "Visits", "Pages Served", "Cache Hits", "Cache Misses", "Cache Hit Ratio"}
+	return []string{"Period", "Visits", "Pages Served", "Cache Hits", "Cache Misses", "Cache Hit Ratio"}
 }
 
 // formatRole converts API role names to friendly display names to match PHP Terminus
