@@ -351,7 +351,12 @@ type metricsDatapoint struct {
 }
 
 // GetMetrics returns traffic metrics for an environment
-func (s *EnvironmentsService) GetMetrics(ctx context.Context, siteID, envID, duration string) ([]*models.Metrics, error) {
+func (s *EnvironmentsService) GetMetrics(ctx context.Context, siteIdentifier, envID, duration string) ([]*models.Metrics, error) {
+	siteID, err := EnsureSiteUUID(ctx, s.client, siteIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
 	var path string
 	if envID == "" {
 		// Site-level metrics (all environments combined)
@@ -374,13 +379,17 @@ func (s *EnvironmentsService) GetMetrics(ctx context.Context, siteID, envID, dur
 	// Convert API response to Metrics model
 	metrics := make([]*models.Metrics, 0, len(metricsResp.Timeseries))
 	for _, dp := range metricsResp.Timeseries {
-		// Convert timestamp to ISO 8601 date format
-		datetime := formatTimestamp(dp.Timestamp)
+		// Convert timestamp to ISO 8601 datetime format (matching PHP terminus)
+		datetime := formatTimestampISO8601(dp.Timestamp)
 
-		// Calculate cache hit ratio
-		var cacheHitRatio float64
+		// Calculate cache hit ratio as string
+		// PHP terminus shows "--" when pages_served is 0
+		var cacheHitRatio string
 		if dp.PagesServed > 0 {
-			cacheHitRatio = float64(dp.CacheHits) / float64(dp.PagesServed)
+			ratio := float64(dp.CacheHits) / float64(dp.PagesServed)
+			cacheHitRatio = fmt.Sprintf("%.0f%%", ratio*100)
+		} else {
+			cacheHitRatio = "--"
 		}
 
 		metrics = append(metrics, &models.Metrics{
@@ -396,8 +405,8 @@ func (s *EnvironmentsService) GetMetrics(ctx context.Context, siteID, envID, dur
 	return metrics, nil
 }
 
-// formatTimestamp converts a Unix timestamp to ISO 8601 date format
-func formatTimestamp(ts int64) string {
+// formatTimestampISO8601 converts a Unix timestamp to ISO 8601 datetime format
+func formatTimestampISO8601(ts int64) string {
 	t := time.Unix(ts, 0).UTC()
-	return t.Format("2006-01-02")
+	return t.Format("2006-01-02T15:04:05")
 }
