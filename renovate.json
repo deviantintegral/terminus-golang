@@ -3,5 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "pinDigests": true
+  "pinDigests": true,
+  "minimumReleaseAge": "3 days",
+  "automerge": true
 }
