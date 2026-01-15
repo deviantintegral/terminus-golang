@@ -474,7 +474,7 @@ This section tracks the implementation status of all PHP Terminus commands in th
 | `env:diffstat` | Show diff statistics for an environment | ❌ | ❌ |
 | `env:info` | Show environment information | ✅ | ❌ |
 | `env:list` | List environments for a site | ✅ | ❌ |
-| `env:metrics` | Show environment metrics | ❌ | ❌ |
+| `env:metrics` | Show environment metrics | ✅ | ✅ |
 | `env:rotate-random-seed` | Rotate the Drupal hash salt | ❌ | ❌ |
 | `env:view` | Open environment in a browser | ❌ | ❌ |
 | `env:wake` | Wake a sleeping environment | ❌ | ❌ |
