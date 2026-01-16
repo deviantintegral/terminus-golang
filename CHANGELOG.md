@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/deviantintegral/terminus-golang/compare/v0.5.0...v0.6.0) (2026-01-16)
+
+
+### Features
+
+* add env:metrics command ([75a19c4](https://github.com/deviantintegral/terminus-golang/commit/75a19c4718670ba2835eef8d24db5c7778d75fd2))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/schollz/progressbar/v3 to v3.19.0 ([#111](https://github.com/deviantintegral/terminus-golang/issues/111)) ([164e7c6](https://github.com/deviantintegral/terminus-golang/commit/164e7c62d90b85aa508ce59a414c0200eac7ed76))
+* **deps:** update module github.com/spf13/cobra to v1.10.2 ([#108](https://github.com/deviantintegral/terminus-golang/issues/108)) ([fea71f8](https://github.com/deviantintegral/terminus-golang/commit/fea71f87593b8f2d780380f12d67192bffdb7504))
+* improve env:metrics output formatting ([abbee78](https://github.com/deviantintegral/terminus-golang/commit/abbee78aa65d7a5c1a533558ea7ce731c1bc9170))
+* match PHP terminus env:metrics output format ([0b5fd9a](https://github.com/deviantintegral/terminus-golang/commit/0b5fd9a7f090ca7dcaa1829f4b6ff2c2be011362))
+
 ## [0.5.0](https://github.com/deviantintegral/terminus-golang/compare/v0.4.0...v0.5.0) (2025-11-28)
 
 
