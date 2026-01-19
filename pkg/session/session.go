@@ -14,6 +14,7 @@ type Session struct {
 	SessionToken string `json:"session"`
 	UserID       string `json:"user_id"`
 	ExpiresAt    int64  `json:"expires_at"`
+	MachineToken string `json:"machine_token,omitempty"`
 }
 
 // IsExpired returns true if the session has expired
@@ -22,6 +23,20 @@ func (s *Session) IsExpired() bool {
 		return false
 	}
 	return time.Now().Unix() > s.ExpiresAt
+}
+
+// TokenRenewalBuffer is the duration before expiry when a token is considered
+// to need renewal (5 minutes)
+const TokenRenewalBuffer = 5 * time.Minute
+
+// NeedsRenewal returns true if the session token will expire within the
+// renewal buffer window (5 minutes) or has already expired
+func (s *Session) NeedsRenewal() bool {
+	if s.ExpiresAt == 0 {
+		return false // No expiry time set, assume indefinite validity
+	}
+	renewalTime := time.Now().Add(TokenRenewalBuffer).Unix()
+	return renewalTime > s.ExpiresAt
 }
 
 // Store handles session and token persistence
