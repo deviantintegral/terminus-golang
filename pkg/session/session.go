@@ -74,6 +74,9 @@ func (s *Store) SaveSession(session *Session) error {
 }
 
 // LoadSession loads a session from disk
+// Note: This returns expired sessions as well, since the machine token
+// can still be used for automatic token renewal. Callers should check
+// IsExpired() if they need to verify the session is still valid.
 func (s *Store) LoadSession() (*Session, error) {
 	data, err := os.ReadFile(s.sessionPath)
 	if err != nil {
@@ -86,13 +89,6 @@ func (s *Store) LoadSession() (*Session, error) {
 	var session Session
 	if err := json.Unmarshal(data, &session); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
-	}
-
-	// Check if expired
-	if session.IsExpired() {
-		// Remove expired session
-		_ = s.DeleteSession()
-		return nil, nil
 	}
 
 	return &session, nil
