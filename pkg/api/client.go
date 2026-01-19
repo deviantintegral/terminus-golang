@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/deviantintegral/terminus-golang/pkg/version"
 	"github.com/google/uuid"
 )
 
@@ -55,8 +56,8 @@ func NewClient(options ...ClientOption) *Client {
 		httpClient: &http.Client{
 			Timeout: DefaultTimeout,
 		},
-		userAgent: fmt.Sprintf("Terminus-Go/0.0.0 (go_version=%s; os=%s; arch=%s)",
-			runtime.Version(), runtime.GOOS, runtime.GOARCH),
+		userAgent: fmt.Sprintf("Terminus-Go/%s (go_version=%s; os=%s; arch=%s)",
+			version.String(), runtime.Version(), runtime.GOOS, runtime.GOARCH),
 	}
 
 	for _, opt := range options {
@@ -91,6 +92,14 @@ func WithLogger(logger Logger) ClientOption {
 func WithHTTPClient(httpClient *http.Client) ClientOption {
 	return func(c *Client) {
 		c.httpClient = httpClient
+	}
+}
+
+// WithUserAgent sets a custom User-Agent header.
+// This allows downstream applications using this library to identify themselves.
+func WithUserAgent(userAgent string) ClientOption {
+	return func(c *Client) {
+		c.userAgent = userAgent
 	}
 }
 

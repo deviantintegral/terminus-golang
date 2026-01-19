@@ -3,6 +3,8 @@ package commands
 import (
 	"os"
 	"testing"
+
+	"github.com/deviantintegral/terminus-golang/pkg/version"
 )
 
 func TestSelfInfoCmdStructure(t *testing.T) {
@@ -58,9 +60,9 @@ func TestRunSelfInfo(t *testing.T) {
 	}
 }
 
-func TestVersionVariable(t *testing.T) {
-	// Test that Version variable is set
-	if Version == "" {
-		t.Error("Version should not be empty")
+func TestVersionString(t *testing.T) {
+	// Test that version.String() returns a non-empty value
+	if version.String() == "" {
+		t.Error("version.String() should not be empty")
 	}
 }
