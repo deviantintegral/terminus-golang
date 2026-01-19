@@ -5,11 +5,9 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/deviantintegral/terminus-golang/pkg/version"
 	"github.com/spf13/cobra"
 )
-
-// Version is set at build time via ldflags
-var Version = "dev"
 
 var selfInfoCmd = &cobra.Command{
 	Use:   "self:info",
@@ -49,7 +47,7 @@ func runSelfInfo(_ *cobra.Command, _ []string) error {
 	}
 
 	info := SelfInfo{
-		TerminusVersion: Version,
+		TerminusVersion: version.String(),
 		TerminusPath:    execPath,
 		ConfigPath:      configPath,
 		GoVersion:       runtime.Version(),
