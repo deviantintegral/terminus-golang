@@ -77,11 +77,12 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("login failed: %w", err)
 	}
 
-	// Save session
+	// Save session with machine token for automatic renewal
 	sessionData := &session.Session{
 		SessionToken: sess.Session,
 		UserID:       sess.UserID,
 		ExpiresAt:    sess.ExpiresAt,
+		MachineToken: token,
 	}
 
 	if err := cliContext.SessionStore.SaveSession(sessionData); err != nil {

@@ -45,6 +45,91 @@ func TestSessionIsExpired(t *testing.T) {
 	}
 }
 
+func TestSessionNeedsRenewal(t *testing.T) {
+	tests := []struct {
+		name      string
+		expiresAt int64
+		expected  bool
+	}{
+		{
+			name:      "expires in 1 hour - no renewal needed",
+			expiresAt: time.Now().Add(1 * time.Hour).Unix(),
+			expected:  false,
+		},
+		{
+			name:      "expires in 10 minutes - no renewal needed",
+			expiresAt: time.Now().Add(10 * time.Minute).Unix(),
+			expected:  false,
+		},
+		{
+			name:      "expires in 4 minutes - needs renewal",
+			expiresAt: time.Now().Add(4 * time.Minute).Unix(),
+			expected:  true,
+		},
+		{
+			name:      "expires in 1 minute - needs renewal",
+			expiresAt: time.Now().Add(1 * time.Minute).Unix(),
+			expected:  true,
+		},
+		{
+			name:      "already expired - needs renewal",
+			expiresAt: time.Now().Add(-1 * time.Hour).Unix(),
+			expected:  true,
+		},
+		{
+			name:      "no expiry set - no renewal needed",
+			expiresAt: 0,
+			expected:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sess := &Session{
+				SessionToken: "test-token",
+				UserID:       "test-user",
+				ExpiresAt:    tt.expiresAt,
+			}
+
+			if sess.NeedsRenewal() != tt.expected {
+				t.Errorf("expected NeedsRenewal() to be %v, got %v", tt.expected, sess.NeedsRenewal())
+			}
+		})
+	}
+}
+
+func TestSessionWithMachineToken(t *testing.T) {
+	tmpDir := t.TempDir()
+	store := NewStore(tmpDir)
+
+	sess := &Session{
+		SessionToken: "session-token",
+		UserID:       "test-user-id",
+		ExpiresAt:    time.Now().Add(1 * time.Hour).Unix(),
+		MachineToken: "machine-token-12345",
+	}
+
+	// Test save
+	err := store.SaveSession(sess)
+	if err != nil {
+		t.Fatalf("failed to save session: %v", err)
+	}
+
+	// Test load
+	loaded, err := store.LoadSession()
+	if err != nil {
+		t.Fatalf("failed to load session: %v", err)
+	}
+
+	if loaded == nil {
+		t.Fatal("expected session to be loaded")
+	}
+
+	if loaded.MachineToken != sess.MachineToken {
+		t.Errorf("expected machine token %s, got %s", sess.MachineToken, loaded.MachineToken)
+	}
+}
+
 func TestStoreSaveAndLoadSession(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewStore(tmpDir)

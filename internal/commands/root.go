@@ -106,10 +106,40 @@ func initCLIContext() error {
 
 	apiClient := api.NewClient(clientOpts...)
 
-	// Try to load existing session
+	// Try to load existing session and set up token refresher
 	sess, err := sessionStore.LoadSession()
 	if err == nil && sess != nil {
 		apiClient.SetToken(sess.SessionToken)
+
+		// Set up token refresher if we have a machine token
+		if sess.MachineToken != "" {
+			refresher := api.NewSessionTokenRefresher(
+				sess.MachineToken,
+				apiClient,
+				api.WithOnTokenRefreshed(func(newSession *api.SessionResponse) error {
+					// Save the new session to disk
+					newSessionData := &session.Session{
+						SessionToken: newSession.Session,
+						UserID:       newSession.UserID,
+						ExpiresAt:    newSession.ExpiresAt,
+						MachineToken: sess.MachineToken,
+					}
+					return sessionStore.SaveSession(newSessionData)
+				}),
+			)
+			apiClient.SetTokenRefresher(refresher)
+
+			// Proactively refresh token if it will expire soon
+			if sess.NeedsRenewal() {
+				ctx := context.Background()
+				newToken, refreshErr := refresher.RefreshToken(ctx)
+				if refreshErr == nil {
+					apiClient.SetToken(newToken)
+				}
+				// If refresh fails, continue anyway - the reactive refresh will
+				// handle it when the API returns 401
+			}
+		}
 	}
 
 	// Create output options
