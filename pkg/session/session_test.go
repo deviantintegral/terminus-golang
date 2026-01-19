@@ -173,6 +173,7 @@ func TestStoreExpiredSession(t *testing.T) {
 		SessionToken: "test-token",
 		UserID:       "test-user-id",
 		ExpiresAt:    time.Now().Add(-1 * time.Hour).Unix(),
+		MachineToken: "machine-token-for-renewal",
 	}
 
 	// Save expired session
@@ -181,21 +182,25 @@ func TestStoreExpiredSession(t *testing.T) {
 		t.Fatalf("failed to save session: %v", err)
 	}
 
-	// Try to load expired session
+	// Load expired session - it should still be returned for auto-renewal
 	loaded, err := store.LoadSession()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Expired session should return nil
-	if loaded != nil {
-		t.Error("expected expired session to return nil")
+	// Expired session should still be returned (for auto-renewal using machine token)
+	if loaded == nil {
+		t.Fatal("expected expired session to be returned for auto-renewal")
 	}
 
-	// Verify session file was deleted
-	_, err = os.Stat(store.sessionPath)
-	if !os.IsNotExist(err) {
-		t.Error("expected expired session file to be deleted")
+	// Verify it's marked as expired
+	if !loaded.IsExpired() {
+		t.Error("expected session to be marked as expired")
+	}
+
+	// Verify machine token is preserved for auto-renewal
+	if loaded.MachineToken != sess.MachineToken {
+		t.Errorf("expected machine token %s, got %s", sess.MachineToken, loaded.MachineToken)
 	}
 }
 
