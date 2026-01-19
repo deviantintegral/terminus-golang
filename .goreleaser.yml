@@ -20,7 +20,6 @@ builds:
     ldflags:
       - -s -w
       - -X github.com/deviantintegral/terminus-golang/pkg/version.version={{ .Version }}
-      - -X github.com/deviantintegral/terminus-golang/pkg/version.commit={{ .ShortCommit }}
 
 archives:
   - id: terminus
@@ -42,7 +41,8 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  version_template: "{{ incpatch .Version }}-next"
+  # For dev builds: use short commit hash, with -dirty suffix if working tree is dirty
+  version_template: "{{ .ShortCommit }}{{ if .IsGitDirty }}-dirty{{ end }}"
 
 changelog:
   disable: true

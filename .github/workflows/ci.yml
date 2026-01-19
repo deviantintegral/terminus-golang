@@ -68,63 +68,27 @@ jobs:
           args: --timeout=5m
 
   build:
-    name: Build (${{ matrix.platform }})
+    name: Build
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        include:
-          - platform: linux
-            targets: |
-              GOOS=linux GOARCH=amd64 go build -ldflags "$LDFLAGS" -o bin/terminus-linux-amd64 ./cmd/terminus
-              GOOS=linux GOARCH=arm64 go build -ldflags "$LDFLAGS" -o bin/terminus-linux-arm64 ./cmd/terminus
-          - platform: macos
-            targets: |
-              GOOS=darwin GOARCH=amd64 go build -ldflags "$LDFLAGS" -o bin/terminus-darwin-amd64 ./cmd/terminus
-              GOOS=darwin GOARCH=arm64 go build -ldflags "$LDFLAGS" -o bin/terminus-darwin-arm64 ./cmd/terminus
-          - platform: windows
-            targets: |
-              GOOS=windows GOARCH=amd64 go build -ldflags "$LDFLAGS" -o bin/terminus-windows-amd64.exe ./cmd/terminus
-              GOOS=windows GOARCH=arm64 go build -ldflags "$LDFLAGS" -o bin/terminus-windows-arm64.exe ./cmd/terminus
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
         with:
           go-version: '1.24.7'
 
-      - name: Cache Go modules
-        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5
+      - name: Build with GoReleaser
+        uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552 # v6
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.platform }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.platform }}-go-
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Set version info
-        id: version
-        run: |
-          COMMIT=$(git rev-parse --short HEAD)
-          DIRTY=""
-          if [ -n "$(git status --porcelain)" ]; then
-            DIRTY="true"
-          fi
-          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
-          echo "dirty=$DIRTY" >> $GITHUB_OUTPUT
-
-      - name: Build for ${{ matrix.platform }}
-        env:
-          LDFLAGS: >-
-            -X github.com/deviantintegral/terminus-golang/pkg/version.commit=${{ steps.version.outputs.commit }}
-            -X github.com/deviantintegral/terminus-golang/pkg/version.dirty=${{ steps.version.outputs.dirty }}
-        run: ${{ matrix.targets }}
+          version: '~> v2'
+          args: build --snapshot --clean
 
       - name: Upload artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: binaries-${{ matrix.platform }}
-          path: bin/
+          name: binaries
+          path: dist/
