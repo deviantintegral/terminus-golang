@@ -9,8 +9,9 @@ import (
 // It refreshes the session token by calling the authentication endpoint with the
 // stored machine token.
 type SessionTokenRefresher struct {
-	// machineToken is the machine token used to obtain new session tokens
-	machineToken string
+	// getMachineToken is a callback that returns the machine token to use for refresh.
+	// This allows the caller to load the token from storage (e.g., token files).
+	getMachineToken func() (string, error)
 	// client is the API client used to make the refresh request
 	// Note: This creates a circular reference, but it's necessary for the refresh flow.
 	// The doWithRetry function tracks tokenRefreshAttempted to prevent infinite loops.
@@ -40,12 +41,13 @@ func WithOnTokenRefreshed(callback func(session *SessionResponse) error) Session
 }
 
 // NewSessionTokenRefresher creates a new SessionTokenRefresher.
-// The machineToken is required and will be used to obtain new session tokens.
+// The getMachineToken callback is called when a token refresh is needed to get
+// the current machine token. This allows loading tokens from storage dynamically.
 // The client is the API client to use for the refresh request.
-func NewSessionTokenRefresher(machineToken string, client *Client, opts ...SessionTokenRefresherOption) *SessionTokenRefresher {
+func NewSessionTokenRefresher(getMachineToken func() (string, error), client *Client, opts ...SessionTokenRefresherOption) *SessionTokenRefresher {
 	r := &SessionTokenRefresher{
-		machineToken: machineToken,
-		client:       client,
+		getMachineToken: getMachineToken,
+		client:          client,
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -53,15 +55,19 @@ func NewSessionTokenRefresher(machineToken string, client *Client, opts ...Sessi
 	return r
 }
 
-// SetMachineToken updates the machine token used for refreshing
-func (r *SessionTokenRefresher) SetMachineToken(token string) {
-	r.machineToken = token
-}
-
 // RefreshToken implements the TokenRefresher interface.
 // It uses the stored machine token to obtain a new session token from the API.
 func (r *SessionTokenRefresher) RefreshToken(ctx context.Context) (string, error) {
-	if r.machineToken == "" {
+	if r.getMachineToken == nil {
+		return "", fmt.Errorf("no machine token provider configured")
+	}
+
+	machineToken, err := r.getMachineToken()
+	if err != nil {
+		return "", fmt.Errorf("failed to get machine token: %w", err)
+	}
+
+	if machineToken == "" {
 		return "", fmt.Errorf("no machine token available for token refresh")
 	}
 
@@ -74,7 +80,7 @@ func (r *SessionTokenRefresher) RefreshToken(ctx context.Context) (string, error
 	// The doWithRetry function in the client tracks tokenRefreshAttempted to prevent
 	// infinite recursion if the auth endpoint also returns 401.
 	authService := NewAuthService(r.client)
-	session, err := authService.Login(ctx, r.machineToken)
+	session, err := authService.Login(ctx, machineToken)
 	if err != nil {
 		return "", fmt.Errorf("failed to refresh token: %w", err)
 	}

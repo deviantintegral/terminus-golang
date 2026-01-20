@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,14 +12,17 @@ import (
 
 func TestNewSessionTokenRefresher(t *testing.T) {
 	client := NewClient()
-	refresher := NewSessionTokenRefresher("machine-token", client)
+	getMachineToken := func() (string, error) {
+		return "machine-token", nil
+	}
+	refresher := NewSessionTokenRefresher(getMachineToken, client)
 
 	if refresher == nil {
 		t.Fatal("expected refresher to be created")
 	}
 
-	if refresher.machineToken != "machine-token" {
-		t.Errorf("expected machine token 'machine-token', got %s", refresher.machineToken)
+	if refresher.getMachineToken == nil {
+		t.Error("expected getMachineToken callback to be set")
 	}
 
 	if refresher.client != client {
@@ -66,8 +70,11 @@ func TestSessionTokenRefresher_RefreshToken_Success(t *testing.T) {
 	)
 
 	var savedSession *SessionResponse
+	getMachineToken := func() (string, error) {
+		return "test-machine-token", nil
+	}
 	refresher := NewSessionTokenRefresher(
-		"test-machine-token",
+		getMachineToken,
 		client,
 		WithOnTokenRefreshed(func(session *SessionResponse) error {
 			savedSession = session
@@ -97,7 +104,10 @@ func TestSessionTokenRefresher_RefreshToken_Success(t *testing.T) {
 
 func TestSessionTokenRefresher_RefreshToken_NoMachineToken(t *testing.T) {
 	client := NewClient()
-	refresher := NewSessionTokenRefresher("", client)
+	getMachineToken := func() (string, error) {
+		return "", nil
+	}
+	refresher := NewSessionTokenRefresher(getMachineToken, client)
 
 	ctx := context.Background()
 	_, err := refresher.RefreshToken(ctx)
@@ -108,6 +118,40 @@ func TestSessionTokenRefresher_RefreshToken_NoMachineToken(t *testing.T) {
 	expectedErr := "no machine token available for token refresh"
 	if err.Error() != expectedErr {
 		t.Errorf("expected error '%s', got '%s'", expectedErr, err.Error())
+	}
+}
+
+func TestSessionTokenRefresher_RefreshToken_NoProvider(t *testing.T) {
+	client := NewClient()
+	refresher := NewSessionTokenRefresher(nil, client)
+
+	ctx := context.Background()
+	_, err := refresher.RefreshToken(ctx)
+	if err == nil {
+		t.Fatal("expected error for nil machine token provider")
+	}
+
+	expectedErr := "no machine token provider configured"
+	if err.Error() != expectedErr {
+		t.Errorf("expected error '%s', got '%s'", expectedErr, err.Error())
+	}
+}
+
+func TestSessionTokenRefresher_RefreshToken_ProviderError(t *testing.T) {
+	client := NewClient()
+	getMachineToken := func() (string, error) {
+		return "", errors.New("token file not found")
+	}
+	refresher := NewSessionTokenRefresher(getMachineToken, client)
+
+	ctx := context.Background()
+	_, err := refresher.RefreshToken(ctx)
+	if err == nil {
+		t.Fatal("expected error from provider")
+	}
+
+	if err.Error() != "failed to get machine token: token file not found" {
+		t.Errorf("unexpected error: %s", err.Error())
 	}
 }
 
@@ -124,7 +168,10 @@ func TestSessionTokenRefresher_RefreshToken_AuthFails(t *testing.T) {
 		WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
 	)
 
-	refresher := NewSessionTokenRefresher("invalid-token", client)
+	getMachineToken := func() (string, error) {
+		return "invalid-token", nil
+	}
+	refresher := NewSessionTokenRefresher(getMachineToken, client)
 
 	ctx := context.Background()
 	_, err := refresher.RefreshToken(ctx)
@@ -133,27 +180,15 @@ func TestSessionTokenRefresher_RefreshToken_AuthFails(t *testing.T) {
 	}
 }
 
-func TestSessionTokenRefresher_SetMachineToken(t *testing.T) {
-	client := NewClient()
-	refresher := NewSessionTokenRefresher("original-token", client)
-
-	if refresher.machineToken != "original-token" {
-		t.Errorf("expected 'original-token', got %s", refresher.machineToken)
-	}
-
-	refresher.SetMachineToken("new-token")
-
-	if refresher.machineToken != "new-token" {
-		t.Errorf("expected 'new-token', got %s", refresher.machineToken)
-	}
-}
-
 func TestSessionTokenRefresher_WithRefreshLogger(t *testing.T) {
 	client := NewClient()
 	logger := NewLogger(VerbosityDebug)
 
+	getMachineToken := func() (string, error) {
+		return "token", nil
+	}
 	refresher := NewSessionTokenRefresher(
-		"token",
+		getMachineToken,
 		client,
 		WithRefreshLogger(logger),
 	)

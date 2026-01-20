@@ -111,10 +111,15 @@ func initCLIContext() error {
 	if err == nil && sess != nil {
 		apiClient.SetToken(sess.SessionToken)
 
-		// Set up token refresher if we have a machine token
-		if sess.MachineToken != "" {
+		// Set up token refresher if we have an email to look up the machine token
+		if sess.Email != "" {
+			// Create a closure that loads the machine token from the token file
+			getMachineToken := func() (string, error) {
+				return sessionStore.LoadMachineToken(sess.Email)
+			}
+
 			refresher := api.NewSessionTokenRefresher(
-				sess.MachineToken,
+				getMachineToken,
 				apiClient,
 				api.WithOnTokenRefreshed(func(newSession *api.SessionResponse) error {
 					// Save the new session to disk
@@ -122,7 +127,7 @@ func initCLIContext() error {
 						SessionToken: newSession.Session,
 						UserID:       newSession.UserID,
 						ExpiresAt:    newSession.ExpiresAt,
-						MachineToken: sess.MachineToken,
+						Email:        sess.Email,
 					}
 					return sessionStore.SaveSession(newSessionData)
 				}),
@@ -178,10 +183,17 @@ func requireAuth() error {
 		return fmt.Errorf("not authenticated. Please run 'terminus auth:login' first")
 	}
 
-	// If session is expired but has a machine token, auto-renewal will handle it
-	// If session is expired and has no machine token, we need to re-authenticate
-	if sess.IsExpired() && sess.MachineToken == "" {
-		return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
+	// If session is expired, check if we have a machine token for auto-renewal
+	if sess.IsExpired() {
+		if sess.Email == "" {
+			return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
+		}
+		// Check if we have a saved machine token for this email
+		machineToken, err := cliContext.SessionStore.LoadMachineToken(sess.Email)
+		if err != nil || machineToken == "" {
+			return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
+		}
+		// Machine token exists, auto-renewal will handle it
 	}
 
 	return nil

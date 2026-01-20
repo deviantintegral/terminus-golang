@@ -512,8 +512,8 @@ func TestRunAuthLogin_WithMachineTokenAndEmail(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify token was saved for email
-	savedToken, err := store.LoadToken("test@example.com")
+	// Verify token was saved for email (in PHP JSON format)
+	savedToken, err := store.LoadMachineToken("test@example.com")
 	if err != nil {
 		t.Fatalf("failed to load token: %v", err)
 	}

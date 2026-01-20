@@ -14,7 +14,7 @@ type Session struct {
 	SessionToken string `json:"session"`
 	UserID       string `json:"user_id"`
 	ExpiresAt    int64  `json:"expires_at"`
-	MachineToken string `json:"machine_token,omitempty"`
+	Email        string `json:"email,omitempty"`
 }
 
 // IsExpired returns true if the session has expired
@@ -102,7 +102,7 @@ func (s *Store) DeleteSession() error {
 	return nil
 }
 
-// SaveToken saves a machine token to disk
+// SaveToken saves a machine token to disk in PHP Terminus compatible JSON format
 func (s *Store) SaveToken(email, token string) error {
 	// Ensure tokens directory exists
 	if err := os.MkdirAll(s.tokensPath, 0o700); err != nil {
@@ -111,15 +111,27 @@ func (s *Store) SaveToken(email, token string) error {
 
 	tokenPath := filepath.Join(s.tokensPath, sanitizeFilename(email))
 
+	// Save in PHP Terminus JSON format for compatibility
+	tokenData := phpTokenFormat{
+		Token: token,
+		Email: email,
+		Date:  time.Now().Unix(),
+	}
+
+	data, err := json.MarshalIndent(tokenData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal token: %w", err)
+	}
+
 	// Write with secure permissions
-	if err := os.WriteFile(tokenPath, []byte(token), 0o600); err != nil {
+	if err := os.WriteFile(tokenPath, data, 0o600); err != nil {
 		return fmt.Errorf("failed to write token file: %w", err)
 	}
 
 	return nil
 }
 
-// LoadToken loads a machine token from disk
+// LoadToken loads a machine token from disk (returns raw file content)
 func (s *Store) LoadToken(email string) (string, error) {
 	tokenPath := filepath.Join(s.tokensPath, sanitizeFilename(email))
 
@@ -132,6 +144,19 @@ func (s *Store) LoadToken(email string) (string, error) {
 	}
 
 	return string(data), nil
+}
+
+// LoadMachineToken loads and extracts the raw machine token for an email.
+// This handles both PHP Terminus JSON format and raw token strings.
+func (s *Store) LoadMachineToken(email string) (string, error) {
+	tokenData, err := s.LoadToken(email)
+	if err != nil {
+		return "", err
+	}
+	if tokenData == "" {
+		return "", nil
+	}
+	return ExtractRawToken(tokenData), nil
 }
 
 // DeleteToken deletes a machine token
@@ -186,7 +211,8 @@ type phpTokenFormat struct {
 func ExtractRawToken(tokenData string) string {
 	// Try to parse as PHP Terminus JSON format
 	var phpToken phpTokenFormat
-	if err := json.Unmarshal([]byte(tokenData), &phpToken); err == nil && phpToken.Token != "" {
+	if err := json.Unmarshal([]byte(tokenData), &phpToken); err == nil {
+		// Successfully parsed as PHP format, return the token (even if empty)
 		return phpToken.Token
 	}
 	// Return as-is if not in PHP format

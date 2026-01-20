@@ -98,7 +98,7 @@ func TestSessionNeedsRenewal(t *testing.T) {
 	}
 }
 
-func TestSessionWithMachineToken(t *testing.T) {
+func TestSessionWithEmail(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewStore(tmpDir)
 
@@ -106,7 +106,7 @@ func TestSessionWithMachineToken(t *testing.T) {
 		SessionToken: "session-token",
 		UserID:       "test-user-id",
 		ExpiresAt:    time.Now().Add(1 * time.Hour).Unix(),
-		MachineToken: "machine-token-12345",
+		Email:        "test@example.com",
 	}
 
 	// Test save
@@ -125,8 +125,8 @@ func TestSessionWithMachineToken(t *testing.T) {
 		t.Fatal("expected session to be loaded")
 	}
 
-	if loaded.MachineToken != sess.MachineToken {
-		t.Errorf("expected machine token %s, got %s", sess.MachineToken, loaded.MachineToken)
+	if loaded.Email != sess.Email {
+		t.Errorf("expected email %s, got %s", sess.Email, loaded.Email)
 	}
 }
 
@@ -173,7 +173,7 @@ func TestStoreExpiredSession(t *testing.T) {
 		SessionToken: "test-token",
 		UserID:       "test-user-id",
 		ExpiresAt:    time.Now().Add(-1 * time.Hour).Unix(),
-		MachineToken: "machine-token-for-renewal",
+		Email:        "test@example.com",
 	}
 
 	// Save expired session
@@ -188,7 +188,7 @@ func TestStoreExpiredSession(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Expired session should still be returned (for auto-renewal using machine token)
+	// Expired session should still be returned (for auto-renewal using email to lookup token)
 	if loaded == nil {
 		t.Fatal("expected expired session to be returned for auto-renewal")
 	}
@@ -198,9 +198,9 @@ func TestStoreExpiredSession(t *testing.T) {
 		t.Error("expected session to be marked as expired")
 	}
 
-	// Verify machine token is preserved for auto-renewal
-	if loaded.MachineToken != sess.MachineToken {
-		t.Errorf("expected machine token %s, got %s", sess.MachineToken, loaded.MachineToken)
+	// Verify email is preserved for auto-renewal token lookup
+	if loaded.Email != sess.Email {
+		t.Errorf("expected email %s, got %s", sess.Email, loaded.Email)
 	}
 }
 
@@ -246,14 +246,60 @@ func TestStoreSaveAndLoadToken(t *testing.T) {
 		t.Fatalf("failed to save token: %v", err)
 	}
 
-	// Test load
+	// Test load raw - should return PHP JSON format
 	loaded, err := store.LoadToken(email)
 	if err != nil {
 		t.Fatalf("failed to load token: %v", err)
 	}
 
+	// Verify it's in PHP JSON format
+	if loaded == token {
+		t.Error("expected token to be saved in PHP JSON format, got raw token")
+	}
+
+	// Extract the raw token using ExtractRawToken
+	extractedToken := ExtractRawToken(loaded)
+	if extractedToken != token {
+		t.Errorf("expected extracted token %s, got %s", token, extractedToken)
+	}
+}
+
+func TestStoreLoadMachineToken(t *testing.T) {
+	tmpDir := t.TempDir()
+	store := NewStore(tmpDir)
+
+	email := "test@example.com"
+	token := "test-machine-token"
+
+	// Save token
+	err := store.SaveToken(email, token)
+	if err != nil {
+		t.Fatalf("failed to save token: %v", err)
+	}
+
+	// Test LoadMachineToken - should return the raw token directly
+	loaded, err := store.LoadMachineToken(email)
+	if err != nil {
+		t.Fatalf("failed to load machine token: %v", err)
+	}
+
 	if loaded != token {
-		t.Errorf("expected token %s, got %s", token, loaded)
+		t.Errorf("expected machine token %s, got %s", token, loaded)
+	}
+}
+
+func TestStoreLoadMachineToken_NotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+	store := NewStore(tmpDir)
+
+	// Test loading non-existent token
+	loaded, err := store.LoadMachineToken("nonexistent@example.com")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if loaded != "" {
+		t.Errorf("expected empty string for non-existent token, got %s", loaded)
 	}
 }
 
@@ -340,12 +386,12 @@ func TestExtractRawToken(t *testing.T) {
 		{
 			name:     "JSON without token field",
 			input:    `{"email":"user@example.com","date":1763142241}`,
-			expected: `{"email":"user@example.com","date":1763142241}`,
+			expected: "",
 		},
 		{
 			name:     "JSON with empty token field",
 			input:    `{"token":"","email":"user@example.com"}`,
-			expected: `{"token":"","email":"user@example.com"}`,
+			expected: "",
 		},
 	}
 
