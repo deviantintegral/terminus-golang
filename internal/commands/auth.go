@@ -77,38 +77,44 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("login failed: %w", err)
 	}
 
-	// Save session with machine token for automatic renewal
-	sessionData := &session.Session{
-		SessionToken: sess.Session,
-		UserID:       sess.UserID,
-		ExpiresAt:    sess.ExpiresAt,
-		MachineToken: token,
+	// Update API client with new session token
+	cliContext.APIClient.SetToken(sess.Session)
+
+	// Get user info to determine email for token storage
+	user, err := authService.Whoami(getContext(), sess.UserID)
+	if err != nil {
+		printError("Warning: failed to get user info: %v", err)
 	}
 
-	if err := cliContext.SessionStore.SaveSession(sessionData); err != nil {
-		return fmt.Errorf("failed to save session: %w", err)
+	// Use email from user info if not provided via flag
+	if email == "" && user != nil {
+		email = user.Email
 	}
 
-	// Save machine token for future use if email was provided
+	// Save machine token to token file for automatic renewal
 	if email != "" {
 		if err := cliContext.SessionStore.SaveToken(email, token); err != nil {
 			printError("Warning: failed to save machine token: %v", err)
 		}
 	}
 
-	// Update API client with new session token
-	cliContext.APIClient.SetToken(sess.Session)
+	// Save session with email reference for token lookup during auto-renewal
+	sessionData := &session.Session{
+		SessionToken: sess.Session,
+		UserID:       sess.UserID,
+		ExpiresAt:    sess.ExpiresAt,
+		Email:        email,
+	}
+
+	if err := cliContext.SessionStore.SaveSession(sessionData); err != nil {
+		return fmt.Errorf("failed to save session: %w", err)
+	}
 
 	printMessage("Login successful!")
 
-	// Get and display user info
-	user, err := authService.Whoami(getContext(), sess.UserID)
-	if err != nil {
-		printError("Warning: failed to get user info: %v", err)
-		return nil
+	if user != nil {
+		printMessage("Logged in as: %s %s (%s)", user.FirstName, user.LastName, user.Email)
 	}
-
-	printMessage("Logged in as: %s %s (%s)", user.FirstName, user.LastName, user.Email)
 
 	return nil
 }
@@ -116,8 +122,8 @@ func runAuthLogin(_ *cobra.Command, _ []string) error {
 // resolveToken loads a machine token from saved tokens
 func resolveToken(email string) (token, resolvedEmail string, err error) {
 	if email != "" {
-		// Load token for specific email
-		token, err = cliContext.SessionStore.LoadToken(email)
+		// Load token for specific email (extracts raw token from PHP JSON format)
+		token, err = cliContext.SessionStore.LoadMachineToken(email)
 		if err != nil {
 			return "", "", fmt.Errorf("failed to load token: %w", err)
 		}
@@ -142,9 +148,9 @@ func resolveToken(email string) (token, resolvedEmail string, err error) {
 		return "", "", fmt.Errorf("multiple saved tokens found. Please specify --email with one of: %v", emails)
 	}
 
-	// Exactly one saved token
+	// Exactly one saved token (extracts raw token from PHP JSON format)
 	resolvedEmail = emails[0]
-	token, err = cliContext.SessionStore.LoadToken(resolvedEmail)
+	token, err = cliContext.SessionStore.LoadMachineToken(resolvedEmail)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to load token for %s: %w", resolvedEmail, err)
 	}
