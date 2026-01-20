@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/deviantintegral/terminus-golang/compare/v0.6.0...v0.7.0) (2026-01-20)
+
+
+### Features
+
+* add dynamic version to user agent header ([715e9c2](https://github.com/deviantintegral/terminus-golang/commit/715e9c2e4c1bbd72d39d12c0395e8922044262c7))
+* **auth:** add automatic session token renewal ([90fb698](https://github.com/deviantintegral/terminus-golang/commit/90fb698d74ed16139f7c6895d8e2b435e14f0de8))
+
+
+### Bug Fixes
+
+* **auth:** preserve expired sessions for auto-renewal ([81159af](https://github.com/deviantintegral/terminus-golang/commit/81159afd794c2dbf5b7e4a814bae233d41a303cf))
+* use atomic operations for pollCount in tests ([#125](https://github.com/deviantintegral/terminus-golang/issues/125)) ([c969d61](https://github.com/deviantintegral/terminus-golang/commit/c969d61f527998761396569aa8cb955a16abe559))
+
 ## [0.6.0](https://github.com/deviantintegral/terminus-golang/compare/v0.5.0...v0.6.0) (2026-01-16)
 
 
