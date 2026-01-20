@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -180,7 +181,7 @@ func TestWorkflowsService_Wait(t *testing.T) {
 	workflowID := "wf-123"
 
 	// Track the number of polls
-	pollCount := 0
+	var pollCount atomic.Int32
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		expectedPath := "/sites/" + siteID + "/workflows/" + workflowID
@@ -188,10 +189,10 @@ func TestWorkflowsService_Wait(t *testing.T) {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 
-		pollCount++
+		count := pollCount.Add(1)
 
 		var workflow map[string]interface{}
-		if pollCount < 3 {
+		if count < 3 {
 			// First two polls: workflow is still running
 			workflow = map[string]interface{}{
 				"id":          workflowID,
@@ -244,8 +245,8 @@ func TestWorkflowsService_Wait(t *testing.T) {
 		t.Errorf("expected result 'succeeded', got '%s'", workflow.Result)
 	}
 
-	if pollCount < 3 {
-		t.Errorf("expected at least 3 polls, got %d", pollCount)
+	if pollCount.Load() < 3 {
+		t.Errorf("expected at least 3 polls, got %d", pollCount.Load())
 	}
 
 	if progressCallCount < 3 {
@@ -261,10 +262,10 @@ func TestWorkflowsService_Wait_Timeout(t *testing.T) {
 	siteID := "12345678-1234-1234-1234-123456789abc"
 	workflowID := "wf-123"
 
-	pollCount := 0
+	var pollCount atomic.Int32
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pollCount++
+		pollCount.Add(1)
 
 		// Always return a workflow that's not finished
 		workflow := map[string]interface{}{
@@ -300,8 +301,8 @@ func TestWorkflowsService_Wait_Timeout(t *testing.T) {
 	}
 
 	// Verify that we polled multiple times before timing out
-	if pollCount < 2 {
-		t.Errorf("expected at least 2 polls, got %d", pollCount)
+	if pollCount.Load() < 2 {
+		t.Errorf("expected at least 2 polls, got %d", pollCount.Load())
 	}
 }
 
@@ -360,7 +361,7 @@ func TestWorkflowsService_Watch(t *testing.T) {
 	workflowID := "wf-123"
 
 	// Track the number of polls
-	pollCount := 0
+	var pollCount atomic.Int32
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		expectedPath := "/sites/" + siteID + "/workflows/" + workflowID
@@ -368,10 +369,10 @@ func TestWorkflowsService_Watch(t *testing.T) {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 
-		pollCount++
+		count := pollCount.Add(1)
 
 		var workflow map[string]interface{}
-		if pollCount < 3 {
+		if count < 3 {
 			// First two polls: workflow is running
 			workflow = map[string]interface{}{
 				"id":                workflowID,
@@ -380,7 +381,7 @@ func TestWorkflowsService_Watch(t *testing.T) {
 				"site_id":           siteID,
 				"result":            "",
 				"current_operation": "sync_code",
-				"step":              pollCount,
+				"step":              int(count),
 				"finished_at":       0.0,
 			}
 		} else {
@@ -570,7 +571,7 @@ func TestWorkflowsService_WaitForUser(t *testing.T) {
 	workflowID := "wf-123"
 
 	// Track the number of polls
-	pollCount := 0
+	var pollCount atomic.Int32
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		expectedPath := "/users/" + userID + "/workflows/" + workflowID
@@ -578,10 +579,10 @@ func TestWorkflowsService_WaitForUser(t *testing.T) {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 
-		pollCount++
+		count := pollCount.Add(1)
 
 		var workflow map[string]interface{}
-		if pollCount < 3 {
+		if count < 3 {
 			// First two polls: workflow is still running
 			workflow = map[string]interface{}{
 				"id":          workflowID,
@@ -634,8 +635,8 @@ func TestWorkflowsService_WaitForUser(t *testing.T) {
 		t.Errorf("expected result 'succeeded', got '%s'", workflow.Result)
 	}
 
-	if pollCount < 3 {
-		t.Errorf("expected at least 3 polls, got %d", pollCount)
+	if pollCount.Load() < 3 {
+		t.Errorf("expected at least 3 polls, got %d", pollCount.Load())
 	}
 
 	if progressCallCount < 3 {
