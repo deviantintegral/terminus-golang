@@ -110,35 +110,9 @@ func onlyTimestampsChanged(oldData, newData []byte) bool {
 }
 
 // redactSensitiveData removes sensitive information from JSON responses
+// using the shared RedactSensitiveData function from logger.go
 func (r *fixtureRecorder) redactSensitiveData(data []byte) []byte {
-	// Convert to string for easier manipulation
-	str := string(data)
-
-	// Redact patterns
-	patterns := map[string]string{
-		// Session tokens (UUIDs and long strings)
-		`"session":\s*"[^"]{20,}"`:       `"session": "REDACTED"`,
-		`"Session":\s*"[^"]{20,}"`:       `"Session": "REDACTED"`,
-		`"session_token":\s*"[^"]{20,}"`: `"session_token": "REDACTED"`,
-		`"SessionToken":\s*"[^"]{20,}"`:  `"SessionToken": "REDACTED"`,
-		// Machine tokens
-		`"machine_token":\s*"[^"]{20,}"`: `"machine_token": "REDACTED"`,
-		`"MachineToken":\s*"[^"]{20,}"`:  `"MachineToken": "REDACTED"`,
-		// User IDs (UUIDs)
-		`"user_id":\s*"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"`: `"user_id": "REDACTED-USER-ID"`,
-		`"UserID":\s*"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"`:  `"UserID": "REDACTED-USER-ID"`,
-		`"id":\s*"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"`:      `"id": "REDACTED-ID"`,
-		// Emails - replace with redacted email
-		`"email":\s*"[^"]+@[^"]+\.[^"]+"`: `"email": "redacted@example.com"`,
-		`"Email":\s*"[^"]+@[^"]+\.[^"]+"`: `"Email": "redacted@example.com"`,
-	}
-
-	for pattern, replacement := range patterns {
-		re := regexp.MustCompile(pattern)
-		str = re.ReplaceAllString(str, replacement)
-	}
-
-	return []byte(str)
+	return []byte(RedactSensitiveData(string(data)))
 }
 
 // record saves a fixture to disk with redacted sensitive data
