@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1](https://github.com/deviantintegral/terminus-golang/compare/v0.7.0...v0.7.1) (2026-01-26)
+
+
+### Bug Fixes
+
+* **auth:** remove requireAuth checks ([#130](https://github.com/deviantintegral/terminus-golang/issues/130)) ([4868f79](https://github.com/deviantintegral/terminus-golang/commit/4868f79905c699d91c80f69a07cda90f6a09696c))
+* **logging:** redact tokens in request/response bodies ([#129](https://github.com/deviantintegral/terminus-golang/issues/129)) ([12b6874](https://github.com/deviantintegral/terminus-golang/commit/12b68740b63ea79fc3c3ddc130f3f8c48378a681))
+
 ## [0.7.0](https://github.com/deviantintegral/terminus-golang/compare/v0.6.0...v0.7.0) (2026-01-20)
 
 
