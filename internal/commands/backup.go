@@ -122,10 +122,6 @@ func init() {
 }
 
 func runBackupList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -142,10 +138,6 @@ func runBackupList(_ *cobra.Command, args []string) error {
 }
 
 func runBackupCreate(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -174,10 +166,6 @@ func runBackupCreate(_ *cobra.Command, args []string) error {
 }
 
 func runBackupGet(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -207,10 +195,6 @@ func runBackupGet(_ *cobra.Command, args []string) error {
 }
 
 func runBackupRestore(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -234,10 +218,6 @@ func runBackupRestore(_ *cobra.Command, args []string) error {
 }
 
 func runBackupInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -297,10 +277,6 @@ func runBackupInfo(_ *cobra.Command, args []string) error {
 }
 
 func runBackupAutomaticInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -317,10 +293,6 @@ func runBackupAutomaticInfo(_ *cobra.Command, args []string) error {
 }
 
 func runBackupAutomaticEnable(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -340,10 +312,6 @@ func runBackupAutomaticEnable(_ *cobra.Command, args []string) error {
 }
 
 func runBackupAutomaticDisable(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err

@@ -57,10 +57,6 @@ func init() {
 }
 
 func runOrgList(_ *cobra.Command, _ []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Load session to get user ID
 	sess, err := cliContext.SessionStore.LoadSession()
 	if err != nil {
@@ -81,10 +77,6 @@ func runOrgList(_ *cobra.Command, _ []string) error {
 }
 
 func runOrgInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	orgID := args[0]
 	orgsService := api.NewOrganizationsService(cliContext.APIClient)
 
@@ -97,10 +89,6 @@ func runOrgInfo(_ *cobra.Command, args []string) error {
 }
 
 func runOrgPeopleList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	orgID := args[0]
 	orgsService := api.NewOrganizationsService(cliContext.APIClient)
 
@@ -113,10 +101,6 @@ func runOrgPeopleList(_ *cobra.Command, args []string) error {
 }
 
 func runOrgSiteList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	orgID := args[0]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 
@@ -129,10 +113,6 @@ func runOrgSiteList(_ *cobra.Command, args []string) error {
 }
 
 func runOrgUpstreamsList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	orgID := args[0]
 	orgsService := api.NewOrganizationsService(cliContext.APIClient)
 

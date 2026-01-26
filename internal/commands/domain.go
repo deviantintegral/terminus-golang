@@ -49,10 +49,6 @@ func init() {
 }
 
 func runDomainList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -69,10 +65,6 @@ func runDomainList(_ *cobra.Command, args []string) error {
 }
 
 func runDomainAdd(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -94,10 +86,6 @@ func runDomainAdd(_ *cobra.Command, args []string) error {
 }
 
 func runDomainRemove(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -124,10 +112,6 @@ func runDomainRemove(_ *cobra.Command, args []string) error {
 }
 
 func runDomainDNS(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err

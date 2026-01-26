@@ -112,9 +112,10 @@ func TestAuthService_Login_InvalidStatus(t *testing.T) {
 		t.Fatal("expected error for invalid credentials")
 	}
 
-	// The error should be from login request failed
-	if err.Error()[:23] != "login request failed: A" {
-		t.Errorf("unexpected error message: %s", err.Error())
+	// The error should indicate login failed with status code
+	expectedMsg := "login failed with status 401"
+	if err.Error() != expectedMsg {
+		t.Errorf("expected error message %q, got %q", expectedMsg, err.Error())
 	}
 }
 

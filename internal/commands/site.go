@@ -85,10 +85,6 @@ func init() {
 }
 
 func runSiteOrgList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 
@@ -106,10 +102,6 @@ func runSiteOrgList(_ *cobra.Command, args []string) error {
 }
 
 func runSiteList(_ *cobra.Command, _ []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Load session to get user ID
 	sess, err := cliContext.SessionStore.LoadSession()
 	if err != nil {
@@ -311,10 +303,6 @@ func filterSites(sites []*models.Site, currentUserID string) []*models.Site {
 }
 
 func runSiteInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 
@@ -327,10 +315,6 @@ func runSiteInfo(_ *cobra.Command, args []string) error {
 }
 
 func runSiteCreate(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Load session to get user ID
 	sess, err := cliContext.SessionStore.LoadSession()
 	if err != nil {
@@ -366,10 +350,6 @@ func runSiteCreate(_ *cobra.Command, args []string) error {
 }
 
 func runSiteDelete(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 
 	if !confirm(fmt.Sprintf("Are you sure you want to delete site '%s'? This cannot be undone.", siteID)) {
@@ -391,10 +371,6 @@ func runSiteDelete(_ *cobra.Command, args []string) error {
 }
 
 func runSiteTeamList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 

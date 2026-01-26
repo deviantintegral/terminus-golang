@@ -20,10 +20,6 @@ func init() {
 }
 
 func runTagList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	orgID := args[1]
 

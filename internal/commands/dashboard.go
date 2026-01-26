@@ -32,10 +32,6 @@ func init() {
 }
 
 func runDashboardView(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	var dashboardURL string
 	var err error
 

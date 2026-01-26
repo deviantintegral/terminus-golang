@@ -30,10 +30,6 @@ func init() {
 }
 
 func runConnectionInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -50,10 +46,6 @@ func runConnectionInfo(_ *cobra.Command, args []string) error {
 }
 
 func runConnectionSet(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err

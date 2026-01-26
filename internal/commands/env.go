@@ -129,10 +129,6 @@ func init() {
 }
 
 func runEnvList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	envsService := api.NewEnvironmentsService(cliContext.APIClient)
 
@@ -145,10 +141,6 @@ func runEnvList(_ *cobra.Command, args []string) error {
 }
 
 func runEnvInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -165,10 +157,6 @@ func runEnvInfo(_ *cobra.Command, args []string) error {
 }
 
 func runEnvClearCache(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -192,10 +180,6 @@ func runEnvClearCache(_ *cobra.Command, args []string) error {
 }
 
 func runEnvDeploy(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -220,10 +204,6 @@ func runEnvDeploy(_ *cobra.Command, args []string) error {
 }
 
 func runEnvCloneContent(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -266,10 +246,6 @@ func runEnvCloneContent(_ *cobra.Command, args []string) error {
 }
 
 func runEnvCommit(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -292,10 +268,6 @@ func runEnvCommit(_ *cobra.Command, args []string) error {
 }
 
 func runEnvWipe(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -319,10 +291,6 @@ func runEnvWipe(_ *cobra.Command, args []string) error {
 }
 
 func runEnvConnectionSet(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -346,10 +314,6 @@ func runEnvConnectionSet(_ *cobra.Command, args []string) error {
 }
 
 func runEnvMetrics(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Determine duration string from period and datapoints
 	duration, err := buildMetricsDuration(envMetricsPeriod, envMetricsDatapts)
 	if err != nil {
