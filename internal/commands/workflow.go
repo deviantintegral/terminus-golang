@@ -54,10 +54,6 @@ func init() {
 }
 
 func runWorkflowList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	workflowsService := api.NewWorkflowsService(cliContext.APIClient)
 
@@ -70,10 +66,6 @@ func runWorkflowList(_ *cobra.Command, args []string) error {
 }
 
 func runWorkflowInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	workflowID := args[1]
 	workflowsService := api.NewWorkflowsService(cliContext.APIClient)
@@ -87,10 +79,6 @@ func runWorkflowInfo(_ *cobra.Command, args []string) error {
 }
 
 func runWorkflowWait(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	workflowID := args[1]
 
@@ -98,10 +86,6 @@ func runWorkflowWait(_ *cobra.Command, args []string) error {
 }
 
 func runWorkflowWatch(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	workflowID := args[1]
 	workflowsService := api.NewWorkflowsService(cliContext.APIClient)

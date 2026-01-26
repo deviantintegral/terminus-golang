@@ -68,10 +68,16 @@ func TestDashboardViewFlags(t *testing.T) {
 func TestDashboardViewRequiresAuth(t *testing.T) {
 	// Save old context and create a minimal context without session
 	oldContext := cliContext
-	cliContext = &CLIContext{
-		APIClient: nil,
-	}
 	defer func() { cliContext = oldContext }()
+
+	// Create a temporary session store (with no session)
+	tmpDir := t.TempDir()
+	store := session.NewStore(tmpDir)
+
+	cliContext = &CLIContext{
+		SessionStore: store,
+		APIClient:    nil,
+	}
 
 	err := runDashboardView(nil, []string{})
 	if err == nil {

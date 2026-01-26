@@ -111,11 +111,21 @@ func initCLIContext() error {
 	if err == nil && sess != nil {
 		apiClient.SetToken(sess.SessionToken)
 
+		// Determine which email to use for the token refresher
+		tokenEmail := sess.Email
+		if tokenEmail == "" {
+			// No email in session, try to find any available machine token
+			emails, listErr := sessionStore.ListTokens()
+			if listErr == nil && len(emails) == 1 {
+				tokenEmail = emails[0]
+			}
+		}
+
 		// Set up token refresher if we have an email to look up the machine token
-		if sess.Email != "" {
+		if tokenEmail != "" {
 			// Create a closure that loads the machine token from the token file
 			getMachineToken := func() (string, error) {
-				return sessionStore.LoadMachineToken(sess.Email)
+				return sessionStore.LoadMachineToken(tokenEmail)
 			}
 
 			refresher := api.NewSessionTokenRefresher(
@@ -127,7 +137,7 @@ func initCLIContext() error {
 						SessionToken: newSession.Session,
 						UserID:       newSession.UserID,
 						ExpiresAt:    newSession.ExpiresAt,
-						Email:        sess.Email,
+						Email:        tokenEmail,
 					}
 					return sessionStore.SaveSession(newSessionData)
 				}),
@@ -159,41 +169,6 @@ func initCLIContext() error {
 		SessionStore: sessionStore,
 		APIClient:    apiClient,
 		Output:       outputOpts,
-	}
-
-	return nil
-}
-
-// requireAuth ensures the user is authenticated
-// Note: This only checks if a session exists, not if it's expired.
-// The automatic token renewal mechanism handles expired sessions by
-// refreshing them using the stored machine token when API calls return 401.
-func requireAuth() error {
-	if cliContext.APIClient == nil {
-		return fmt.Errorf("API client not initialized")
-	}
-
-	// Check if we have a session (even if expired, auto-renewal will handle it)
-	sess, err := cliContext.SessionStore.LoadSession()
-	if err != nil {
-		return fmt.Errorf("failed to load session: %w", err)
-	}
-
-	if sess == nil {
-		return fmt.Errorf("not authenticated. Please run 'terminus auth:login' first")
-	}
-
-	// If session is expired, check if we have a machine token for auto-renewal
-	if sess.IsExpired() {
-		if sess.Email == "" {
-			return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
-		}
-		// Check if we have a saved machine token for this email
-		machineToken, err := cliContext.SessionStore.LoadMachineToken(sess.Email)
-		if err != nil || machineToken == "" {
-			return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
-		}
-		// Machine token exists, auto-renewal will handle it
 	}
 
 	return nil

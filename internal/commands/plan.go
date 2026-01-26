@@ -30,10 +30,6 @@ func init() {
 }
 
 func runPlanInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 
 	sitesService := api.NewSitesService(cliContext.APIClient)
@@ -47,10 +43,6 @@ func runPlanInfo(_ *cobra.Command, args []string) error {
 }
 
 func runPlanList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 

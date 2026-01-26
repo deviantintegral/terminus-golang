@@ -50,10 +50,6 @@ func init() {
 }
 
 func runUpstreamInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	upstreamID := args[0]
 
 	upstreamsService := api.NewUpstreamsService(cliContext.APIClient)
@@ -67,10 +63,6 @@ func runUpstreamInfo(_ *cobra.Command, args []string) error {
 }
 
 func runUpstreamList(_ *cobra.Command, _ []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Load session to get user ID
 	sess, err := cliContext.SessionStore.LoadSession()
 	if err != nil {
@@ -151,10 +143,6 @@ func filterUpstreamsByType(upstreams []*models.Upstream) []*models.Upstream {
 }
 
 func runUpstreamUpdatesList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
