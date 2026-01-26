@@ -31,13 +31,12 @@ const (
 
 // Client is the HTTP client for the Pantheon API
 type Client struct {
-	baseURL           string
-	httpClient        *http.Client
-	userAgent         string
-	token             string
-	logger            Logger
-	tokenRefresher    TokenRefresher
-	isRefreshingToken bool // Prevents recursive token refresh attempts
+	baseURL        string
+	httpClient     *http.Client
+	userAgent      string
+	token          string
+	logger         Logger
+	tokenRefresher TokenRefresher
 }
 
 // Logger is an interface for logging
@@ -231,15 +230,14 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 				}
 
 				// Handle 401 Unauthorized with token refresh
-				// Only attempt refresh if:
-				// - We haven't already tried in this call (tokenRefreshAttempted)
-				// - We're not in a recursive refresh operation (isRefreshingToken)
+				// Only attempt refresh if we haven't already tried in this call.
+				// The tokenRefreshAttempted flag prevents multiple refresh attempts
+				// within a single doWithRetry call. Recursive refresh is prevented
+				// by the token refresher using PostOnlyOnce which bypasses doWithRetry.
 				if resp.StatusCode == http.StatusUnauthorized &&
 					c.tokenRefresher != nil &&
-					!tokenRefreshAttempted &&
-					!c.isRefreshingToken {
+					!tokenRefreshAttempted {
 					tokenRefreshAttempted = true
-					c.isRefreshingToken = true
 					if c.logger != nil {
 						c.logger.Debug("Received 401 Unauthorized, attempting token refresh")
 					}
@@ -247,7 +245,6 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 					// Get context from request
 					ctx := req.Context()
 					newToken, refreshErr := c.tokenRefresher.RefreshToken(ctx)
-					c.isRefreshingToken = false
 
 					if refreshErr != nil {
 						if c.logger != nil {
