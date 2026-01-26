@@ -76,9 +76,9 @@ func TestRedactSensitiveData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := redactSensitiveData(tt.input)
+			result := RedactSensitiveData(tt.input)
 			if result != tt.expected {
-				t.Errorf("redactSensitiveData() = %q, expected %q", result, tt.expected)
+				t.Errorf("RedactSensitiveData() = %q, expected %q", result, tt.expected)
 			}
 		})
 	}
