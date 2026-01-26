@@ -34,7 +34,7 @@ type SessionResponse struct {
 }
 
 // Login authenticates using a machine token and returns a session.
-// This uses PostSimple to avoid retry logic and token refresh attempts,
+// This uses PostOnlyOnce to avoid retry logic and token refresh attempts,
 // since this endpoint is the source of new session tokens.
 func (s *AuthService) Login(ctx context.Context, machineToken string) (*SessionResponse, error) {
 	req := LoginRequest{
@@ -42,7 +42,7 @@ func (s *AuthService) Login(ctx context.Context, machineToken string) (*SessionR
 		Client:       "terminus-golang",
 	}
 
-	resp, err := s.client.PostSimple(ctx, "/authorize/machine-token", req)
+	resp, err := s.client.PostOnlyOnce(ctx, "/authorize/machine-token", req)
 	if err != nil {
 		return nil, fmt.Errorf("login request failed: %w", err)
 	}
