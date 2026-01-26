@@ -51,34 +51,6 @@ func TestRedisCommands(t *testing.T) {
 	}
 }
 
-func TestRedisEnableRequiresAuth(t *testing.T) {
-	// Save old context and create a minimal context without session
-	oldContext := cliContext
-	cliContext = &CLIContext{
-		APIClient: nil,
-	}
-	defer func() { cliContext = oldContext }()
-
-	err := runRedisEnable(nil, []string{"test-site"})
-	if err == nil {
-		t.Error("expected error when not authenticated")
-	}
-}
-
-func TestRedisDisableRequiresAuth(t *testing.T) {
-	// Save old context and create a minimal context without session
-	oldContext := cliContext
-	cliContext = &CLIContext{
-		APIClient: nil,
-	}
-	defer func() { cliContext = oldContext }()
-
-	err := runRedisDisable(nil, []string{"test-site"})
-	if err == nil {
-		t.Error("expected error when not authenticated")
-	}
-}
-
 func TestRedisEnableRequiresArg(t *testing.T) {
 	// Test that enable command requires exactly one argument
 	cmd := redisEnableCmd

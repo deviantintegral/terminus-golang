@@ -807,7 +807,7 @@ func TestRunAuthWhoami_NoSession(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := session.NewStore(tmpDir)
 
-	// Create API client (needed to pass requireAuth check)
+	// Create API client
 	apiClient := api.NewClient()
 
 	// Set up CLI context
@@ -816,15 +816,16 @@ func TestRunAuthWhoami_NoSession(t *testing.T) {
 		APIClient:    apiClient,
 	}
 
-	// Run whoami (should fail with auth error)
+	// Run whoami (should fail with no session error)
 	err := runAuthWhoami(nil, nil)
 	if err == nil {
 		t.Fatal("expected error for no session")
 	}
 
-	// Should fail the requireAuth check
-	if err.Error()[:19] != "not authenticated. " {
-		t.Errorf("unexpected error message: %s", err.Error())
+	// Should fail when trying to load session with no user ID
+	expectedErr := "no user ID in session"
+	if err.Error() != expectedErr {
+		t.Errorf("expected error message '%s', got '%s'", expectedErr, err.Error())
 	}
 }
 

@@ -164,41 +164,6 @@ func initCLIContext() error {
 	return nil
 }
 
-// requireAuth ensures the user is authenticated
-// Note: This only checks if a session exists, not if it's expired.
-// The automatic token renewal mechanism handles expired sessions by
-// refreshing them using the stored machine token when API calls return 401.
-func requireAuth() error {
-	if cliContext.APIClient == nil {
-		return fmt.Errorf("API client not initialized")
-	}
-
-	// Check if we have a session (even if expired, auto-renewal will handle it)
-	sess, err := cliContext.SessionStore.LoadSession()
-	if err != nil {
-		return fmt.Errorf("failed to load session: %w", err)
-	}
-
-	if sess == nil {
-		return fmt.Errorf("not authenticated. Please run 'terminus auth:login' first")
-	}
-
-	// If session is expired, check if we have a machine token for auto-renewal
-	if sess.IsExpired() {
-		if sess.Email == "" {
-			return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
-		}
-		// Check if we have a saved machine token for this email
-		machineToken, err := cliContext.SessionStore.LoadMachineToken(sess.Email)
-		if err != nil || machineToken == "" {
-			return fmt.Errorf("session expired. Please run 'terminus auth:login' to re-authenticate")
-		}
-		// Machine token exists, auto-renewal will handle it
-	}
-
-	return nil
-}
-
 // confirm prompts the user for confirmation
 func confirm(message string) bool {
 	if yesFlag {

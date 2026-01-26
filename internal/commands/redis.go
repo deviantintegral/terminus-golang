@@ -30,10 +30,6 @@ func init() {
 }
 
 func runRedisEnable(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	redisService := api.NewRedisService(cliContext.APIClient)
 
@@ -48,10 +44,6 @@ func runRedisEnable(_ *cobra.Command, args []string) error {
 }
 
 func runRedisDisable(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	redisService := api.NewRedisService(cliContext.APIClient)
 

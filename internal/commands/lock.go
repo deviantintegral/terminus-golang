@@ -50,10 +50,6 @@ func init() {
 }
 
 func runLockInfo(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -70,10 +66,6 @@ func runLockInfo(_ *cobra.Command, args []string) error {
 }
 
 func runLockEnable(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -93,10 +85,6 @@ func runLockEnable(_ *cobra.Command, args []string) error {
 }
 
 func runLockDisable(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err

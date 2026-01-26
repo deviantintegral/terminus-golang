@@ -20,10 +20,6 @@ func init() {
 }
 
 func runBranchList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	sitesService := api.NewSitesService(cliContext.APIClient)
 

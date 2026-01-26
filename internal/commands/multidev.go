@@ -67,10 +67,6 @@ func init() {
 }
 
 func runMultidevList(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID := args[0]
 	multidevService := api.NewMultidevService(cliContext.APIClient)
 
@@ -88,10 +84,6 @@ func runMultidevList(_ *cobra.Command, args []string) error {
 }
 
 func runMultidevCreate(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envName, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -110,10 +102,6 @@ func runMultidevCreate(_ *cobra.Command, args []string) error {
 }
 
 func runMultidevDelete(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -137,10 +125,6 @@ func runMultidevDelete(_ *cobra.Command, args []string) error {
 }
 
 func runMultidevMergeToDev(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err
@@ -159,10 +143,6 @@ func runMultidevMergeToDev(_ *cobra.Command, args []string) error {
 }
 
 func runMultidevMergeFromDev(_ *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	siteID, envID, err := parseSiteEnv(args[0])
 	if err != nil {
 		return err

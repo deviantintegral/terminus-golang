@@ -174,10 +174,6 @@ func runAuthLogout(_ *cobra.Command, _ []string) error {
 }
 
 func runAuthWhoami(_ *cobra.Command, _ []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Load session to get user ID
 	sess, err := cliContext.SessionStore.LoadSession()
 	if err != nil {

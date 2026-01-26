@@ -19,10 +19,6 @@ func init() {
 }
 
 func runMachineTokenList(_ *cobra.Command, _ []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	// Load session to get user ID
 	sess, err := cliContext.SessionStore.LoadSession()
 	if err != nil {
