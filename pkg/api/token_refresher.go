@@ -14,7 +14,7 @@ type SessionTokenRefresher struct {
 	getMachineToken func() (string, error)
 	// client is the API client used to make the refresh request
 	// Note: This creates a circular reference, but it's necessary for the refresh flow.
-	// The doWithRetry function tracks tokenRefreshAttempted to prevent infinite loops.
+	// The client's isRefreshingToken flag prevents infinite loops.
 	client *Client
 	// onTokenRefreshed is an optional callback invoked when a token is successfully refreshed.
 	// This allows the caller to persist the new session information.
@@ -77,8 +77,8 @@ func (r *SessionTokenRefresher) RefreshToken(ctx context.Context) (string, error
 
 	// Create a temporary auth service to perform the login
 	// Note: We use the existing client which will use the same base URL and settings.
-	// The doWithRetry function in the client tracks tokenRefreshAttempted to prevent
-	// infinite recursion if the auth endpoint also returns 401.
+	// The client's isRefreshingToken flag prevents infinite recursion if the
+	// auth endpoint also returns 401.
 	authService := NewAuthService(r.client)
 	session, err := authService.Login(ctx, machineToken)
 	if err != nil {
