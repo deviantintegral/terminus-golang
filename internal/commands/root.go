@@ -111,11 +111,21 @@ func initCLIContext() error {
 	if err == nil && sess != nil {
 		apiClient.SetToken(sess.SessionToken)
 
+		// Determine which email to use for the token refresher
+		tokenEmail := sess.Email
+		if tokenEmail == "" {
+			// No email in session, try to find any available machine token
+			emails, listErr := sessionStore.ListTokens()
+			if listErr == nil && len(emails) == 1 {
+				tokenEmail = emails[0]
+			}
+		}
+
 		// Set up token refresher if we have an email to look up the machine token
-		if sess.Email != "" {
+		if tokenEmail != "" {
 			// Create a closure that loads the machine token from the token file
 			getMachineToken := func() (string, error) {
-				return sessionStore.LoadMachineToken(sess.Email)
+				return sessionStore.LoadMachineToken(tokenEmail)
 			}
 
 			refresher := api.NewSessionTokenRefresher(
@@ -127,7 +137,7 @@ func initCLIContext() error {
 						SessionToken: newSession.Session,
 						UserID:       newSession.UserID,
 						ExpiresAt:    newSession.ExpiresAt,
-						Email:        sess.Email,
+						Email:        tokenEmail,
 					}
 					return sessionStore.SaveSession(newSessionData)
 				}),
