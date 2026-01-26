@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 )
 
 // VerbosityLevel represents the logging verbosity level
@@ -19,6 +20,32 @@ const (
 	// VerbosityTrace enables trace level logging including HTTP details (-vvv)
 	VerbosityTrace VerbosityLevel = 3
 )
+
+// sensitiveFieldPatterns contains regex patterns for sensitive data that should be redacted in logs
+var sensitiveFieldPatterns = []*regexp.Regexp{
+	// Machine token in request bodies
+	regexp.MustCompile(`"machine_token"\s*:\s*"[^"]{20,}"`),
+	// Session token in response bodies
+	regexp.MustCompile(`"session"\s*:\s*"[^"]{20,}"`),
+	// Session token (alternate field name)
+	regexp.MustCompile(`"session_token"\s*:\s*"[^"]{20,}"`),
+}
+
+// sensitiveFieldReplacements contains the replacement strings for each pattern
+var sensitiveFieldReplacements = []string{
+	`"machine_token": "[REDACTED]"`,
+	`"session": "[REDACTED]"`,
+	`"session_token": "[REDACTED]"`,
+}
+
+// redactSensitiveData redacts sensitive tokens from a string (typically a JSON body)
+func redactSensitiveData(data string) string {
+	result := data
+	for i, pattern := range sensitiveFieldPatterns {
+		result = pattern.ReplaceAllString(result, sensitiveFieldReplacements[i])
+	}
+	return result
+}
 
 // DefaultLogger is a default implementation of the Logger interface
 type DefaultLogger struct {
@@ -96,7 +123,7 @@ func (l *DefaultLogger) LogHTTPRequest(method, url string, headers map[string][]
 		}
 	}
 	if body != "" {
-		l.logger.Printf("[TRACE]   Body: %s", body)
+		l.logger.Printf("[TRACE]   Body: %s", redactSensitiveData(body))
 	}
 }
 
@@ -115,7 +142,7 @@ func (l *DefaultLogger) LogHTTPResponse(statusCode int, status string, headers m
 		}
 	}
 	if body != "" {
-		l.logger.Printf("[TRACE]   Body: %s", body)
+		l.logger.Printf("[TRACE]   Body: %s", redactSensitiveData(body))
 	}
 }
 
