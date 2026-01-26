@@ -15,17 +15,17 @@ func TestRedactSensitiveData(t *testing.T) {
 		{
 			name:     "redact machine_token in request body",
 			input:    `{"machine_token": "abcdefghijklmnopqrstuvwxyz123456", "client": "terminus-golang"}`,
-			expected: `{"machine_token": "[REDACTED]", "client": "terminus-golang"}`,
+			expected: `{"machine_token": "REDACTED", "client": "terminus-golang"}`,
 		},
 		{
 			name:     "redact session in response body",
 			input:    `{"session": "abcdefghijklmnopqrstuvwxyz123456", "user_id": "12345", "expires_at": 1234567890}`,
-			expected: `{"session": "[REDACTED]", "user_id": "12345", "expires_at": 1234567890}`,
+			expected: `{"session": "REDACTED", "user_id": "12345", "expires_at": 1234567890}`,
 		},
 		{
 			name:     "redact session_token in body",
 			input:    `{"session_token": "abcdefghijklmnopqrstuvwxyz123456", "user_id": "12345"}`,
-			expected: `{"session_token": "[REDACTED]", "user_id": "12345"}`,
+			expected: `{"session_token": "REDACTED", "user_id": "12345"}`,
 		},
 		{
 			name:     "do not redact short tokens",
@@ -35,12 +35,12 @@ func TestRedactSensitiveData(t *testing.T) {
 		{
 			name:     "handle whitespace variations",
 			input:    `{"machine_token":"abcdefghijklmnopqrstuvwxyz123456"}`,
-			expected: `{"machine_token": "[REDACTED]"}`,
+			expected: `{"machine_token": "REDACTED"}`,
 		},
 		{
 			name:     "handle multiple tokens in same body",
 			input:    `{"machine_token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "session": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}`,
-			expected: `{"machine_token": "[REDACTED]", "session": "[REDACTED]"}`,
+			expected: `{"machine_token": "REDACTED", "session": "REDACTED"}`,
 		},
 		{
 			name:     "leave non-sensitive fields unchanged",
@@ -55,22 +55,22 @@ func TestRedactSensitiveData(t *testing.T) {
 		{
 			name:     "redact token with escaped quote",
 			input:    `{"machine_token": "abcdefghij\"klmnopqrstuvwxyz"}`,
-			expected: `{"machine_token": "[REDACTED]"}`,
+			expected: `{"machine_token": "REDACTED"}`,
 		},
 		{
 			name:     "redact token with escaped backslash",
 			input:    `{"session": "abcdefghij\\klmnopqrstuvwxyz"}`,
-			expected: `{"session": "[REDACTED]"}`,
+			expected: `{"session": "REDACTED"}`,
 		},
 		{
 			name:     "redact token with multiple escapes",
 			input:    `{"machine_token": "abc\"def\\ghi\"jkl\\mnopqrst"}`,
-			expected: `{"machine_token": "[REDACTED]"}`,
+			expected: `{"machine_token": "REDACTED"}`,
 		},
 		{
 			name:     "redact token with unicode escape",
 			input:    `{"session": "abcdefghij\u0041klmnopqrstuvwxyz"}`,
-			expected: `{"session": "[REDACTED]"}`,
+			expected: `{"session": "REDACTED"}`,
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestLogHTTPRequestRedactsBody(t *testing.T) {
 	output := buf.String()
 
 	// Should contain redacted token
-	if !strings.Contains(output, `"machine_token": "[REDACTED]"`) {
+	if !strings.Contains(output, `"machine_token": "REDACTED"`) {
 		t.Errorf("expected redacted machine_token in output, got: %s", output)
 	}
 
@@ -122,7 +122,7 @@ func TestLogHTTPResponseRedactsBody(t *testing.T) {
 	output := buf.String()
 
 	// Should contain redacted token
-	if !strings.Contains(output, `"session": "[REDACTED]"`) {
+	if !strings.Contains(output, `"session": "REDACTED"`) {
 		t.Errorf("expected redacted session in output, got: %s", output)
 	}
 
@@ -146,7 +146,7 @@ func TestLogHTTPRequestRedactsAuthorizationHeader(t *testing.T) {
 	output := buf.String()
 
 	// Should contain redacted Authorization header
-	if !strings.Contains(output, "Authorization: [REDACTED]") {
+	if !strings.Contains(output, "Authorization: REDACTED") {
 		t.Errorf("expected redacted Authorization header in output, got: %s", output)
 	}
 

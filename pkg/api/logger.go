@@ -35,9 +35,9 @@ var sensitiveFieldPatterns = []*regexp.Regexp{
 
 // sensitiveFieldReplacements contains the replacement strings for each pattern
 var sensitiveFieldReplacements = []string{
-	`"machine_token": "[REDACTED]"`,
-	`"session": "[REDACTED]"`,
-	`"session_token": "[REDACTED]"`,
+	`"machine_token": "REDACTED"`,
+	`"session": "REDACTED"`,
+	`"session_token": "REDACTED"`,
 }
 
 // redactSensitiveData redacts sensitive tokens from a string (typically a JSON body)
@@ -118,7 +118,7 @@ func (l *DefaultLogger) LogHTTPRequest(method, url string, headers map[string][]
 		for _, value := range values {
 			// Redact sensitive headers
 			if key == "Authorization" {
-				l.logger.Printf("[TRACE]     %s: [REDACTED]", key)
+				l.logger.Printf("[TRACE]     %s: REDACTED", key)
 			} else {
 				l.logger.Printf("[TRACE]     %s: %s", key, value)
 			}
