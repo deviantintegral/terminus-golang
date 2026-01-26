@@ -21,14 +21,16 @@ const (
 	VerbosityTrace VerbosityLevel = 3
 )
 
-// sensitiveFieldPatterns contains regex patterns for sensitive data that should be redacted in logs
+// sensitiveFieldPatterns contains regex patterns for sensitive data that should be redacted in logs.
+// The pattern (?:[^"\\]|\\.)* properly handles JSON escape sequences like \" and \\
+// to prevent tokens containing escaped characters from bypassing redaction.
 var sensitiveFieldPatterns = []*regexp.Regexp{
 	// Machine token in request bodies
-	regexp.MustCompile(`"machine_token"\s*:\s*"[^"]{20,}"`),
+	regexp.MustCompile(`"machine_token"\s*:\s*"((?:[^"\\]|\\.){20,})"`),
 	// Session token in response bodies
-	regexp.MustCompile(`"session"\s*:\s*"[^"]{20,}"`),
+	regexp.MustCompile(`"session"\s*:\s*"((?:[^"\\]|\\.){20,})"`),
 	// Session token (alternate field name)
-	regexp.MustCompile(`"session_token"\s*:\s*"[^"]{20,}"`),
+	regexp.MustCompile(`"session_token"\s*:\s*"((?:[^"\\]|\\.){20,})"`),
 }
 
 // sensitiveFieldReplacements contains the replacement strings for each pattern

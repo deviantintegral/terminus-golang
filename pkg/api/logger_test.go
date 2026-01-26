@@ -52,6 +52,26 @@ func TestRedactSensitiveData(t *testing.T) {
 			input:    "",
 			expected: "",
 		},
+		{
+			name:     "redact token with escaped quote",
+			input:    `{"machine_token": "abcdefghij\"klmnopqrstuvwxyz"}`,
+			expected: `{"machine_token": "[REDACTED]"}`,
+		},
+		{
+			name:     "redact token with escaped backslash",
+			input:    `{"session": "abcdefghij\\klmnopqrstuvwxyz"}`,
+			expected: `{"session": "[REDACTED]"}`,
+		},
+		{
+			name:     "redact token with multiple escapes",
+			input:    `{"machine_token": "abc\"def\\ghi\"jkl\\mnopqrst"}`,
+			expected: `{"machine_token": "[REDACTED]"}`,
+		},
+		{
+			name:     "redact token with unicode escape",
+			input:    `{"session": "abcdefghij\u0041klmnopqrstuvwxyz"}`,
+			expected: `{"session": "[REDACTED]"}`,
+		},
 	}
 
 	for _, tt := range tests {
