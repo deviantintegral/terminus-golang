@@ -589,7 +589,7 @@ type MachineToken struct {
 // Lock represents HTTP basic auth lock
 type Lock struct {
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec // G117: API model field, not a hardcoded secret
 	Locked   bool   `json:"locked"`
 }
 
@@ -606,14 +606,14 @@ type RedisConfig struct {
 	Enabled  bool   `json:"enabled"`
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec // G117: API model field, not a hardcoded secret
 }
 
 // NewRelicConfig represents New Relic configuration
 type NewRelicConfig struct {
 	Enabled   bool   `json:"enabled"`
 	AccountID string `json:"account_id"`
-	APIKey    string `json:"api_key"`
+	APIKey    string `json:"api_key"` //nolint:gosec // G117: API model field, not a hardcoded secret
 }
 
 // UpstreamUpdate represents upstream update information

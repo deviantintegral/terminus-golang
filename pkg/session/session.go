@@ -11,7 +11,7 @@ import (
 
 // Session represents an authenticated session
 type Session struct {
-	SessionToken string `json:"session"`
+	SessionToken string `json:"session"` //nolint:gosec // G117: API model field, not a hardcoded secret
 	UserID       string `json:"user_id"`
 	ExpiresAt    int64  `json:"expires_at"`
 	Email        string `json:"email,omitempty"`
