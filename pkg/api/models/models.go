@@ -740,11 +740,11 @@ func formatNumberWithCommas(n int64) string {
 	// Pre-allocate capacity: original length + number of commas ((len-1)/3)
 	numCommas := (len(str) - 1) / 3
 	result := make([]byte, 0, len(str)+numCommas)
-	for i, c := range str {
+	for i := 0; i < len(str); i++ {
 		if i > 0 && (len(str)-i)%3 == 0 {
 			result = append(result, ',')
 		}
-		result = append(result, byte(c))
+		result = append(result, str[i])
 	}
 
 	if negative {
