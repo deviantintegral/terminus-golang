@@ -123,7 +123,7 @@ func getEnvironmentDashboardURL(siteEnv string) (string, error) {
 
 // browserOpener is a variable that can be mocked in tests
 var browserOpener = func(cmd string, args []string) error {
-	return exec.Command(cmd, args...).Start()
+	return exec.Command(cmd, args...).Start() //nolint:gosec // G204: cmd is from a fixed set (open/cmd/xdg-open) selected by OS in openBrowser
 }
 
 func openBrowser(url string) error {
