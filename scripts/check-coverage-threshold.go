@@ -37,7 +37,7 @@ func main() {
 	if len(os.Args) > 2 {
 		t, err := strconv.ParseFloat(os.Args[2], 64)
 		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error: Invalid threshold value: %q\n", os.Args[2]) //nolint:gosec // G705: CLI tool writing to stderr, not a web context; input is quoted with %q
+			_, _ = fmt.Fprintf(os.Stderr, "Error: Invalid threshold value: %q\n", os.Args[2]) //nolint:gosec // G705: input is quoted with %q; nolint needed because gosec taint analysis still tracks os.Args flow to fmt.Fprintf
 			os.Exit(1)
 		}
 		threshold = t

@@ -155,7 +155,7 @@ func (s *BackupsService) Download(ctx context.Context, siteID, envID, backupID, 
 		return fmt.Errorf("download URL must use HTTPS, got %q", parsedURL.Scheme)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedURL.String(), http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
 	}
