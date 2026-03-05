@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/deviantintegral/terminus-golang/pkg/api/models"
@@ -146,12 +147,20 @@ func (s *BackupsService) Download(ctx context.Context, siteID, envID, backupID, 
 	}
 
 	// Download file
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, http.NoBody)
+	parsedURL, err := url.Parse(downloadURL)
+	if err != nil {
+		return fmt.Errorf("invalid download URL: %w", err)
+	}
+	if parsedURL.Scheme != "https" {
+		return fmt.Errorf("download URL must use HTTPS, got %q", parsedURL.Scheme)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedURL.String(), http.NoBody)
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
 	}
 
-	resp, err := s.client.httpClient.Do(req)
+	resp, err := s.client.httpClient.Do(req) //nolint:gosec // G704: URL is validated above (HTTPS scheme required); originates from trusted API response
 	if err != nil {
 		return fmt.Errorf("failed to download backup: %w", err)
 	}
