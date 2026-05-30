@@ -216,7 +216,7 @@ func (c *Client) doWithRetry(req *http.Request) (*http.Response, error) {
 			return nil, cloneErr
 		}
 
-		resp, err = c.httpClient.Do(req)
+		resp, err = c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from configured baseURL + API path in buildRequest
 
 		if c.shouldStopRetrying(resp, err) {
 			c.logResponse(resp)
@@ -407,7 +407,7 @@ func (c *Client) PostOnlyOnce(ctx context.Context, path string, body interface{}
 	}
 
 	// Execute request directly without retry logic
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is constructed from configured baseURL + API path in buildRequest
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}

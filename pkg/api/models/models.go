@@ -589,7 +589,7 @@ type MachineToken struct {
 // Lock represents HTTP basic auth lock
 type Lock struct {
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec // G117: API model field, not a hardcoded secret
 	Locked   bool   `json:"locked"`
 }
 
@@ -606,14 +606,14 @@ type RedisConfig struct {
 	Enabled  bool   `json:"enabled"`
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec // G117: API model field, not a hardcoded secret
 }
 
 // NewRelicConfig represents New Relic configuration
 type NewRelicConfig struct {
 	Enabled   bool   `json:"enabled"`
 	AccountID string `json:"account_id"`
-	APIKey    string `json:"api_key"`
+	APIKey    string `json:"api_key"` //nolint:gosec // G117: API model field, not a hardcoded secret
 }
 
 // UpstreamUpdate represents upstream update information
@@ -740,11 +740,12 @@ func formatNumberWithCommas(n int64) string {
 	// Pre-allocate capacity: original length + number of commas ((len-1)/3)
 	numCommas := (len(str) - 1) / 3
 	result := make([]byte, 0, len(str)+numCommas)
-	for i, c := range str {
-		if i > 0 && (len(str)-i)%3 == 0 {
+	strLen := len(str)
+	for i := 0; i < strLen; i++ {
+		if i > 0 && (strLen-i)%3 == 0 {
 			result = append(result, ',')
 		}
-		result = append(result, byte(c))
+		result = append(result, str[i])
 	}
 
 	if negative {
