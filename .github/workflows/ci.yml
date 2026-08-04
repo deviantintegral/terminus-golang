@@ -43,7 +43,7 @@ jobs:
 
       - name: Code Coverage Annotation
         if: github.event_name == 'pull_request'
-        uses: ggilder/codecoverage@f8afbff2fe4b038a8ac77d69a1890a687947f458 # v1
+        uses: ggilder/codecoverage@3ae5dbe5d9ec0c038f4863cb42d902c4a5f25ae8 # v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE_PATH: coverage.out
