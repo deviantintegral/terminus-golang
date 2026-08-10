@@ -37,7 +37,7 @@ func main() {
 	if len(os.Args) > 2 {
 		t, err := strconv.ParseFloat(os.Args[2], 64)
 		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error: Invalid threshold value: %s\n", os.Args[2])
+			_, _ = fmt.Fprintf(os.Stderr, "Error: Invalid threshold value: %q\n", os.Args[2]) //nolint:gosec // G705: input is quoted with %q; nolint needed because gosec taint analysis still tracks os.Args flow to fmt.Fprintf
 			os.Exit(1)
 		}
 		threshold = t
@@ -52,7 +52,7 @@ func main() {
 	fmt.Printf("Coverage: %.1f%%\n", coverage)
 
 	if coverage < threshold-epsilon {
-		_, _ = fmt.Fprintf(os.Stderr, "::error::Coverage %.1f%% is below the required threshold of %.1f%%\n",
+		_, _ = fmt.Fprintf(os.Stderr, "::error::Coverage %.1f%% is below the required threshold of %.1f%%\n", //nolint:gosec // G705: threshold is a validated float64 from strconv.ParseFloat; %.1f cannot produce unsafe output
 			coverage, threshold)
 		os.Exit(1)
 	}
